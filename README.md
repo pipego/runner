@@ -24,7 +24,7 @@
 
 ```bash
 version=latest make build
-./bin/runner --config-file="$PWD/config/config.yml"
+./bin/runner --config-file="$PWD/config/config.yml --listen-url=:29090"
 ```
 
 
@@ -33,7 +33,7 @@ version=latest make build
 
 ```bash
 version=latest make docker
-docker run -v "$PWD"/config:/tmp ghcr.io/pipego/runner:latest --config-file="/tmp/config.yml"
+docker run -v "$PWD"/config:/tmp ghcr.io/pipego/runner:latest --config-file="/tmp/config.yml --listen-url=:29090"
 ```
 
 
@@ -41,7 +41,7 @@ docker run -v "$PWD"/config:/tmp ghcr.io/pipego/runner:latest --config-file="/tm
 ## Usage
 
 ```
-usage: runner --config-file=CONFIG-FILE [<flags>]
+usage: runner --config-file=CONFIG-FILE --listen-url=LISTEN-URL [<flags>]
 
 pipego runner
 
@@ -49,6 +49,7 @@ Flags:
   --help                     Show context-sensitive help (also try --help-long and --help-man).
   --version                  Show application version.
   --config-file=CONFIG-FILE  Config file (.yml)
+  --listen-url=LISTEN-URL    Listen URL (host:port)
 ```
 
 

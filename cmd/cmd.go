@@ -12,6 +12,7 @@ import (
 
 	"github.com/pipego/runner/config"
 	"github.com/pipego/runner/runner"
+	"github.com/pipego/runner/server"
 )
 
 var (
@@ -70,18 +71,16 @@ func initConfig(name string) (*config.Config, error) {
 	return c, nil
 }
 
-func initRunner(cfg *config.Config) (runner.Runner, error) {
+func initRunner(_ *config.Config) (runner.Runner, error) {
 	c := runner.DefaultConfig()
 	if c == nil {
 		return nil, errors.New("failed to config")
 	}
 
-	c.Config = *cfg
-
 	return runner.New(context.Background(), c), nil
 }
 
-func initServer(cfg *config.Config) (server.Server, error) {
+func initServer(_ *config.Config) (server.Server, error) {
 	c := server.DefaultConfig()
 	if c == nil {
 		return nil, errors.New("failed to config")
