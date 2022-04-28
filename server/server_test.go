@@ -23,7 +23,7 @@ type rpcTest struct {
 	grpctest.Tester
 }
 
-func TestRunRpc(t *testing.T) {
+func TestRun(t *testing.T) {
 	grpctest.RunSubTests(t, rpcTest{})
 }
 

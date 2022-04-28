@@ -3,11 +3,10 @@ package server
 import (
 	"context"
 	"math"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	"net"
 
 	pb "github.com/pipego/runner/server/proto"
+	"google.golang.org/grpc"
 )
 
 type Server interface {
@@ -37,17 +36,14 @@ func DefaultConfig() *Config {
 }
 
 func (s *server) Run() error {
-	return nil
-}
-
-func (s *server) initRpc() *grpc.Server {
 	options := []grpc.ServerOption{grpc.MaxRecvMsgSize(math.MaxInt32), grpc.MaxSendMsgSize(math.MaxInt32)}
 
 	g := grpc.NewServer(options...)
 	pb.RegisterServerProtoServer(g, &rpcServer{})
-	reflection.Register(g)
 
-	return g
+	lis, _ := net.Listen("tcp", s.cfg.Addr)
+
+	return g.Serve(lis)
 }
 
 func (s *server) SendServer(in *pb.ServerRequest) (*pb.ServerReply, error) {
