@@ -11,7 +11,16 @@ service ServerProto {
 
 // The request message.
 message ServerRequest {
-  string message = 1;
+  string kind = 1;
+  string type = 2;
+  string name = 3;
+  repeated Task tasks = 4;
+}
+
+message Task {
+  string name = 1;
+  repeated string commands = 2;
+  repeated string depends = 3;
 }
 
 // The response message.

@@ -24,7 +24,7 @@
 
 ```bash
 version=latest make build
-./bin/runner --config-file="$PWD/config/config.yml --listen-url=:29090"
+./bin/runner --listen-url=:29090
 ```
 
 
@@ -33,7 +33,7 @@ version=latest make build
 
 ```bash
 version=latest make docker
-docker run -v "$PWD"/config:/tmp ghcr.io/pipego/runner:latest --config-file="/tmp/config.yml --listen-url=:29090"
+docker run ghcr.io/pipego/runner:latest --listen-url=:29090
 ```
 
 
@@ -41,31 +41,44 @@ docker run -v "$PWD"/config:/tmp ghcr.io/pipego/runner:latest --config-file="/tm
 ## Usage
 
 ```
-usage: runner --config-file=CONFIG-FILE --listen-url=LISTEN-URL [<flags>]
+usage: runner --listen-url=LISTEN-URL [<flags>]
 
 pipego runner
 
 Flags:
-  --help                     Show context-sensitive help (also try --help-long and --help-man).
-  --version                  Show application version.
-  --config-file=CONFIG-FILE  Config file (.yml)
-  --listen-url=LISTEN-URL    Listen URL (host:port)
+  --help                   Show context-sensitive help (also try --help-long and --help-man).
+  --version                Show application version.
+  --listen-url=LISTEN-URL  Listen URL (host:port)
 ```
 
 
 
-## Settings
+## Protobuf
 
-*runner* parameters can be set in the directory [config](https://github.com/pipego/runner/blob/main/config).
-
-An example of configuration in [config.yml](https://github.com/pipego/runner/blob/main/config/config.yml):
-
-```yaml
-apiVersion: v1
-kind: runner
-metadata:
-  name: runner
-spec:
+```json
+{
+  "kind": "pipeline",
+  "type": "exec",
+  "name": "default",
+  "tasks": [
+    {
+      "name": "name1",
+      "commands": [
+        "command1"
+      ],
+      "depends": []
+    },
+    {
+      "name": "name2",
+      "commands": [
+        "command2"
+      ],
+      "depends": [
+        "name1"
+      ]
+    }
+  ]
+}
 ```
 
 
@@ -81,9 +94,10 @@ Project License can be found [here](LICENSE).
 - [asynq](https://github.com/hibiken/asynq)
 - [asynqmon](https://github.com/hibiken/asynqmon)
 - [cuelang](https://cuelang.org)
-- [dag](https://github.com/drone/dag)
 - [dagger](https://dagger.io/)
-- [drone](https://drone.io)
+- [drone-dag](https://github.com/drone/dag)
+- [drone-pipeline](https://docs.drone.io/pipeline/overview/)
 - [grpctest](https://github.com/grpc/grpc-go/tree/master/internal/grpctest)
 - [machinery](https://github.com/RichardKnop/machinery/blob/master/v2/example/go-redis/main.go)
 - [termui](https://github.com/gizak/termui)
+- [wiki-dag](https://en.wikipedia.org/wiki/Directed_acyclic_graph)
