@@ -5,11 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/pipego/runner/config"
-	"github.com/pipego/runner/runner"
-	"github.com/pipego/runner/server"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/pipego/runner/config"
+	"github.com/pipego/runner/server"
 )
 
 var (
@@ -25,11 +25,6 @@ func Run() error {
 		return errors.Wrap(err, "failed to init config")
 	}
 
-	r, err := initRunner(c)
-	if err != nil {
-		return errors.Wrap(err, "failed to init runner")
-	}
-
 	s, err := initServer(c)
 	if err != nil {
 		return errors.Wrap(err, "failed to init server")
@@ -37,7 +32,7 @@ func Run() error {
 
 	log.Println("running")
 
-	if err := runPipe(c, r, s); err != nil {
+	if err := runPipe(s); err != nil {
 		return errors.Wrap(err, "failed to run pipe")
 	}
 
@@ -51,15 +46,6 @@ func initConfig() (*config.Config, error) {
 	return c, nil
 }
 
-func initRunner(_ *config.Config) (runner.Runner, error) {
-	c := runner.DefaultConfig()
-	if c == nil {
-		return nil, errors.New("failed to config")
-	}
-
-	return runner.New(context.Background(), c), nil
-}
-
 func initServer(_ *config.Config) (server.Server, error) {
 	c := server.DefaultConfig()
 	if c == nil {
@@ -71,6 +57,14 @@ func initServer(_ *config.Config) (server.Server, error) {
 	return server.New(context.Background(), c), nil
 }
 
-func runPipe(c *config.Config, r runner.Runner, s server.Server) error {
+func runPipe(s server.Server) error {
+	if err := s.Init(); err != nil {
+		return errors.New("failed to init")
+	}
+
+	if err := s.Run(); err != nil {
+		return errors.New("failed to run")
+	}
+
 	return nil
 }

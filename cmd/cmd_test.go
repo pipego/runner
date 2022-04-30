@@ -11,14 +11,6 @@ func TestInitConfig(t *testing.T) {
 	assert.Equal(t, nil, err)
 }
 
-func TestInitRunner(t *testing.T) {
-	c, err := initConfig()
-	assert.Equal(t, nil, err)
-
-	_, err = initRunner(c)
-	assert.Equal(t, nil, err)
-}
-
 func TestInitServer(t *testing.T) {
 	c, err := initConfig()
 	assert.Equal(t, nil, err)

@@ -10,11 +10,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/pipego/runner/builder"
 	"github.com/pipego/runner/config"
 )
 
 type Runner interface {
-	Run() error
+	Run(dag *builder.Dag) error
 }
 
 type Config struct {
@@ -48,11 +49,16 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
+func (r *runner) Run(dag *builder.Dag) error {
+	// TODO
+	return r.routine()
+}
+
 // Run will validate that all edges in the graph point to existing vertices, and that there are
 // no dependency cycles. After validation, each vertex will be run, deterministically, in parallel
 // topological order. If any vertex returns an error, no more vertices will be scheduled and
 // Run will exit and return that error once all in-flight functions finish execution.
-func (r *runner) Run() error {
+func (r *runner) routine() error {
 	// sanity check
 	if len(r.fn) == 0 {
 		return nil

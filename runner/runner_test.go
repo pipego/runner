@@ -10,7 +10,7 @@ func TestZero(t *testing.T) {
 	var r runner
 
 	res := make(chan error)
-	go func() { res <- r.Run() }()
+	go func() { res <- r.routine() }()
 
 	select {
 	case err := <-res:
@@ -29,7 +29,7 @@ func TestOne(t *testing.T) {
 	r.AddVertex("one", func() error { return err })
 
 	res := make(chan error)
-	go func() { res <- r.Run() }()
+	go func() { res <- r.routine() }()
 
 	select {
 	case err := <-res:
@@ -51,7 +51,7 @@ func TestManyNoDeps(t *testing.T) {
 	r.AddVertex("fout", func() error { return nil })
 
 	res := make(chan error)
-	go func() { res <- r.Run() }()
+	go func() { res <- r.routine() }()
 
 	select {
 	case err := <-res:
@@ -77,7 +77,7 @@ func TestManyWithCycle(t *testing.T) {
 	r.AddEdge("three", "one")
 
 	res := make(chan error)
-	go func() { res <- r.Run() }()
+	go func() { res <- r.routine() }()
 
 	select {
 	case err := <-res:
@@ -103,7 +103,7 @@ func TestInvalidToVertex(t *testing.T) {
 	r.AddEdge("three", "definitely-not-a-valid-vertex")
 
 	res := make(chan error)
-	go func() { res <- r.Run() }()
+	go func() { res <- r.routine() }()
 
 	select {
 	case err := <-res:
@@ -129,7 +129,7 @@ func TestInvalidFromVertex(t *testing.T) {
 	r.AddEdge("definitely-not-a-valid-vertex", "three")
 
 	res := make(chan error)
-	go func() { res <- r.Run() }()
+	go func() { res <- r.routine() }()
 
 	select {
 	case err := <-res:
@@ -181,7 +181,7 @@ func TestManyWithDepsSuccess(t *testing.T) {
 	r.AddEdge("five", "six")
 
 	err := make(chan error)
-	go func() { err <- r.Run() }()
+	go func() { err <- r.routine() }()
 
 	select {
 	case err := <-err:

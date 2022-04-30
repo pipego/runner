@@ -45,24 +45,57 @@ func (rpcTest) TestSendServer(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
-		r, err := client.SendServer(ctx, &pb.ServerRequest{Message: "Send to server"})
-		if err != nil || r.Message != "Reply from server" {
+		r, err := client.SendServer(ctx, &pb.ServerRequest{
+			Kind: "kind",
+			Type: "type",
+			Name: "name",
+			Tasks: []*pb.Task{
+				{
+					Name:     "name1",
+					Commands: []string{"command1"},
+					Depends:  []string{},
+				},
+				{
+					Name:     "name2",
+					Commands: []string{"command2"},
+					Depends:  []string{"name1"},
+				},
+			},
+		})
+
+		if err != nil || r.Message != "reply" {
 			t.Errorf("mocking failed")
 		}
 
-		t.Log("reply: ", r.Message)
+		t.Log(r.Message)
 	}
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	req := &pb.ServerRequest{Message: "Send to server"}
+	req := &pb.ServerRequest{
+		Kind: "kind",
+		Type: "type",
+		Name: "name",
+		Tasks: []*pb.Task{
+			{
+				Name:     "name1",
+				Commands: []string{"command1"},
+				Depends:  []string{},
+			},
+			{
+				Name:     "name2",
+				Commands: []string{"command2"},
+				Depends:  []string{"name1"},
+			},
+		},
+	}
 
 	client := mock.NewMockServerProtoClient(ctrl)
 	client.EXPECT().SendServer(
 		gomock.Any(),
 		&rpcMsg{msg: req},
-	).Return(&pb.ServerReply{Message: "Reply from server"}, nil)
+	).Return(&pb.ServerReply{Message: "reply"}, nil)
 
 	helper(t, client)
 }
