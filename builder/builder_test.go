@@ -8,10 +8,10 @@ import (
 
 var (
 	c = Config{
-		Kind:  "kind",
-		Type:  "type",
-		Name:  "name",
-		Tasks: nil,
+		Kind: "kind",
+		Type: "type",
+		Name: "name",
+		Task: nil,
 	}
 
 	b = builder{}
@@ -23,11 +23,11 @@ func TestZero(t *testing.T) {
 }
 
 func TestOne(t *testing.T) {
-	c.Tasks = []Task{
+	c.Task = []Task{
 		{
-			Name:     "task1",
-			Commands: []string{"run1"},
-			Depends:  []string{},
+			Name:    "task1",
+			Command: "run1",
+			Depend:  []string{},
 		},
 	}
 
@@ -36,16 +36,16 @@ func TestOne(t *testing.T) {
 }
 
 func TestManyNoDeps(t *testing.T) {
-	c.Tasks = []Task{
+	c.Task = []Task{
 		{
-			Name:     "task1",
-			Commands: []string{"run1"},
-			Depends:  []string{},
+			Name:    "task1",
+			Command: "run1",
+			Depend:  []string{},
 		},
 		{
-			Name:     "task2",
-			Commands: []string{"run2"},
-			Depends:  []string{},
+			Name:    "task2",
+			Command: "run2",
+			Depend:  []string{},
 		},
 	}
 
@@ -54,21 +54,21 @@ func TestManyNoDeps(t *testing.T) {
 }
 
 func TestManyWithDepsSuccess(t *testing.T) {
-	c.Tasks = []Task{
+	c.Task = []Task{
 		{
-			Name:     "task1",
-			Commands: []string{"run1"},
-			Depends:  []string{},
+			Name:    "task1",
+			Command: "run1",
+			Depend:  []string{},
 		},
 		{
-			Name:     "task2",
-			Commands: []string{"run2"},
-			Depends:  []string{},
+			Name:    "task2",
+			Command: "run2",
+			Depend:  []string{},
 		},
 		{
-			Name:     "task3",
-			Commands: []string{"run3"},
-			Depends:  []string{"task1", "task2"},
+			Name:    "task3",
+			Command: "run3",
+			Depend:  []string{"task1", "task2"},
 		},
 	}
 

@@ -9,16 +9,16 @@ type Builder interface {
 }
 
 type Config struct {
-	Kind  string
-	Type  string
-	Name  string
-	Tasks []Task
+	Kind string
+	Type string
+	Name string
+	Task []Task
 }
 
 type Task struct {
-	Name     string
-	Commands []string
-	Depends  []string
+	Name    string
+	Command string
+	Depend  []string
 }
 
 type Dag struct {
@@ -28,7 +28,7 @@ type Dag struct {
 
 type Vertex struct {
 	Name string
-	Run  []string
+	Run  string
 }
 
 type Edge struct {
@@ -53,14 +53,14 @@ func DefaultConfig() *Config {
 func (b *builder) Run(cfg *Config) (Dag, error) {
 	dag := Dag{}
 
-	for _, task := range cfg.Tasks {
+	for _, task := range cfg.Task {
 		d := Vertex{
 			Name: task.Name,
-			Run:  task.Commands,
+			Run:  task.Command,
 		}
 		dag.Vertex = append(dag.Vertex, d)
 
-		for _, dep := range task.Depends {
+		for _, dep := range task.Depend {
 			e := Edge{
 				From: dep,
 				To:   task.Name,

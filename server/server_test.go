@@ -49,16 +49,16 @@ func (rpcTest) TestSendServer(t *testing.T) {
 			Kind: "kind",
 			Type: "type",
 			Name: "name",
-			Tasks: []*pb.Task{
+			Task: []*pb.Task{
 				{
-					Name:     "name1",
-					Commands: []string{"command1"},
-					Depends:  []string{},
+					Name:    "name1",
+					Command: "command1",
+					Depend:  []string{},
 				},
 				{
-					Name:     "name2",
-					Commands: []string{"command2"},
-					Depends:  []string{"name1"},
+					Name:    "name2",
+					Command: "command2",
+					Depend:  []string{"name1"},
 				},
 			},
 		})
@@ -77,16 +77,16 @@ func (rpcTest) TestSendServer(t *testing.T) {
 		Kind: "kind",
 		Type: "type",
 		Name: "name",
-		Tasks: []*pb.Task{
+		Task: []*pb.Task{
 			{
-				Name:     "name1",
-				Commands: []string{"command1"},
-				Depends:  []string{},
+				Name:    "name1",
+				Command: "command1",
+				Depend:  []string{},
 			},
 			{
-				Name:     "name2",
-				Commands: []string{"command2"},
-				Depends:  []string{"name1"},
+				Name:    "name2",
+				Command: "command2",
+				Depend:  []string{"name1"},
 			},
 		},
 	}

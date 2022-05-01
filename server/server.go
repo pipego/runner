@@ -91,12 +91,12 @@ func (s *server) Run() error {
 func (s *server) SendServer(in *pb.ServerRequest) (*pb.ServerReply, error) {
 	helper := func() []builder.Task {
 		var buf []builder.Task
-		tasks := in.GetTasks()
-		for _, val := range tasks {
+		task := in.GetTask()
+		for _, val := range task {
 			b := builder.Task{
-				Name:     val.GetName(),
-				Commands: val.GetCommands(),
-				Depends:  val.GetDepends(),
+				Name:    val.GetName(),
+				Command: val.GetCommand(),
+				Depend:  val.GetDepend(),
 			}
 			buf = append(buf, b)
 		}
@@ -104,10 +104,10 @@ func (s *server) SendServer(in *pb.ServerRequest) (*pb.ServerReply, error) {
 	}
 
 	cfg := &builder.Config{
-		Kind:  in.GetKind(),
-		Type:  in.GetType(),
-		Name:  in.GetName(),
-		Tasks: helper(),
+		Kind: in.GetKind(),
+		Type: in.GetType(),
+		Name: in.GetName(),
+		Task: helper(),
 	}
 
 	b, err := s.cfg.Builder.Run(cfg)

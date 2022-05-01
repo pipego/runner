@@ -14,13 +14,13 @@ message ServerRequest {
   string kind = 1;
   string type = 2;
   string name = 3;
-  repeated Task tasks = 4;
+  repeated Task task = 4;
 }
 
 message Task {
   string name = 1;
-  repeated string commands = 2;
-  repeated string depends = 3;
+  string command = 2;
+  repeated string depend = 3;
 }
 
 // The response message.

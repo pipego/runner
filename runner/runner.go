@@ -30,8 +30,13 @@ type Config struct {
 // is useful.
 type runner struct {
 	cfg   *Config
-	fn    map[string]func() error
+	fn    map[string]function
 	graph map[string][]string
+}
+
+type function struct {
+	arg  string
+	name func(string) error
 }
 
 type result struct {
@@ -54,7 +59,7 @@ func DefaultConfig() *Config {
 
 func (r *runner) Run(dag *builder.Dag) error {
 	for _, vertex := range dag.Vertex {
-		r.AddVertex(vertex.Name, r.routine)
+		r.AddVertex(vertex.Name, r.routine, vertex.Run)
 	}
 
 	for _, edge := range dag.Edge {
@@ -66,12 +71,15 @@ func (r *runner) Run(dag *builder.Dag) error {
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *runner) AddVertex(name string, fn func() error) {
+func (r *runner) AddVertex(name string, fn func(string) error, arg string) {
 	if r.fn == nil {
-		r.fn = make(map[string]func() error)
+		r.fn = make(map[string]function)
 	}
 
-	r.fn[name] = fn
+	r.fn[name] = function{
+		arg:  arg,
+		name: fn,
+	}
 }
 
 // AddEdge establishes a dependency between two vertices in the graph. Both from and to must exist
@@ -84,7 +92,7 @@ func (r *runner) AddEdge(from, to string) {
 	r.graph[from] = append(r.graph[from], to)
 }
 
-func (r *runner) routine() error {
+func (r *runner) routine(arg string) error {
 	outr, outw, _ := os.Pipe()
 	defer func() { _ = outr.Close() }()
 	defer func() { _ = outw.Close() }()
@@ -94,7 +102,7 @@ func (r *runner) routine() error {
 	defer func() { _ = inw.Close() }()
 
 	cmd, _ := exec.LookPath("bash")
-	_, err := os.StartProcess(cmd, []string{""}, &os.ProcAttr{
+	_, err := os.StartProcess(cmd, []string{arg}, &os.ProcAttr{
 		Env:   os.Environ(),
 		Files: []*os.File{inr, outw, outw},
 	})
@@ -209,11 +217,11 @@ func (r *runner) detectCyclesHelper(vertex string, visited, recStack map[string]
 	return false
 }
 
-func (r *runner) start(name string, fn func() error, resc chan<- result) {
+func (r *runner) start(name string, fn function, resc chan<- result) {
 	go func() {
 		resc <- result{
 			name: name,
-			err:  fn(),
+			err:  fn.name(fn.arg),
 		}
 	}()
 }
