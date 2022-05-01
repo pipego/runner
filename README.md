@@ -93,6 +93,7 @@ Project License can be found [here](LICENSE).
 
 - [asynq](https://github.com/hibiken/asynq)
 - [asynqmon](https://github.com/hibiken/asynqmon)
+- [bufio-example](https://golang.org/src/bufio/example_test.go)
 - [cuelang](https://cuelang.org)
 - [dagger](https://dagger.io/)
 - [drone-dag](https://github.com/drone/dag)
@@ -100,4 +101,5 @@ Project License can be found [here](LICENSE).
 - [grpctest](https://github.com/grpc/grpc-go/tree/master/internal/grpctest)
 - [machinery](https://github.com/RichardKnop/machinery/blob/master/v2/example/go-redis/main.go)
 - [termui](https://github.com/gizak/termui)
+- [websocket-command](https://github.com/gorilla/websocket/tree/master/examples/command)
 - [wiki-dag](https://en.wikipedia.org/wiki/Directed_acyclic_graph)

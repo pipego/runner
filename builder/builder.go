@@ -22,7 +22,18 @@ type Task struct {
 }
 
 type Dag struct {
-	// TODO
+	Vertex []Vertex
+	Edge   []Edge
+}
+
+type Vertex struct {
+	Name string
+	Run  []string
+}
+
+type Edge struct {
+	From string
+	To   string
 }
 
 type builder struct {
@@ -40,6 +51,23 @@ func DefaultConfig() *Config {
 }
 
 func (b *builder) Run(cfg *Config) (Dag, error) {
-	// TODO
-	return Dag{}, nil
+	dag := Dag{}
+
+	for _, task := range cfg.Tasks {
+		d := Vertex{
+			Name: task.Name,
+			Run:  task.Commands,
+		}
+		dag.Vertex = append(dag.Vertex, d)
+
+		for _, dep := range task.Depends {
+			e := Edge{
+				From: dep,
+				To:   task.Name,
+			}
+			dag.Edge = append(dag.Edge, e)
+		}
+	}
+
+	return dag, nil
 }
