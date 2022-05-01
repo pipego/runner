@@ -60,20 +60,16 @@ Flags:
   "kind": "pipeline",
   "type": "exec",
   "name": "default",
-  "tasks": [
+  "task": [
     {
       "name": "name1",
-      "commands": [
-        "command1"
-      ],
-      "depends": []
+      "command": "command1",
+      "depend": []
     },
     {
       "name": "name2",
-      "commands": [
-        "command2"
-      ],
-      "depends": [
+      "command": "command2",
+      "depend": [
         "name1"
       ]
     }
