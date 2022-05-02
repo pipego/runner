@@ -17,7 +17,7 @@ type Config struct {
 
 type Task struct {
 	Name    string
-	Command string
+	Command []string
 	Depend  []string
 }
 
@@ -28,7 +28,7 @@ type Dag struct {
 
 type Vertex struct {
 	Name string
-	Run  string
+	Run  []string
 }
 
 type Edge struct {

@@ -19,7 +19,7 @@ message ServerRequest {
 
 message Task {
   string name = 1;
-  string command = 2;
+  repeated string command = 2;
   repeated string depend = 3;
 }
 

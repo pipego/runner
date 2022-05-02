@@ -26,7 +26,7 @@ func TestOne(t *testing.T) {
 	c.Task = []Task{
 		{
 			Name:    "task1",
-			Command: "run1",
+			Command: []string{"cmd1", "argv1"},
 			Depend:  []string{},
 		},
 	}
@@ -39,12 +39,12 @@ func TestManyNoDeps(t *testing.T) {
 	c.Task = []Task{
 		{
 			Name:    "task1",
-			Command: "run1",
+			Command: []string{"cmd1", "argv1"},
 			Depend:  []string{},
 		},
 		{
 			Name:    "task2",
-			Command: "run2",
+			Command: []string{"cmd2", "argv2"},
 			Depend:  []string{},
 		},
 	}
@@ -57,17 +57,17 @@ func TestManyWithDepsSuccess(t *testing.T) {
 	c.Task = []Task{
 		{
 			Name:    "task1",
-			Command: "run1",
+			Command: []string{"cmd1", "argv1"},
 			Depend:  []string{},
 		},
 		{
 			Name:    "task2",
-			Command: "run2",
+			Command: []string{"cmd2", "argv2"},
 			Depend:  []string{},
 		},
 		{
 			Name:    "task3",
-			Command: "run3",
+			Command: []string{"cmd3", "argv3"},
 			Depend:  []string{"task1", "task2"},
 		},
 	}
