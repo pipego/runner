@@ -46,9 +46,9 @@ func (rpcTest) TestSendServer(t *testing.T) {
 		defer cancel()
 
 		r, err := client.SendServer(ctx, &pb.ServerRequest{
-			Kind: "kind",
-			Type: "type",
-			Name: "name",
+			Kind: "runner",
+			Type: "exec",
+			Name: "runner",
 			Task: []*pb.Task{
 				{
 					Name:    "name1",
@@ -63,7 +63,7 @@ func (rpcTest) TestSendServer(t *testing.T) {
 			},
 		})
 
-		if err != nil || r.Message != "reply" {
+		if err != nil || r.Message != "" {
 			t.Errorf("mocking failed")
 		}
 
@@ -74,9 +74,9 @@ func (rpcTest) TestSendServer(t *testing.T) {
 	defer ctrl.Finish()
 
 	req := &pb.ServerRequest{
-		Kind: "kind",
-		Type: "type",
-		Name: "name",
+		Kind: "runner",
+		Type: "exec",
+		Name: "runner",
 		Task: []*pb.Task{
 			{
 				Name:    "name1",
@@ -95,7 +95,7 @@ func (rpcTest) TestSendServer(t *testing.T) {
 	client.EXPECT().SendServer(
 		gomock.Any(),
 		&rpcMsg{msg: req},
-	).Return(&pb.ServerReply{Message: "reply"}, nil)
+	).Return(&pb.ServerReply{Message: ""}, nil)
 
 	helper(t, client)
 }

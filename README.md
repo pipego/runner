@@ -57,9 +57,9 @@ Flags:
 
 ```json
 {
-  "kind": "pipeline",
+  "kind": "runner",
   "type": "exec",
-  "name": "default",
+  "name": "runner",
   "task": [
     {
       "name": "name1",

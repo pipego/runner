@@ -14,6 +14,10 @@ import (
 	"github.com/pipego/runner/runner"
 )
 
+const (
+	KIND = "runner"
+)
+
 type Server interface {
 	Init() error
 	Run() error
@@ -101,6 +105,10 @@ func (s *server) SendServer(in *pb.ServerRequest) (*pb.ServerReply, error) {
 			buf = append(buf, b)
 		}
 		return buf
+	}
+
+	if in.GetKind() != KIND {
+		return &pb.ServerReply{Message: "invalid kind"}, nil
 	}
 
 	cfg := &builder.Config{
