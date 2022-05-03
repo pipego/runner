@@ -40,5 +40,8 @@ go-docker: FORCE
 go-lint: FORCE
 	./script/lint.sh
 
+go-proto: FORCE
+	./script/proto.sh
+
 go-test: FORCE
 	./script/test.sh report
