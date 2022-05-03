@@ -101,6 +101,8 @@ Project License can be found [here](LICENSE).
 - [drone-dag](https://github.com/drone/dag)
 - [drone-pipeline](https://docs.drone.io/pipeline/overview/)
 - [grpctest](https://github.com/grpc/grpc-go/tree/master/internal/grpctest)
+- [kube-scheduler](https://kubernetes.io/zh/docs/concepts/scheduling-eviction/kube-scheduler/)
+- [kube-scheduling](https://kubernetes.io/zh/docs/reference/scheduling/config/)
 - [machinery](https://github.com/RichardKnop/machinery/blob/master/v2/example/go-redis/main.go)
 - [termui](https://github.com/gizak/termui)
 - [websocket-command](https://github.com/gorilla/websocket/tree/master/examples/command)
