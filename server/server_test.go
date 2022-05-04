@@ -52,12 +52,12 @@ func (rpcTest) TestSendServer(t *testing.T) {
 			Task: []*pb.Task{
 				{
 					Name:    "name1",
-					Command: []string{"cmd1", "argv1"},
+					Command: []string{"cmd1", "args1"},
 					Depend:  []string{},
 				},
 				{
 					Name:    "name2",
-					Command: []string{"cmd2", "argv2"},
+					Command: []string{"cmd2", "args2"},
 					Depend:  []string{"name1"},
 				},
 			},
@@ -80,12 +80,12 @@ func (rpcTest) TestSendServer(t *testing.T) {
 		Task: []*pb.Task{
 			{
 				Name:    "name1",
-				Command: []string{"cmd1", "argv1"},
+				Command: []string{"cmd1", "args1"},
 				Depend:  []string{},
 			},
 			{
 				Name:    "name2",
-				Command: []string{"cmd2", "argv2"},
+				Command: []string{"cmd2", "args2"},
 				Depend:  []string{"name1"},
 			},
 		},

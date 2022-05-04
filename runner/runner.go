@@ -35,7 +35,7 @@ type runner struct {
 }
 
 type function struct {
-	argv []string
+	args []string
 	name func([]string) error
 }
 
@@ -71,13 +71,13 @@ func (r *runner) Run(dag *builder.Dag) error {
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *runner) AddVertex(name string, fn func([]string) error, argv []string) {
+func (r *runner) AddVertex(name string, fn func([]string) error, args []string) {
 	if r.fn == nil {
 		r.fn = make(map[string]function)
 	}
 
 	r.fn[name] = function{
-		argv: argv,
+		args: args,
 		name: fn,
 	}
 }
@@ -92,7 +92,7 @@ func (r *runner) AddEdge(from, to string) {
 	r.graph[from] = append(r.graph[from], to)
 }
 
-func (r *runner) routine(argv []string) error {
+func (r *runner) routine(args []string) error {
 	var n string
 	var a []string
 
@@ -104,13 +104,13 @@ func (r *runner) routine(argv []string) error {
 	defer func() { _ = inr.Close() }()
 	defer func() { _ = inw.Close() }()
 
-	if len(argv) > 1 {
-		n, _ = exec.LookPath(argv[0])
-		a = argv[1:]
-	} else if len(argv) == 1 {
-		n, _ = exec.LookPath(argv[0])
-	} else if len(argv) == 0 {
-		return errors.New("invalid argv")
+	if len(args) > 1 {
+		n, _ = exec.LookPath(args[0])
+		a = args[1:]
+	} else if len(args) == 1 {
+		n, _ = exec.LookPath(args[0])
+	} else if len(args) == 0 {
+		return errors.New("invalid args")
 	}
 
 	_, err := os.StartProcess(n, a, &os.ProcAttr{
@@ -232,7 +232,7 @@ func (r *runner) start(name string, fn function, resc chan<- result) {
 	go func() {
 		resc <- result{
 			name: name,
-			err:  fn.name(fn.argv),
+			err:  fn.name(fn.args),
 		}
 	}()
 }

@@ -9,13 +9,13 @@ import (
 )
 
 var (
-	argv = []string{"echo", "hello runner"}
+	args = []string{"echo", "hello runner"}
 )
 
 func TestRoutine(t *testing.T) {
 	var r runner
 
-	err := r.routine(argv)
+	err := r.routine(args)
 	assert.Equal(t, nil, err)
 }
 
