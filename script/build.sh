@@ -8,8 +8,7 @@ target="runner"
 
 go env -w GOPROXY=https://goproxy.cn,direct
 
-CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags "$ldflags" -o bin/$target main.go
-CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build -ldflags "$ldflags" -o bin/$target.exe main.go
+# go tool dist list
+CGO_ENABLED=0 GOARCH=$(go env GOARCH) GOOS=$(go env GOOS) go build -ldflags "$ldflags" -o bin/$target main.go
 
 upx bin/$target
-upx bin/$target.exe

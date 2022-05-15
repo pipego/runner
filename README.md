@@ -16,7 +16,7 @@
 
 ## Prerequisites
 
-- Go >= 1.17.0
+- Go >= 1.18.0
 
 
 
@@ -101,6 +101,7 @@ Project License can be found [here](LICENSE).
 - [drone-dag](https://github.com/drone/dag)
 - [drone-pipeline](https://docs.drone.io/pipeline/overview/)
 - [grpctest](https://github.com/grpc/grpc-go/tree/master/internal/grpctest)
+- [kube-schduler](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/schedule_one.go)
 - [kube-scheduling](https://cloud.tencent.com/developer/article/1644857)
 - [kube-scheduling](https://kubernetes.io/zh/docs/concepts/scheduling-eviction/kube-scheduler/)
 - [kube-scheduling](https://kubernetes.io/zh/docs/reference/scheduling/config/)
