@@ -57,29 +57,33 @@ Flags:
 
 ```json
 {
+  "apiVersion": "v1",
   "kind": "runner",
-  "type": "exec",
-  "name": "runner",
-  "task": [
-    {
-      "name": "name1",
-      "command": [
-        "cmd1",
-        "argv1"
-      ],
-      "depend": []
-    },
-    {
-      "name": "name2",
-      "command": [
-        "cmd2",
-        "argv2"
-      ],
-      "depend": [
-        "name1"
-      ]
-    }
-  ]
+  "metadata": {
+    "name": "runner"
+  },
+  "spec": {
+    "task": [
+      {
+        "name": "name1",
+        "command": [
+          "cmd1",
+          "argv1"
+        ],
+        "depend": []
+      },
+      {
+        "name": "name2",
+        "command": [
+          "cmd2",
+          "argv2"
+        ],
+        "depend": [
+          "name1"
+        ]
+      }
+    ]
+  }
 }
 ```
 

@@ -11,10 +11,18 @@ service ServerProto {
 
 // The request message.
 message ServerRequest {
-  string kind = 1;
-  string type = 2;
-  string name = 3;
-  repeated Task task = 4;
+  string apiVersion = 1;
+  string kind = 2;
+  Metadata metadata = 3;
+  Spec spec = 4;
+}
+
+message Metadata {
+  string name = 1;
+}
+
+message Spec {
+  repeated Task tasks = 1;
 }
 
 message Task {
