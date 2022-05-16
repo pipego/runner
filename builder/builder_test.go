@@ -8,10 +8,14 @@ import (
 
 var (
 	c = Config{
-		Kind: "kind",
-		Type: "type",
-		Name: "name",
-		Task: nil,
+		ApiVersion: "v1",
+		Kind:       "runner",
+		MetaData: MetaData{
+			Name: "runner",
+		},
+		Spec: Spec{
+			Tasks: nil,
+		},
 	}
 
 	b = builder{}
@@ -23,7 +27,7 @@ func TestZero(t *testing.T) {
 }
 
 func TestOne(t *testing.T) {
-	c.Task = []Task{
+	c.Spec.Tasks = []Task{
 		{
 			Name:    "task1",
 			Command: []string{"cmd1", "args1"},
@@ -36,7 +40,7 @@ func TestOne(t *testing.T) {
 }
 
 func TestManyNoDeps(t *testing.T) {
-	c.Task = []Task{
+	c.Spec.Tasks = []Task{
 		{
 			Name:    "task1",
 			Command: []string{"cmd1", "args1"},
@@ -54,7 +58,7 @@ func TestManyNoDeps(t *testing.T) {
 }
 
 func TestManyWithDepsSuccess(t *testing.T) {
-	c.Task = []Task{
+	c.Spec.Tasks = []Task{
 		{
 			Name:    "task1",
 			Command: []string{"cmd1", "args1"},

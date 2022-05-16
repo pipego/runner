@@ -63,7 +63,7 @@ Flags:
     "name": "runner"
   },
   "spec": {
-    "task": [
+    "tasks": [
       {
         "name": "name1",
         "command": [

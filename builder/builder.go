@@ -9,10 +9,18 @@ type Builder interface {
 }
 
 type Config struct {
-	Kind string
-	Type string
+	ApiVersion string
+	Kind       string
+	MetaData   MetaData
+	Spec       Spec
+}
+
+type MetaData struct {
 	Name string
-	Task []Task
+}
+
+type Spec struct {
+	Tasks []Task
 }
 
 type Task struct {
@@ -53,7 +61,7 @@ func DefaultConfig() *Config {
 func (b *builder) Run(cfg *Config) (Dag, error) {
 	dag := Dag{}
 
-	for _, task := range cfg.Task {
+	for _, task := range cfg.Spec.Tasks {
 		d := Vertex{
 			Name: task.Name,
 			Run:  task.Command,

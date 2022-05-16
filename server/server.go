@@ -93,18 +93,26 @@ func (s *server) Run() error {
 }
 
 func (s *server) SendServer(in *pb.ServerRequest) (*pb.ServerReply, error) {
-	helper := func() []builder.Task {
-		var buf []builder.Task
-		task := in.GetTask()
-		for _, val := range task {
+	metaDataHelper := func() builder.MetaData {
+		var metadata builder.MetaData
+		metadata.Name = in.GetMetadata().Name
+		return metadata
+	}
+
+	specHelper := func() builder.Spec {
+		var tasks []builder.Task
+		var spec builder.Spec
+		buf := in.GetSpec().GetTasks()
+		for _, val := range buf {
 			b := builder.Task{
 				Name:    val.GetName(),
 				Command: val.GetCommand(),
 				Depend:  val.GetDepend(),
 			}
-			buf = append(buf, b)
+			tasks = append(tasks, b)
 		}
-		return buf
+		spec.Tasks = tasks
+		return spec
 	}
 
 	if in.GetKind() != KIND {
@@ -112,10 +120,10 @@ func (s *server) SendServer(in *pb.ServerRequest) (*pb.ServerReply, error) {
 	}
 
 	cfg := &builder.Config{
-		Kind: in.GetKind(),
-		Type: in.GetType(),
-		Name: in.GetName(),
-		Task: helper(),
+		ApiVersion: in.GetApiVersion(),
+		Kind:       in.GetKind(),
+		MetaData:   metaDataHelper(),
+		Spec:       specHelper(),
 	}
 
 	b, err := s.cfg.Builder.Run(cfg)

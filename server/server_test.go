@@ -46,19 +46,23 @@ func (rpcTest) TestSendServer(t *testing.T) {
 		defer cancel()
 
 		r, err := client.SendServer(ctx, &pb.ServerRequest{
-			Kind: "runner",
-			Type: "exec",
-			Name: "runner",
-			Task: []*pb.Task{
-				{
-					Name:    "name1",
-					Command: []string{"cmd1", "args1"},
-					Depend:  []string{},
-				},
-				{
-					Name:    "name2",
-					Command: []string{"cmd2", "args2"},
-					Depend:  []string{"name1"},
+			ApiVersion: "v1",
+			Kind:       "runner",
+			Metadata: &pb.Metadata{
+				Name: "runner",
+			},
+			Spec: &pb.Spec{
+				Tasks: []*pb.Task{
+					{
+						Name:    "name1",
+						Command: []string{"cmd1", "args1"},
+						Depend:  []string{},
+					},
+					{
+						Name:    "name2",
+						Command: []string{"cmd2", "args2"},
+						Depend:  []string{"name1"},
+					},
 				},
 			},
 		})
@@ -74,19 +78,23 @@ func (rpcTest) TestSendServer(t *testing.T) {
 	defer ctrl.Finish()
 
 	req := &pb.ServerRequest{
-		Kind: "runner",
-		Type: "exec",
-		Name: "runner",
-		Task: []*pb.Task{
-			{
-				Name:    "name1",
-				Command: []string{"cmd1", "args1"},
-				Depend:  []string{},
-			},
-			{
-				Name:    "name2",
-				Command: []string{"cmd2", "args2"},
-				Depend:  []string{"name1"},
+		ApiVersion: "v1",
+		Kind:       "runner",
+		Metadata: &pb.Metadata{
+			Name: "runner",
+		},
+		Spec: &pb.Spec{
+			Tasks: []*pb.Task{
+				{
+					Name:    "name1",
+					Command: []string{"cmd1", "args1"},
+					Depend:  []string{},
+				},
+				{
+					Name:    "name2",
+					Command: []string{"cmd2", "args2"},
+					Depend:  []string{"name1"},
+				},
 			},
 		},
 	}
