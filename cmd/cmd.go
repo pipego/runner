@@ -17,22 +17,22 @@ var (
 	listenUrl = app.Flag("listen-url", "Listen URL (host:port)").Required().String()
 )
 
-func Run() error {
+func Run(ctx context.Context) error {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	c, err := initConfig()
+	c, err := initConfig(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to init config")
 	}
 
-	s, err := initServer(c)
+	s, err := initServer(ctx, c)
 	if err != nil {
 		return errors.Wrap(err, "failed to init server")
 	}
 
 	log.Println("running")
 
-	if err := runPipe(s); err != nil {
+	if err := runPipe(ctx, s); err != nil {
 		return errors.Wrap(err, "failed to run pipe")
 	}
 
@@ -41,12 +41,12 @@ func Run() error {
 	return nil
 }
 
-func initConfig() (*config.Config, error) {
+func initConfig(_ context.Context) (*config.Config, error) {
 	c := config.New()
 	return c, nil
 }
 
-func initServer(_ *config.Config) (server.Server, error) {
+func initServer(ctx context.Context, _ *config.Config) (server.Server, error) {
 	c := server.DefaultConfig()
 	if c == nil {
 		return nil, errors.New("failed to config")
@@ -54,15 +54,15 @@ func initServer(_ *config.Config) (server.Server, error) {
 
 	c.Addr = *listenUrl
 
-	return server.New(context.Background(), c), nil
+	return server.New(ctx, c), nil
 }
 
-func runPipe(s server.Server) error {
-	if err := s.Init(); err != nil {
+func runPipe(ctx context.Context, s server.Server) error {
+	if err := s.Init(ctx); err != nil {
 		return errors.New("failed to init")
 	}
 
-	if err := s.Run(); err != nil {
+	if err := s.Run(ctx); err != nil {
 		return errors.New("failed to run")
 	}
 

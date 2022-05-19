@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -15,7 +16,7 @@ var (
 func TestRoutine(t *testing.T) {
 	var r runner
 
-	err := r.routine(args)
+	err := r.routine(context.Background(), args)
 	assert.Equal(t, nil, err)
 }
 
@@ -23,7 +24,7 @@ func TestZero(t *testing.T) {
 	var r runner
 
 	res := make(chan error)
-	go func() { res <- r.runDag() }()
+	go func() { res <- r.runDag(context.Background()) }()
 
 	select {
 	case err := <-res:
@@ -37,12 +38,13 @@ func TestZero(t *testing.T) {
 
 func TestOne(t *testing.T) {
 	var r runner
+	ctx := context.Background()
 
 	err := errors.New("error")
-	r.AddVertex("one", func([]string) error { return err }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string) error { return err }, []string{})
 
 	res := make(chan error)
-	go func() { res <- r.runDag() }()
+	go func() { res <- r.runDag(ctx) }()
 
 	select {
 	case err := <-res:
@@ -56,15 +58,16 @@ func TestOne(t *testing.T) {
 
 func TestManyNoDeps(t *testing.T) {
 	var r runner
+	ctx := context.Background()
 
 	err := errors.New("error")
-	r.AddVertex("one", func([]string) error { return err }, []string{})
-	r.AddVertex("two", func([]string) error { return nil }, []string{})
-	r.AddVertex("three", func([]string) error { return nil }, []string{})
-	r.AddVertex("fout", func([]string) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string) error { return err }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "fout", func(context.Context, []string) error { return nil }, []string{})
 
 	res := make(chan error)
-	go func() { res <- r.runDag() }()
+	go func() { res <- r.runDag(ctx) }()
 
 	select {
 	case err := <-res:
@@ -78,19 +81,20 @@ func TestManyNoDeps(t *testing.T) {
 
 func TestManyWithCycle(t *testing.T) {
 	var r runner
+	ctx := context.Background()
 
-	r.AddVertex("one", func([]string) error { return nil }, []string{})
-	r.AddVertex("two", func([]string) error { return nil }, []string{})
-	r.AddVertex("three", func([]string) error { return nil }, []string{})
-	r.AddVertex("four", func([]string) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "four", func(context.Context, []string) error { return nil }, []string{})
 
-	r.AddEdge("one", "two")
-	r.AddEdge("two", "three")
-	r.AddEdge("three", "four")
-	r.AddEdge("three", "one")
+	r.AddEdge(ctx, "one", "two")
+	r.AddEdge(ctx, "two", "three")
+	r.AddEdge(ctx, "three", "four")
+	r.AddEdge(ctx, "three", "one")
 
 	res := make(chan error)
-	go func() { res <- r.runDag() }()
+	go func() { res <- r.runDag(ctx) }()
 
 	select {
 	case err := <-res:
@@ -104,19 +108,20 @@ func TestManyWithCycle(t *testing.T) {
 
 func TestInvalidToVertex(t *testing.T) {
 	var r runner
+	ctx := context.Background()
 
-	r.AddVertex("one", func([]string) error { return nil }, []string{})
-	r.AddVertex("two", func([]string) error { return nil }, []string{})
-	r.AddVertex("three", func([]string) error { return nil }, []string{})
-	r.AddVertex("four", func([]string) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "four", func(context.Context, []string) error { return nil }, []string{})
 
-	r.AddEdge("one", "two")
-	r.AddEdge("two", "three")
-	r.AddEdge("three", "four")
-	r.AddEdge("three", "definitely-not-a-valid-vertex")
+	r.AddEdge(ctx, "one", "two")
+	r.AddEdge(ctx, "two", "three")
+	r.AddEdge(ctx, "three", "four")
+	r.AddEdge(ctx, "three", "definitely-not-a-valid-vertex")
 
 	res := make(chan error)
-	go func() { res <- r.runDag() }()
+	go func() { res <- r.runDag(ctx) }()
 
 	select {
 	case err := <-res:
@@ -130,19 +135,20 @@ func TestInvalidToVertex(t *testing.T) {
 
 func TestInvalidFromVertex(t *testing.T) {
 	var r runner
+	ctx := context.Background()
 
-	r.AddVertex("one", func([]string) error { return nil }, []string{})
-	r.AddVertex("two", func([]string) error { return nil }, []string{})
-	r.AddVertex("three", func([]string) error { return nil }, []string{})
-	r.AddVertex("four", func([]string) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string) error { return nil }, []string{})
+	r.AddVertex(ctx, "four", func(context.Context, []string) error { return nil }, []string{})
 
-	r.AddEdge("one", "two")
-	r.AddEdge("two", "three")
-	r.AddEdge("three", "four")
-	r.AddEdge("definitely-not-a-valid-vertex", "three")
+	r.AddEdge(ctx, "one", "two")
+	r.AddEdge(ctx, "two", "three")
+	r.AddEdge(ctx, "three", "four")
+	r.AddEdge(ctx, "definitely-not-a-valid-vertex", "three")
 
 	res := make(chan error)
-	go func() { res <- r.runDag() }()
+	go func() { res <- r.runDag(ctx) }()
 
 	select {
 	case err := <-res:
@@ -156,45 +162,46 @@ func TestInvalidFromVertex(t *testing.T) {
 
 func TestManyWithDepsSuccess(t *testing.T) {
 	var r runner
+	ctx := context.Background()
 
 	res := make(chan string, 7)
-	r.AddVertex("one", func([]string) error {
+	r.AddVertex(ctx, "one", func(context.Context, []string) error {
 		res <- "one"
 		return nil
 	}, []string{})
-	r.AddVertex("two", func([]string) error {
+	r.AddVertex(ctx, "two", func(context.Context, []string) error {
 		res <- "two"
 		return nil
 	}, []string{})
-	r.AddVertex("three", func([]string) error {
+	r.AddVertex(ctx, "three", func(context.Context, []string) error {
 		res <- "three"
 		return nil
 	}, []string{})
-	r.AddVertex("four", func([]string) error {
+	r.AddVertex(ctx, "four", func(context.Context, []string) error {
 		res <- "four"
 		return nil
 	}, []string{})
-	r.AddVertex("five", func([]string) error {
+	r.AddVertex(ctx, "five", func(context.Context, []string) error {
 		res <- "five"
 		return nil
 	}, []string{})
-	r.AddVertex("six", func([]string) error {
+	r.AddVertex(ctx, "six", func(context.Context, []string) error {
 		res <- "six"
 		return nil
 	}, []string{})
-	r.AddVertex("seven", func([]string) error {
+	r.AddVertex(ctx, "seven", func(context.Context, []string) error {
 		res <- "seven"
 		return nil
 	}, []string{})
 
-	r.AddEdge("one", "two")
-	r.AddEdge("one", "three")
-	r.AddEdge("two", "four")
-	r.AddEdge("two", "seven")
-	r.AddEdge("five", "six")
+	r.AddEdge(ctx, "one", "two")
+	r.AddEdge(ctx, "one", "three")
+	r.AddEdge(ctx, "two", "four")
+	r.AddEdge(ctx, "two", "seven")
+	r.AddEdge(ctx, "five", "six")
 
 	err := make(chan error)
-	go func() { err <- r.runDag() }()
+	go func() { err <- r.runDag(ctx) }()
 
 	select {
 	case err := <-err:

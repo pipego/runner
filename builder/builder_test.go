@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ var (
 )
 
 func TestZero(t *testing.T) {
-	_, err := b.Run(&c)
+	_, err := b.Run(context.Background(), &c)
 	assert.Equal(t, nil, err)
 }
 
@@ -35,7 +36,7 @@ func TestOne(t *testing.T) {
 		},
 	}
 
-	_, err := b.Run(&c)
+	_, err := b.Run(context.Background(), &c)
 	assert.Equal(t, nil, err)
 }
 
@@ -53,7 +54,7 @@ func TestManyNoDeps(t *testing.T) {
 		},
 	}
 
-	_, err := b.Run(&c)
+	_, err := b.Run(context.Background(), &c)
 	assert.Equal(t, nil, err)
 }
 
@@ -76,6 +77,6 @@ func TestManyWithDepsSuccess(t *testing.T) {
 		},
 	}
 
-	_, err := b.Run(&c)
+	_, err := b.Run(context.Background(), &c)
 	assert.Equal(t, nil, err)
 }

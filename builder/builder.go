@@ -5,7 +5,7 @@ import (
 )
 
 type Builder interface {
-	Run(*Config) (Dag, error)
+	Run(context.Context, *Config) (Dag, error)
 }
 
 type Config struct {
@@ -58,7 +58,7 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (b *builder) Run(cfg *Config) (Dag, error) {
+func (b *builder) Run(_ context.Context, cfg *Config) (Dag, error) {
 	dag := Dag{}
 
 	for _, task := range cfg.Spec.Tasks {

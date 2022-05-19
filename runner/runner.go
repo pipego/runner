@@ -18,7 +18,7 @@ import (
 )
 
 type Runner interface {
-	Run(dag *builder.Dag) error
+	Run(context.Context, *builder.Dag) error
 }
 
 type Config struct {
@@ -36,7 +36,7 @@ type runner struct {
 
 type function struct {
 	args []string
-	name func([]string) error
+	name func(context.Context, []string) error
 }
 
 type result struct {
@@ -57,21 +57,21 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (r *runner) Run(dag *builder.Dag) error {
+func (r *runner) Run(ctx context.Context, dag *builder.Dag) error {
 	for _, vertex := range dag.Vertex {
-		r.AddVertex(vertex.Name, r.routine, vertex.Run)
+		r.AddVertex(ctx, vertex.Name, r.routine, vertex.Run)
 	}
 
 	for _, edge := range dag.Edge {
-		r.AddEdge(edge.From, edge.To)
+		r.AddEdge(ctx, edge.From, edge.To)
 	}
 
-	return r.runDag()
+	return r.runDag(ctx)
 }
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *runner) AddVertex(name string, fn func([]string) error, args []string) {
+func (r *runner) AddVertex(_ context.Context, name string, fn func(context.Context, []string) error, args []string) {
 	if r.fn == nil {
 		r.fn = make(map[string]function)
 	}
@@ -84,7 +84,7 @@ func (r *runner) AddVertex(name string, fn func([]string) error, args []string) 
 
 // AddEdge establishes a dependency between two vertices in the graph. Both from and to must exist
 // in the graph, or Run will err. The vertex at from will execute before the vertex at to.
-func (r *runner) AddEdge(from, to string) {
+func (r *runner) AddEdge(_ context.Context, from, to string) {
 	if r.graph == nil {
 		r.graph = make(map[string][]string)
 	}
@@ -92,7 +92,7 @@ func (r *runner) AddEdge(from, to string) {
 	r.graph[from] = append(r.graph[from], to)
 }
 
-func (r *runner) routine(args []string) error {
+func (r *runner) routine(_ context.Context, args []string) error {
 	var n string
 	var a []string
 
@@ -129,7 +129,7 @@ func (r *runner) routine(args []string) error {
 // no dependency cycles. After validation, each vertex will be run, deterministically, in parallel
 // topological order. If any vertex returns an error, no more vertices will be scheduled and
 // Run will exit and return that error once all in-flight functions finish execution.
-func (r *runner) runDag() error {
+func (r *runner) runDag(ctx context.Context) error {
 	// sanity check
 	if len(r.fn) == 0 {
 		return nil
@@ -149,7 +149,7 @@ func (r *runner) runDag() error {
 		}
 	}
 
-	if r.detectCycles() {
+	if r.detectCycles(ctx) {
 		return errCycleDetected
 	}
 
@@ -161,7 +161,7 @@ func (r *runner) runDag() error {
 	for name := range r.fn {
 		if deps[name] == 0 {
 			running++
-			r.start(name, r.fn[name], resc)
+			r.start(ctx, name, r.fn[name], resc)
 		}
 	}
 
@@ -185,20 +185,20 @@ func (r *runner) runDag() error {
 			deps[vertex]--
 			if deps[vertex] == 0 {
 				running++
-				r.start(vertex, r.fn[vertex], resc)
+				r.start(ctx, vertex, r.fn[vertex], resc)
 			}
 		}
 	}
 	return err
 }
 
-func (r *runner) detectCycles() bool {
+func (r *runner) detectCycles(ctx context.Context) bool {
 	visited := make(map[string]bool)
 	recStack := make(map[string]bool)
 
 	for vertex := range r.graph {
 		if !visited[vertex] {
-			if r.detectCyclesHelper(vertex, visited, recStack) {
+			if r.detectCyclesHelper(ctx, vertex, visited, recStack) {
 				return true
 			}
 		}
@@ -207,14 +207,14 @@ func (r *runner) detectCycles() bool {
 	return false
 }
 
-func (r *runner) detectCyclesHelper(vertex string, visited, recStack map[string]bool) bool {
+func (r *runner) detectCyclesHelper(ctx context.Context, vertex string, visited, recStack map[string]bool) bool {
 	visited[vertex] = true
 	recStack[vertex] = true
 
 	for _, v := range r.graph[vertex] {
 		// only check cycles on a vertex one time
 		if !visited[v] {
-			if r.detectCyclesHelper(v, visited, recStack) {
+			if r.detectCyclesHelper(ctx, v, visited, recStack) {
 				return true
 			}
 			// if we've visited this vertex in this recursion stack, then we have a cycle
@@ -228,11 +228,11 @@ func (r *runner) detectCyclesHelper(vertex string, visited, recStack map[string]
 	return false
 }
 
-func (r *runner) start(name string, fn function, resc chan<- result) {
+func (r *runner) start(ctx context.Context, name string, fn function, resc chan<- result) {
 	go func() {
 		resc <- result{
 			name: name,
-			err:  fn.name(fn.args),
+			err:  fn.name(ctx, fn.args),
 		}
 	}()
 }

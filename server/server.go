@@ -19,8 +19,8 @@ const (
 )
 
 type Server interface {
-	Init() error
-	Run() error
+	Init(context.Context) error
+	Run(context.Context) error
 }
 
 type Config struct {
@@ -31,6 +31,7 @@ type Config struct {
 
 type server struct {
 	cfg *Config
+	ctx context.Context
 }
 
 type rpcServer struct {
@@ -47,41 +48,43 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (s *server) Init() error {
-	if err := s.initBuilder(); err != nil {
+func (s *server) Init(ctx context.Context) error {
+	if err := s.initBuilder(ctx); err != nil {
 		return errors.Wrap(err, "failed to init builder")
 	}
 
-	if err := s.initRunner(); err != nil {
+	if err := s.initRunner(ctx); err != nil {
 		return errors.Wrap(err, "failed to init runner")
 	}
 
 	return nil
 }
 
-func (s *server) initBuilder() error {
+func (s *server) initBuilder(ctx context.Context) error {
 	b := builder.DefaultConfig()
 	if b == nil {
 		return errors.New("failed to config")
 	}
 
-	s.cfg.Builder = builder.New(context.Background(), b)
+	s.cfg.Builder = builder.New(ctx, b)
 
 	return nil
 }
 
-func (s *server) initRunner() error {
+func (s *server) initRunner(ctx context.Context) error {
 	r := runner.DefaultConfig()
 	if r == nil {
 		return errors.New("failed to config")
 	}
 
-	s.cfg.Runner = runner.New(context.Background(), r)
+	s.cfg.Runner = runner.New(ctx, r)
 
 	return nil
 }
 
-func (s *server) Run() error {
+func (s *server) Run(ctx context.Context) error {
+	s.ctx = ctx
+
 	options := []grpc.ServerOption{grpc.MaxRecvMsgSize(math.MaxInt32), grpc.MaxSendMsgSize(math.MaxInt32)}
 
 	g := grpc.NewServer(options...)
@@ -126,12 +129,12 @@ func (s *server) SendServer(in *pb.ServerRequest) (*pb.ServerReply, error) {
 		Spec:       specHelper(),
 	}
 
-	b, err := s.cfg.Builder.Run(cfg)
+	b, err := s.cfg.Builder.Run(s.ctx, cfg)
 	if err != nil {
 		return &pb.ServerReply{Message: "failed to build"}, nil
 	}
 
-	if err := s.cfg.Runner.Run(&b); err != nil {
+	if err := s.cfg.Runner.Run(s.ctx, &b); err != nil {
 		return &pb.ServerReply{Message: "failed to run"}, nil
 	}
 
