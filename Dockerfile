@@ -9,4 +9,5 @@ FROM gcr.io/distroless/base-debian11 AS production-stage
 WORKDIR /
 COPY --from=build-stage /go/src/app/bin/runner /
 USER nonroot:nonroot
-ENTRYPOINT ["/runner"]
+EXPOSE 29090
+CMD ["/runner", "--listen-url=:29090"]

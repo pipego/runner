@@ -10,7 +10,7 @@ builds:
     main: .
     flags:
       - -trimpath
-    ldflags: -s -w -X config.Build={{.Date}} -X config.Version={{.Version}}
+    ldflags: -s -w -X github.com/pipego/runner/config.Build={{.Date}} -X github.com/pipego/runner/config.Version={{.Version}}
 
 dockers:
   - image_templates: ["ghcr.io/pipego/{{ .ProjectName }}:{{ .Tag }}-amd64"]
