@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"log"
 	"os"
 
 	"github.com/pkg/errors"
@@ -30,13 +29,9 @@ func Run(ctx context.Context) error {
 		return errors.Wrap(err, "failed to init server")
 	}
 
-	log.Println("running")
-
 	if err := runPipe(ctx, s); err != nil {
 		return errors.Wrap(err, "failed to run pipe")
 	}
-
-	log.Println("exiting")
 
 	return nil
 }
