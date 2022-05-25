@@ -24,9 +24,9 @@ type Spec struct {
 }
 
 type Task struct {
-	Name    string
-	Command []string
-	Depend  []string
+	Name     string
+	Commands []string
+	Depends  []string
 }
 
 type Dag struct {
@@ -64,11 +64,11 @@ func (b *builder) Run(_ context.Context, cfg *Config) (Dag, error) {
 	for _, task := range cfg.Spec.Tasks {
 		d := Vertex{
 			Name: task.Name,
-			Run:  task.Command,
+			Run:  task.Commands,
 		}
 		dag.Vertex = append(dag.Vertex, d)
 
-		for _, dep := range task.Depend {
+		for _, dep := range task.Depends {
 			e := Edge{
 				From: dep,
 				To:   task.Name,

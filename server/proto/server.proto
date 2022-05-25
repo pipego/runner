@@ -27,8 +27,8 @@ message Spec {
 
 message Task {
   string name = 1;
-  repeated string command = 2;
-  repeated string depend = 3;
+  repeated string commands = 2;
+  repeated string depends = 3;
 }
 
 // The response message.

@@ -66,19 +66,19 @@ Flags:
     "tasks": [
       {
         "name": "name1",
-        "command": [
+        "commands": [
           "cmd1",
           "argv1"
         ],
-        "depend": []
+        "depends": []
       },
       {
         "name": "name2",
-        "command": [
+        "commands": [
           "cmd2",
           "argv2"
         ],
-        "depend": [
+        "depends": [
           "name1"
         ]
       }

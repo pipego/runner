@@ -30,9 +30,9 @@ func TestZero(t *testing.T) {
 func TestOne(t *testing.T) {
 	c.Spec.Tasks = []Task{
 		{
-			Name:    "task1",
-			Command: []string{"cmd1", "args1"},
-			Depend:  []string{},
+			Name:     "task1",
+			Commands: []string{"cmd1", "args1"},
+			Depends:  []string{},
 		},
 	}
 
@@ -43,14 +43,14 @@ func TestOne(t *testing.T) {
 func TestManyNoDeps(t *testing.T) {
 	c.Spec.Tasks = []Task{
 		{
-			Name:    "task1",
-			Command: []string{"cmd1", "args1"},
-			Depend:  []string{},
+			Name:     "task1",
+			Commands: []string{"cmd1", "args1"},
+			Depends:  []string{},
 		},
 		{
-			Name:    "task2",
-			Command: []string{"cmd2", "args2"},
-			Depend:  []string{},
+			Name:     "task2",
+			Commands: []string{"cmd2", "args2"},
+			Depends:  []string{},
 		},
 	}
 
@@ -61,19 +61,19 @@ func TestManyNoDeps(t *testing.T) {
 func TestManyWithDepsSuccess(t *testing.T) {
 	c.Spec.Tasks = []Task{
 		{
-			Name:    "task1",
-			Command: []string{"cmd1", "args1"},
-			Depend:  []string{},
+			Name:     "task1",
+			Commands: []string{"cmd1", "args1"},
+			Depends:  []string{},
 		},
 		{
-			Name:    "task2",
-			Command: []string{"cmd2", "args2"},
-			Depend:  []string{},
+			Name:     "task2",
+			Commands: []string{"cmd2", "args2"},
+			Depends:  []string{},
 		},
 		{
-			Name:    "task3",
-			Command: []string{"cmd3", "args3"},
-			Depend:  []string{"task1", "task2"},
+			Name:     "task3",
+			Commands: []string{"cmd3", "args3"},
+			Depends:  []string{"task1", "task2"},
 		},
 	}
 

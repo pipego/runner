@@ -108,9 +108,9 @@ func (s *server) SendServer(in *pb.ServerRequest) (*pb.ServerReply, error) {
 		buf := in.GetSpec().GetTasks()
 		for _, val := range buf {
 			b := builder.Task{
-				Name:    val.GetName(),
-				Command: val.GetCommand(),
-				Depend:  val.GetDepend(),
+				Name:     val.GetName(),
+				Commands: val.GetCommand(),
+				Depends:  val.GetDepend(),
 			}
 			tasks = append(tasks, b)
 		}
