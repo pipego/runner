@@ -1,13 +1,17 @@
 ---
 builds:
-  - env: [CGO_ENABLED=0]
+  - id: runner
+    env:
+      - CGO_ENABLED=0
     goos:
       - darwin
       - linux
       - windows
     goarch:
       - amd64
-    main: .
+    dir: .
+    main: main.go
+    binary: runner
     flags:
       - -trimpath
     ldflags: -s -w -X github.com/pipego/runner/config.Build={{.Date}} -X github.com/pipego/runner/config.Version={{.Version}}
