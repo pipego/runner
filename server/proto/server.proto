@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "github.com/pipego/runner/server";
 
-package server;
+package runner;
 
 // The service definition.
 service ServerProto {

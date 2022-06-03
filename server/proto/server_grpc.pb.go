@@ -35,7 +35,7 @@ func NewServerProtoClient(cc grpc.ClientConnInterface) ServerProtoClient {
 
 func (c *serverProtoClient) SendServer(ctx context.Context, in *ServerRequest, opts ...grpc.CallOption) (*ServerReply, error) {
 	out := new(ServerReply)
-	err := c.cc.Invoke(ctx, "/server.ServerProto/SendServer", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/runner.ServerProto/SendServer", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func _ServerProto_SendServer_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/server.ServerProto/SendServer",
+		FullMethod: "/runner.ServerProto/SendServer",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ServerProtoServer).SendServer(ctx, req.(*ServerRequest))
@@ -92,7 +92,7 @@ func _ServerProto_SendServer_Handler(srv interface{}, ctx context.Context, dec f
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ServerProto_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "server.ServerProto",
+	ServiceName: "runner.ServerProto",
 	HandlerType: (*ServerProtoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
