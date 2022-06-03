@@ -31,10 +31,6 @@ type Config struct {
 
 type server struct {
 	cfg *Config
-	ctx context.Context
-}
-
-type rpcServer struct {
 	pb.UnimplementedServerProtoServer
 }
 
@@ -82,20 +78,18 @@ func (s *server) initRunner(ctx context.Context) error {
 	return nil
 }
 
-func (s *server) Run(ctx context.Context) error {
-	s.ctx = ctx
-
+func (s *server) Run(_ context.Context) error {
 	options := []grpc.ServerOption{grpc.MaxRecvMsgSize(math.MaxInt32), grpc.MaxSendMsgSize(math.MaxInt32)}
 
 	g := grpc.NewServer(options...)
-	pb.RegisterServerProtoServer(g, &rpcServer{})
+	pb.RegisterServerProtoServer(g, &server{})
 
 	lis, _ := net.Listen("tcp", s.cfg.Addr)
 
 	return g.Serve(lis)
 }
 
-func (s *server) SendServer(in *pb.ServerRequest) (*pb.ServerReply, error) {
+func (s *server) SendServer(ctx context.Context, in *pb.ServerRequest) (*pb.ServerReply, error) {
 	metaDataHelper := func() builder.MetaData {
 		var metadata builder.MetaData
 		metadata.Name = in.GetMetadata().Name
@@ -129,12 +123,12 @@ func (s *server) SendServer(in *pb.ServerRequest) (*pb.ServerReply, error) {
 		Spec:       specHelper(),
 	}
 
-	b, err := s.cfg.Builder.Run(s.ctx, cfg)
+	b, err := s.cfg.Builder.Run(ctx, cfg)
 	if err != nil {
 		return &pb.ServerReply{Message: "failed to build"}, nil
 	}
 
-	if err := s.cfg.Runner.Run(s.ctx, &b); err != nil {
+	if err := s.cfg.Runner.Run(ctx, &b); err != nil {
 		return &pb.ServerReply{Message: "failed to run"}, nil
 	}
 
