@@ -1,11 +1,13 @@
 #!/bin/bash
 
 # Install protoc
+#OS=$(go env GOOS)
 #PB_REL="https://github.com/protocolbuffers/protobuf/releases"
-#curl -LO $PB_REL/download/v3.20.1/protoc-3.20.1-linux-x86_64.zip
-#unzip protoc-3.20.1-linux-x86_64.zip -d protoc-3.20.1
-#sudo mv protoc-3.20.1 /opt/
-#export PATH=/opt/protoc-3.20.1/bin:$PATH
+#VERSION="3.20.1"
+#curl -LO $PB_REL/download/v${VERSION}/protoc-${VERSION}-${OS}-x86_64.zip
+#unzip protoc-${VERSION}-${OS}-x86_64.zip -d protoc-${VERSION}
+#sudo mv protoc-${VERSION} /opt/
+#export PATH=/opt/protoc-${VERSION}/bin:$PATH
 
 # Install plugins
 #go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
