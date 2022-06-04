@@ -33,5 +33,6 @@ message Task {
 
 // The response message.
 message ServerReply {
-  string message = 1;
+  string result = 1;
+  string error = 2;
 }

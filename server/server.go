@@ -113,7 +113,7 @@ func (s *server) SendServer(ctx context.Context, in *pb.ServerRequest) (*pb.Serv
 	}
 
 	if in.GetKind() != KIND {
-		return &pb.ServerReply{Message: "invalid kind"}, nil
+		return &pb.ServerReply{Error: "invalid kind"}, nil
 	}
 
 	cfg := &builder.Config{
@@ -125,12 +125,12 @@ func (s *server) SendServer(ctx context.Context, in *pb.ServerRequest) (*pb.Serv
 
 	b, err := s.cfg.Builder.Run(ctx, cfg)
 	if err != nil {
-		return &pb.ServerReply{Message: "failed to build"}, nil
+		return &pb.ServerReply{Error: "failed to build"}, nil
 	}
 
 	if err := s.cfg.Runner.Run(ctx, &b); err != nil {
-		return &pb.ServerReply{Message: "failed to run"}, nil
+		return &pb.ServerReply{Error: "failed to run"}, nil
 	}
 
-	return &pb.ServerReply{Message: ""}, nil
+	return &pb.ServerReply{Result: "completed"}, nil
 }

@@ -67,11 +67,11 @@ func (rpcTest) TestSendServer(t *testing.T) {
 			},
 		})
 
-		if err != nil || r.Message != "" {
+		if err != nil || r.Error != "" {
 			t.Errorf("mocking failed")
 		}
 
-		t.Log(r.Message)
+		t.Log(r.Result)
 	}
 
 	ctrl := gomock.NewController(t)
@@ -103,7 +103,7 @@ func (rpcTest) TestSendServer(t *testing.T) {
 	client.EXPECT().SendServer(
 		gomock.Any(),
 		&rpcMsg{msg: req},
-	).Return(&pb.ServerReply{Message: ""}, nil)
+	).Return(&pb.ServerReply{Error: ""}, nil)
 
 	helper(t, client)
 }
