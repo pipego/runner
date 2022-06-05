@@ -18,14 +18,14 @@ func initLivelog() *livelog {
 	return l
 }
 
-func TestCreate(t *testing.T) {
+func TestLivelogCreate(t *testing.T) {
 	l := initLivelog()
 
 	err := l.Create(context.Background(), 0)
 	assert.Equal(t, nil, err)
 }
 
-func TestDelete(t *testing.T) {
+func TestLivelogDelete(t *testing.T) {
 	l := initLivelog()
 
 	err := l.Create(context.Background(), 0)
@@ -38,7 +38,7 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, nil, err)
 }
 
-func TestWrite(t *testing.T) {
+func TestLivelogWrite(t *testing.T) {
 	l := initLivelog()
 
 	err := l.Create(context.Background(), 0)
@@ -51,7 +51,7 @@ func TestWrite(t *testing.T) {
 	assert.Equal(t, nil, err)
 }
 
-func TestTail(t *testing.T) {
+func TestLivelogTail(t *testing.T) {
 	l := initLivelog()
 
 	err := l.Create(context.Background(), 0)
