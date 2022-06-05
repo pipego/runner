@@ -67,11 +67,11 @@ func (rpcTest) TestSendServer(t *testing.T) {
 			},
 		})
 
-		if err != nil || r.Error != "" {
+		if err != nil || r.GetError() != "" {
 			t.Errorf("mocking failed")
 		}
 
-		t.Log(r.Result)
+		t.Log(r.GetOutput())
 	}
 
 	ctrl := gomock.NewController(t)

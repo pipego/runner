@@ -132,5 +132,5 @@ func (s *server) SendServer(ctx context.Context, in *pb.ServerRequest) (*pb.Serv
 		return &pb.ServerReply{Error: "failed to run"}, nil
 	}
 
-	return &pb.ServerReply{Result: "completed"}, nil
+	return &pb.ServerReply{Output: "completed"}, nil
 }
