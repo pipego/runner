@@ -103,6 +103,7 @@ Project License can be found [here](LICENSE).
 - [cuelang](https://cuelang.org)
 - [dagger](https://dagger.io/)
 - [drone-dag](https://github.com/drone/dag)
+- [drone-logs](https://github.com/harness/drone/blob/master/core/logs.go)
 - [drone-pipeline](https://docs.drone.io/pipeline/overview/)
 - [grpctest](https://github.com/grpc/grpc-go/tree/master/internal/grpctest)
 - [kube-parallelize](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/framework/parallelize/parallelism.go)
