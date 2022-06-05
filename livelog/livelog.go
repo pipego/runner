@@ -35,8 +35,7 @@ type livelog struct {
 
 func New(_ context.Context, cfg *Config) Livelog {
 	return &livelog{
-		cfg:     cfg,
-		streams: make(map[int64]*stream),
+		cfg: cfg,
 	}
 }
 
@@ -45,7 +44,7 @@ func DefaultConfig() *Config {
 }
 
 func (l *livelog) Init(_ context.Context) error {
-	// TODO: Init
+	l.streams = make(map[int64]*stream)
 	return nil
 }
 
