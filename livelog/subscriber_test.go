@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLivelog(t *testing.T) {
-	// TODO: TestLivelog
+func TestSubscriber(t *testing.T) {
+	// TODO: TestSubscriber
 	assert.Equal(t, nil, nil)
 }

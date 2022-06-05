@@ -2,25 +2,41 @@ package livelog
 
 import (
 	"context"
+	"sync"
+
+	"github.com/pkg/errors"
 
 	"github.com/pipego/runner/config"
 )
 
 type Livelog interface {
-	Run(context.Context) error
+	Init(context.Context) error
+	Create(context.Context, int64) error
+	Delete(context.Context, int64) error
+	Write(context.Context, int64, *Line) error
+	Tail(context.Context, int64) (<-chan *Line, <-chan error)
 }
 
 type Config struct {
 	Config config.Config
 }
 
+type Line struct {
+	Pos     int64  `json:"pos"`
+	Time    int64  `json:"time"`
+	Message string `json:"message"`
+}
+
 type livelog struct {
-	cfg *Config
+	sync.Mutex
+	cfg     *Config
+	streams map[int64]*stream
 }
 
 func New(_ context.Context, cfg *Config) Livelog {
 	return &livelog{
-		cfg: cfg,
+		cfg:     cfg,
+		streams: make(map[int64]*stream),
 	}
 }
 
@@ -28,6 +44,54 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (l *livelog) Run(ctx context.Context) error {
+func (l *livelog) Init(_ context.Context) error {
+	// TODO: Init
 	return nil
+}
+
+func (l *livelog) Create(ctx context.Context, id int64) error {
+	l.Lock()
+	defer l.Unlock()
+
+	l.streams[id] = newStream(ctx)
+
+	return nil
+}
+
+func (l *livelog) Delete(ctx context.Context, id int64) error {
+	l.Lock()
+	defer l.Unlock()
+
+	s, ok := l.streams[id]
+	if ok {
+		delete(l.streams, id)
+	} else {
+		return errors.New("invalid id")
+	}
+
+	return s.close(ctx)
+}
+
+func (l *livelog) Write(ctx context.Context, id int64, line *Line) error {
+	l.Lock()
+	defer l.Unlock()
+
+	s, ok := l.streams[id]
+	if !ok {
+		return errors.New("invalid id")
+	}
+
+	return s.write(ctx, line)
+}
+
+func (l *livelog) Tail(ctx context.Context, id int64) (line <-chan *Line, err <-chan error) {
+	l.Lock()
+	defer l.Unlock()
+
+	s, ok := l.streams[id]
+	if !ok {
+		return nil, nil
+	}
+
+	return s.subscribe(ctx)
 }
