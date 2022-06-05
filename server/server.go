@@ -89,7 +89,7 @@ func (s *server) Run(_ context.Context) error {
 	return g.Serve(lis)
 }
 
-func (s *server) SendServer(ctx context.Context, in *pb.ServerRequest) (*pb.ServerReply, error) {
+func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerServer) error {
 	metaDataHelper := func() builder.MetaData {
 		var metadata builder.MetaData
 		metadata.Name = in.GetMetadata().Name
@@ -113,7 +113,7 @@ func (s *server) SendServer(ctx context.Context, in *pb.ServerRequest) (*pb.Serv
 	}
 
 	if in.GetKind() != KIND {
-		return &pb.ServerReply{Error: "invalid kind"}, nil
+		return srv.Send(&pb.ServerReply{Error: "invalid kind"})
 	}
 
 	cfg := &builder.Config{
@@ -123,14 +123,14 @@ func (s *server) SendServer(ctx context.Context, in *pb.ServerRequest) (*pb.Serv
 		Spec:       specHelper(),
 	}
 
-	b, err := s.cfg.Builder.Run(ctx, cfg)
+	b, err := s.cfg.Builder.Run(context.Background(), cfg)
 	if err != nil {
-		return &pb.ServerReply{Error: "failed to build"}, nil
+		return srv.Send(&pb.ServerReply{Error: "failed to build"})
 	}
 
-	if err := s.cfg.Runner.Run(ctx, &b); err != nil {
-		return &pb.ServerReply{Error: "failed to run"}, nil
+	if err := s.cfg.Runner.Run(context.Background(), &b); err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to run"})
 	}
 
-	return &pb.ServerReply{Output: "completed"}, nil
+	return srv.Send(&pb.ServerReply{Error: "completed"})
 }

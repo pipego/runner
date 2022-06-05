@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ServerProtoClient interface {
-	SendServer(ctx context.Context, in *ServerRequest, opts ...grpc.CallOption) (*ServerReply, error)
+	SendServer(ctx context.Context, in *ServerRequest, opts ...grpc.CallOption) (ServerProto_SendServerClient, error)
 }
 
 type serverProtoClient struct {
@@ -33,20 +33,43 @@ func NewServerProtoClient(cc grpc.ClientConnInterface) ServerProtoClient {
 	return &serverProtoClient{cc}
 }
 
-func (c *serverProtoClient) SendServer(ctx context.Context, in *ServerRequest, opts ...grpc.CallOption) (*ServerReply, error) {
-	out := new(ServerReply)
-	err := c.cc.Invoke(ctx, "/runner.ServerProto/SendServer", in, out, opts...)
+func (c *serverProtoClient) SendServer(ctx context.Context, in *ServerRequest, opts ...grpc.CallOption) (ServerProto_SendServerClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ServerProto_ServiceDesc.Streams[0], "/runner.ServerProto/SendServer", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &serverProtoSendServerClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ServerProto_SendServerClient interface {
+	Recv() (*ServerReply, error)
+	grpc.ClientStream
+}
+
+type serverProtoSendServerClient struct {
+	grpc.ClientStream
+}
+
+func (x *serverProtoSendServerClient) Recv() (*ServerReply, error) {
+	m := new(ServerReply)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // ServerProtoServer is the server API for ServerProto service.
 // All implementations must embed UnimplementedServerProtoServer
 // for forward compatibility
 type ServerProtoServer interface {
-	SendServer(context.Context, *ServerRequest) (*ServerReply, error)
+	SendServer(*ServerRequest, ServerProto_SendServerServer) error
 	mustEmbedUnimplementedServerProtoServer()
 }
 
@@ -54,8 +77,8 @@ type ServerProtoServer interface {
 type UnimplementedServerProtoServer struct {
 }
 
-func (UnimplementedServerProtoServer) SendServer(context.Context, *ServerRequest) (*ServerReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendServer not implemented")
+func (UnimplementedServerProtoServer) SendServer(*ServerRequest, ServerProto_SendServerServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendServer not implemented")
 }
 func (UnimplementedServerProtoServer) mustEmbedUnimplementedServerProtoServer() {}
 
@@ -70,22 +93,25 @@ func RegisterServerProtoServer(s grpc.ServiceRegistrar, srv ServerProtoServer) {
 	s.RegisterService(&ServerProto_ServiceDesc, srv)
 }
 
-func _ServerProto_SendServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ServerRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _ServerProto_SendServer_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ServerRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(ServerProtoServer).SendServer(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/runner.ServerProto/SendServer",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServerProtoServer).SendServer(ctx, req.(*ServerRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(ServerProtoServer).SendServer(m, &serverProtoSendServerServer{stream})
+}
+
+type ServerProto_SendServerServer interface {
+	Send(*ServerReply) error
+	grpc.ServerStream
+}
+
+type serverProtoSendServerServer struct {
+	grpc.ServerStream
+}
+
+func (x *serverProtoSendServerServer) Send(m *ServerReply) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 // ServerProto_ServiceDesc is the grpc.ServiceDesc for ServerProto service.
@@ -94,12 +120,13 @@ func _ServerProto_SendServer_Handler(srv interface{}, ctx context.Context, dec f
 var ServerProto_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "runner.ServerProto",
 	HandlerType: (*ServerProtoServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "SendServer",
-			Handler:    _ServerProto_SendServer_Handler,
+			StreamName:    "SendServer",
+			Handler:       _ServerProto_SendServer_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "server/proto/server.proto",
 }

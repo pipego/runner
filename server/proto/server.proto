@@ -6,7 +6,7 @@ package runner;
 
 // The service definition.
 service ServerProto {
-  rpc SendServer (ServerRequest) returns (ServerReply) {}
+  rpc SendServer (ServerRequest) returns (stream ServerReply) {}
 }
 
 // The request message.
