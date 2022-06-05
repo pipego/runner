@@ -132,5 +132,6 @@ func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerS
 		return srv.Send(&pb.ServerReply{Error: "failed to run"})
 	}
 
-	return srv.Send(&pb.ServerReply{Error: "completed"})
+	// TODO: Streaming mode
+	return srv.Send(&pb.ServerReply{Output: "completed"})
 }
