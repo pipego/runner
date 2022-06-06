@@ -65,7 +65,7 @@ Flags:
   "spec": {
     "tasks": [
       {
-        "name": "name1",
+        "name": "task1",
         "commands": [
           "cmd1",
           "argv1"
@@ -73,13 +73,13 @@ Flags:
         "depends": []
       },
       {
-        "name": "name2",
+        "name": "task2",
         "commands": [
           "cmd2",
           "argv2"
         ],
         "depends": [
-          "name1"
+          "task1"
         ]
       }
     ]
