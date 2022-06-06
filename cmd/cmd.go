@@ -92,7 +92,7 @@ func runPipe(ctx context.Context, ll livelog.Livelog, srv server.Server) error {
 
 	go func() {
 		<-s
-		// TODO: Deinit
+		_ = srv.Deinit(ctx)
 		done <- true
 	}()
 

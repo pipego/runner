@@ -20,6 +20,7 @@ const (
 
 type Server interface {
 	Init(context.Context) error
+	Deinit(context.Context) error
 	Run(context.Context) error
 }
 
@@ -75,6 +76,10 @@ func (s *server) initRunner(ctx context.Context) error {
 
 	s.cfg.Runner = runner.New(ctx, r)
 
+	return nil
+}
+
+func (s *server) Deinit(ctx context.Context) error {
 	return nil
 }
 
