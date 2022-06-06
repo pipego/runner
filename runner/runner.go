@@ -109,7 +109,7 @@ func (r *runner) routine(_ context.Context, args []string) error {
 		a = args[1:]
 	} else if len(args) == 1 {
 		n, _ = exec.LookPath(args[0])
-	} else if len(args) == 0 {
+	} else {
 		return errors.New("invalid args")
 	}
 
@@ -134,6 +134,7 @@ func (r *runner) runDag(ctx context.Context) error {
 	if len(r.fn) == 0 {
 		return nil
 	}
+
 	// count how many deps each vertex has
 	deps := make(map[string]int)
 	for vertex, edges := range r.graph {
@@ -189,6 +190,7 @@ func (r *runner) runDag(ctx context.Context) error {
 			}
 		}
 	}
+
 	return err
 }
 
