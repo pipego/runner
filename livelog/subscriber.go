@@ -17,7 +17,7 @@ func (s *subscriber) publish(_ context.Context, line *Line) {
 	case <-s.closec:
 	case s.handler <- line:
 	default:
-		// lines are sent on a buffered channel. If there
+		// Lines are sent on a buffered channel. If there
 		// is a slow consumer that is not processing events,
 		// the buffered channel will fill and newer messages
 		// are ignored.
