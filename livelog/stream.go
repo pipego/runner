@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	// this is the amount of items that are stored in memory
+	// This is the amount of items that are stored in memory
 	// in the buffer. This should result in approximately 10kb
 	// of memory allocated per-stream and per-subscriber, not
 	// including any logdata stored in these structures.
@@ -35,7 +35,7 @@ func (s *stream) write(ctx context.Context, line *Line) error {
 		l.publish(ctx, line)
 	}
 
-	// the history should not be unbounded. The history
+	// The history should not be unbounded. The history
 	// slice is capped and items are removed in a FIFO
 	// ordering when capacity is reached.
 	if size := len(s.lines); size >= bufferSize {
