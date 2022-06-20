@@ -49,6 +49,9 @@ func TestLivelogWrite(t *testing.T) {
 
 	err = l.Write(context.Background(), 0, &Line{})
 	assert.Equal(t, nil, err)
+
+	err = l.Delete(context.Background(), 0)
+	assert.Equal(t, nil, err)
 }
 
 func TestLivelogTail(t *testing.T) {
@@ -69,5 +72,8 @@ func TestLivelogTail(t *testing.T) {
 	assert.Equal(t, int64(1), line.Pos)
 	assert.Equal(t, int64(2022), line.Time)
 	assert.Equal(t, "message", line.Message)
+	assert.Equal(t, nil, err)
+
+	err = l.Delete(context.Background(), 0)
 	assert.Equal(t, nil, err)
 }

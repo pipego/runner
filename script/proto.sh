@@ -22,4 +22,4 @@
 protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./server/proto/server.proto
 
 # Build mock
-mockgen github.com/pipego/runner/server/proto ServerProtoClient > server/mock/server_mock.go
+# TODO

@@ -15,10 +15,11 @@ import (
 
 	"github.com/pipego/runner/builder"
 	"github.com/pipego/runner/config"
+	"github.com/pipego/runner/livelog"
 )
 
 type Runner interface {
-	Run(context.Context, *builder.Dag) error
+	Run(context.Context, *builder.Dag, livelog.Livelog) error
 }
 
 type Config struct {
@@ -36,7 +37,7 @@ type runner struct {
 
 type function struct {
 	args []string
-	name func(context.Context, []string) error
+	name func(context.Context, []string, livelog.Livelog) error
 }
 
 type result struct {
@@ -57,7 +58,7 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (r *runner) Run(ctx context.Context, dag *builder.Dag) error {
+func (r *runner) Run(ctx context.Context, dag *builder.Dag, log livelog.Livelog) error {
 	for _, vertex := range dag.Vertex {
 		r.AddVertex(ctx, vertex.Name, r.routine, vertex.Run)
 	}
@@ -66,12 +67,12 @@ func (r *runner) Run(ctx context.Context, dag *builder.Dag) error {
 		r.AddEdge(ctx, edge.From, edge.To)
 	}
 
-	return r.runDag(ctx)
+	return r.runDag(ctx, log)
 }
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *runner) AddVertex(_ context.Context, name string, fn func(context.Context, []string) error, args []string) {
+func (r *runner) AddVertex(_ context.Context, name string, fn func(context.Context, []string, livelog.Livelog) error, args []string) {
 	if r.fn == nil {
 		r.fn = make(map[string]function)
 	}
@@ -92,9 +93,9 @@ func (r *runner) AddEdge(_ context.Context, from, to string) {
 	r.graph[from] = append(r.graph[from], to)
 }
 
-func (r *runner) routine(_ context.Context, args []string) error {
-	var n string
+func (r *runner) routine(_ context.Context, args []string, log livelog.Livelog) error {
 	var a []string
+	var n string
 
 	outr, outw, _ := os.Pipe()
 	defer func() { _ = outr.Close() }()
@@ -129,7 +130,9 @@ func (r *runner) routine(_ context.Context, args []string) error {
 // no dependency cycles. After validation, each vertex will be run, deterministically, in parallel
 // topological order. If any vertex returns an error, no more vertices will be scheduled and
 // Run will exit and return that error once all in-flight functions finish execution.
-func (r *runner) runDag(ctx context.Context) error {
+func (r *runner) runDag(ctx context.Context, log livelog.Livelog) error {
+	var err error
+
 	// sanity check
 	if len(r.fn) == 0 {
 		return nil
@@ -156,13 +159,12 @@ func (r *runner) runDag(ctx context.Context) error {
 
 	running := 0
 	resc := make(chan result, len(r.fn))
-	var err error
 
 	// start any vertex that has no deps
 	for name := range r.fn {
 		if deps[name] == 0 {
 			running++
-			r.start(ctx, name, r.fn[name], resc)
+			r.start(ctx, name, r.fn[name], resc, log)
 		}
 	}
 
@@ -186,7 +188,7 @@ func (r *runner) runDag(ctx context.Context) error {
 			deps[vertex]--
 			if deps[vertex] == 0 {
 				running++
-				r.start(ctx, vertex, r.fn[vertex], resc)
+				r.start(ctx, vertex, r.fn[vertex], resc, log)
 			}
 		}
 	}
@@ -230,11 +232,11 @@ func (r *runner) detectCyclesHelper(ctx context.Context, vertex string, visited,
 	return false
 }
 
-func (r *runner) start(ctx context.Context, name string, fn function, resc chan<- result) {
+func (r *runner) start(ctx context.Context, name string, fn function, resc chan<- result, log livelog.Livelog) {
 	go func() {
 		resc <- result{
 			name: name,
-			err:  fn.name(ctx, fn.args),
+			err:  fn.name(ctx, fn.args, log),
 		}
 	}()
 }

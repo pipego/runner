@@ -11,6 +11,7 @@ import (
 
 type Livelog interface {
 	Init(context.Context) error
+	Deinit(context.Context) error
 	Create(context.Context, int64) error
 	Delete(context.Context, int64) error
 	Write(context.Context, int64, *Line) error
@@ -45,6 +46,16 @@ func DefaultConfig() *Config {
 
 func (l *livelog) Init(_ context.Context) error {
 	l.streams = make(map[int64]*stream)
+	return nil
+}
+
+func (l *livelog) Deinit(_ context.Context) error {
+	for key := range l.streams {
+		delete(l.streams, key)
+	}
+
+	l.streams = nil
+
 	return nil
 }
 

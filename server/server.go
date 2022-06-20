@@ -11,10 +11,12 @@ import (
 	pb "github.com/pipego/runner/server/proto"
 
 	"github.com/pipego/runner/builder"
+	"github.com/pipego/runner/livelog"
 	"github.com/pipego/runner/runner"
 )
 
 const (
+	ID   = 0
 	KIND = "runner"
 )
 
@@ -27,6 +29,7 @@ type Server interface {
 type Config struct {
 	Addr    string
 	Builder builder.Builder
+	Livelog livelog.Livelog
 	Runner  runner.Runner
 }
 
@@ -50,6 +53,10 @@ func (s *server) Init(ctx context.Context) error {
 		return errors.Wrap(err, "failed to init builder")
 	}
 
+	if err := s.initLivelog(ctx); err != nil {
+		return errors.Wrap(err, "failed to init livelog")
+	}
+
 	if err := s.initRunner(ctx); err != nil {
 		return errors.Wrap(err, "failed to init runner")
 	}
@@ -68,6 +75,21 @@ func (s *server) initBuilder(ctx context.Context) error {
 	return nil
 }
 
+func (s *server) initLivelog(ctx context.Context) error {
+	l := livelog.DefaultConfig()
+	if l == nil {
+		return errors.New("failed to config")
+	}
+
+	s.cfg.Livelog = livelog.New(ctx, l)
+
+	if err := s.cfg.Livelog.Init(ctx); err != nil {
+		return errors.Wrap(err, "failed to init")
+	}
+
+	return nil
+}
+
 func (s *server) initRunner(ctx context.Context) error {
 	r := runner.DefaultConfig()
 	if r == nil {
@@ -80,6 +102,8 @@ func (s *server) initRunner(ctx context.Context) error {
 }
 
 func (s *server) Deinit(ctx context.Context) error {
+	_ = s.cfg.Livelog.Deinit(ctx)
+
 	return nil
 }
 
@@ -133,10 +157,28 @@ func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerS
 		return srv.Send(&pb.ServerReply{Error: "failed to build"})
 	}
 
-	if err := s.cfg.Runner.Run(context.Background(), &b); err != nil {
+	if err := s.cfg.Livelog.Create(context.Background(), ID); err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to create"})
+	}
+
+	if err := s.cfg.Runner.Run(context.Background(), &b, s.cfg.Livelog); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to run"})
 	}
 
-	// TODO: Streaming mode
-	return srv.Send(&pb.ServerReply{Output: "completed"})
+	lines, _ := s.cfg.Livelog.Tail(context.Background(), ID)
+	for item := range lines {
+		_ = srv.Send(&pb.ServerReply{
+			Output: &pb.Output{
+				Pos:     item.Pos,
+				Time:    item.Time,
+				Message: item.Message,
+			},
+		})
+	}
+
+	if err := s.cfg.Livelog.Delete(context.Background(), ID); err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to delete"})
+	}
+
+	return nil
 }
