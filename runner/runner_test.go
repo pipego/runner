@@ -11,10 +11,6 @@ import (
 	"github.com/pipego/runner/livelog"
 )
 
-const (
-	ID = 0
-)
-
 var (
 	args = []string{"echo", "hello runner"}
 	log  = livelog.New(context.Background(), livelog.DefaultConfig())
@@ -22,26 +18,30 @@ var (
 
 func TestRoutine(t *testing.T) {
 	var r runner
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	_ = log.Init(ctx)
-	_ = log.Create(ctx, ID)
+	_ = log.Create(ctx, livelog.ID)
 
-	err := r.routine(ctx, args, log)
+	err := r.routine(ctx, args, log, cancel)
 	assert.Equal(t, nil, err)
 
-	_ = log.Delete(ctx, ID)
+	_ = log.Delete(ctx, livelog.ID)
 }
 
 func TestZero(t *testing.T) {
 	var r runner
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	_ = log.Init(ctx)
-	_ = log.Create(ctx, ID)
+	_ = log.Create(ctx, livelog.ID)
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log) }()
+	go func() { res <- r.runDag(ctx, log, cancel) }()
 
 	select {
 	case err := <-res:
@@ -52,21 +52,23 @@ func TestZero(t *testing.T) {
 		t.Error("timeout")
 	}
 
-	_ = log.Delete(ctx, ID)
+	_ = log.Delete(ctx, livelog.ID)
 }
 
 func TestOne(t *testing.T) {
 	var r runner
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	_ = log.Init(ctx)
-	_ = log.Create(ctx, ID)
+	_ = log.Create(ctx, livelog.ID)
 
 	err := errors.New("error")
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return err }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return err }, []string{})
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log) }()
+	go func() { res <- r.runDag(ctx, log, cancel) }()
 
 	select {
 	case err := <-res:
@@ -77,24 +79,26 @@ func TestOne(t *testing.T) {
 		t.Error("timeout")
 	}
 
-	_ = log.Delete(ctx, ID)
+	_ = log.Delete(ctx, livelog.ID)
 }
 
 func TestManyNoDeps(t *testing.T) {
 	var r runner
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	_ = log.Init(ctx)
-	_ = log.Create(ctx, ID)
+	_ = log.Create(ctx, livelog.ID)
 
 	err := errors.New("error")
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return err }, []string{})
-	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "fout", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return err }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "fout", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log) }()
+	go func() { res <- r.runDag(ctx, log, cancel) }()
 
 	select {
 	case err := <-res:
@@ -105,20 +109,22 @@ func TestManyNoDeps(t *testing.T) {
 		t.Error("timeout")
 	}
 
-	_ = log.Delete(ctx, ID)
+	_ = log.Delete(ctx, livelog.ID)
 }
 
 func TestManyWithCycle(t *testing.T) {
 	var r runner
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	_ = log.Init(ctx)
-	_ = log.Create(ctx, ID)
+	_ = log.Create(ctx, livelog.ID)
 
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
 
 	r.AddEdge(ctx, "one", "two")
 	r.AddEdge(ctx, "two", "three")
@@ -126,7 +132,7 @@ func TestManyWithCycle(t *testing.T) {
 	r.AddEdge(ctx, "three", "one")
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log) }()
+	go func() { res <- r.runDag(ctx, log, cancel) }()
 
 	select {
 	case err := <-res:
@@ -137,20 +143,22 @@ func TestManyWithCycle(t *testing.T) {
 		t.Error("timeout")
 	}
 
-	_ = log.Delete(ctx, ID)
+	_ = log.Delete(ctx, livelog.ID)
 }
 
 func TestInvalidToVertex(t *testing.T) {
 	var r runner
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	_ = log.Init(ctx)
-	_ = log.Create(ctx, ID)
+	_ = log.Create(ctx, livelog.ID)
 
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
 
 	r.AddEdge(ctx, "one", "two")
 	r.AddEdge(ctx, "two", "three")
@@ -158,7 +166,7 @@ func TestInvalidToVertex(t *testing.T) {
 	r.AddEdge(ctx, "three", "definitely-not-a-valid-vertex")
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log) }()
+	go func() { res <- r.runDag(ctx, log, cancel) }()
 
 	select {
 	case err := <-res:
@@ -169,20 +177,22 @@ func TestInvalidToVertex(t *testing.T) {
 		t.Error("timeout")
 	}
 
-	_ = log.Delete(ctx, ID)
+	_ = log.Delete(ctx, livelog.ID)
 }
 
 func TestInvalidFromVertex(t *testing.T) {
 	var r runner
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	_ = log.Init(ctx)
-	_ = log.Create(ctx, ID)
+	_ = log.Create(ctx, livelog.ID)
 
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
-	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
 
 	r.AddEdge(ctx, "one", "two")
 	r.AddEdge(ctx, "two", "three")
@@ -190,7 +200,7 @@ func TestInvalidFromVertex(t *testing.T) {
 	r.AddEdge(ctx, "definitely-not-a-valid-vertex", "three")
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log) }()
+	go func() { res <- r.runDag(ctx, log, cancel) }()
 
 	select {
 	case err := <-res:
@@ -201,42 +211,44 @@ func TestInvalidFromVertex(t *testing.T) {
 		t.Error("timeout")
 	}
 
-	_ = log.Delete(ctx, ID)
+	_ = log.Delete(ctx, livelog.ID)
 }
 
 func TestManyWithDepsSuccess(t *testing.T) {
 	var r runner
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	_ = log.Init(ctx)
-	_ = log.Create(ctx, ID)
+	_ = log.Create(ctx, livelog.ID)
 
 	res := make(chan string, 7)
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error {
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
 		res <- "one"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog) error {
+	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
 		res <- "two"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog) error {
+	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
 		res <- "three"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog) error {
+	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
 		res <- "four"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "five", func(context.Context, []string, livelog.Livelog) error {
+	r.AddVertex(ctx, "five", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
 		res <- "five"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "six", func(context.Context, []string, livelog.Livelog) error {
+	r.AddVertex(ctx, "six", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
 		res <- "six"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "seven", func(context.Context, []string, livelog.Livelog) error {
+	r.AddVertex(ctx, "seven", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
 		res <- "seven"
 		return nil
 	}, []string{})
@@ -248,7 +260,7 @@ func TestManyWithDepsSuccess(t *testing.T) {
 	r.AddEdge(ctx, "five", "six")
 
 	err := make(chan error)
-	go func() { err <- r.runDag(ctx, log) }()
+	go func() { err <- r.runDag(ctx, log, cancel) }()
 
 	select {
 	case err := <-err:
@@ -276,7 +288,7 @@ func TestManyWithDepsSuccess(t *testing.T) {
 	checkOrder("two", "seven", results, t)
 	checkOrder("five", "six", results, t)
 
-	_ = log.Delete(ctx, ID)
+	_ = log.Delete(ctx, livelog.ID)
 }
 
 func checkOrder(from, to string, results []string, t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"net"
+	"time"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -16,8 +17,8 @@ import (
 )
 
 const (
-	ID   = 0
-	KIND = "runner"
+	KIND    = "runner"
+	TIMEOUT = 24 * time.Hour
 )
 
 type Server interface {
@@ -141,6 +142,10 @@ func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerS
 		return spec
 	}
 
+	timeout := time.After(TIMEOUT)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	if in.GetKind() != KIND {
 		return srv.Send(&pb.ServerReply{Error: "invalid kind"})
 	}
@@ -152,31 +157,40 @@ func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerS
 		Spec:       specHelper(),
 	}
 
-	b, err := s.cfg.Builder.Run(context.Background(), cfg)
+	b, err := s.cfg.Builder.Run(ctx, cfg)
 	if err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to build"})
 	}
 
-	if err := s.cfg.Livelog.Create(context.Background(), ID); err != nil {
+	if err := s.cfg.Livelog.Create(ctx, livelog.ID); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to create"})
 	}
 
-	if err := s.cfg.Runner.Run(context.Background(), &b, s.cfg.Livelog); err != nil {
+	if err := s.cfg.Runner.Run(ctx, &b, s.cfg.Livelog, cancel); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to run"})
 	}
 
-	lines, _ := s.cfg.Livelog.Tail(context.Background(), ID)
-	for item := range lines {
-		_ = srv.Send(&pb.ServerReply{
-			Output: &pb.Output{
-				Pos:     item.Pos,
-				Time:    item.Time,
-				Message: item.Message,
-			},
-		})
+	lines, _ := s.cfg.Livelog.Tail(ctx, livelog.ID)
+
+L:
+	for {
+		select {
+		case <-ctx.Done():
+			break L
+		case <-timeout:
+			break L
+		case line := <-lines:
+			_ = srv.Send(&pb.ServerReply{
+				Output: &pb.Output{
+					Pos:     line.Pos,
+					Time:    line.Time,
+					Message: line.Message,
+				},
+			})
+		}
 	}
 
-	if err := s.cfg.Livelog.Delete(context.Background(), ID); err != nil {
+	if err := s.cfg.Livelog.Delete(context.Background(), livelog.ID); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to delete"})
 	}
 

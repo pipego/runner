@@ -7,9 +7,11 @@
 package runner
 
 import (
+	"bufio"
 	"context"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -19,7 +21,7 @@ import (
 )
 
 type Runner interface {
-	Run(context.Context, *builder.Dag, livelog.Livelog) error
+	Run(context.Context, *builder.Dag, livelog.Livelog, context.CancelFunc) error
 }
 
 type Config struct {
@@ -37,7 +39,7 @@ type runner struct {
 
 type function struct {
 	args []string
-	name func(context.Context, []string, livelog.Livelog) error
+	name func(context.Context, []string, livelog.Livelog, context.CancelFunc) error
 }
 
 type result struct {
@@ -58,7 +60,7 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (r *runner) Run(ctx context.Context, dag *builder.Dag, log livelog.Livelog) error {
+func (r *runner) Run(ctx context.Context, dag *builder.Dag, log livelog.Livelog, cancel context.CancelFunc) error {
 	for _, vertex := range dag.Vertex {
 		r.AddVertex(ctx, vertex.Name, r.routine, vertex.Run)
 	}
@@ -67,12 +69,13 @@ func (r *runner) Run(ctx context.Context, dag *builder.Dag, log livelog.Livelog)
 		r.AddEdge(ctx, edge.From, edge.To)
 	}
 
-	return r.runDag(ctx, log)
+	return r.runDag(ctx, log, cancel)
 }
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *runner) AddVertex(_ context.Context, name string, fn func(context.Context, []string, livelog.Livelog) error, args []string) {
+func (r *runner) AddVertex(_ context.Context, name string, fn func(context.Context, []string,
+	livelog.Livelog, context.CancelFunc) error, args []string) {
 	if r.fn == nil {
 		r.fn = make(map[string]function)
 	}
@@ -93,7 +96,7 @@ func (r *runner) AddEdge(_ context.Context, from, to string) {
 	r.graph[from] = append(r.graph[from], to)
 }
 
-func (r *runner) routine(_ context.Context, args []string, log livelog.Livelog) error {
+func (r *runner) routine(ctx context.Context, args []string, log livelog.Livelog, cancel context.CancelFunc) error {
 	var a []string
 	var n string
 
@@ -123,6 +126,22 @@ func (r *runner) routine(_ context.Context, args []string, log livelog.Livelog) 
 		return errors.Wrap(err, "failed to start")
 	}
 
+	scanner := bufio.NewScanner(outr)
+
+	go func(scanner *bufio.Scanner) {
+		var pos int64
+		for scanner.Scan() {
+			pos += 1
+			if err := log.Write(ctx, livelog.ID, &livelog.Line{Pos: pos, Time: time.Now().Unix(), Message: scanner.Text()}); err != nil {
+				cancel()
+				return
+			}
+		}
+		cancel()
+	}(scanner)
+
+	_ = scanner.Err()
+
 	return nil
 }
 
@@ -130,7 +149,7 @@ func (r *runner) routine(_ context.Context, args []string, log livelog.Livelog) 
 // no dependency cycles. After validation, each vertex will be run, deterministically, in parallel
 // topological order. If any vertex returns an error, no more vertices will be scheduled and
 // Run will exit and return that error once all in-flight functions finish execution.
-func (r *runner) runDag(ctx context.Context, log livelog.Livelog) error {
+func (r *runner) runDag(ctx context.Context, log livelog.Livelog, cancel context.CancelFunc) error {
 	var err error
 
 	// sanity check
@@ -164,7 +183,7 @@ func (r *runner) runDag(ctx context.Context, log livelog.Livelog) error {
 	for name := range r.fn {
 		if deps[name] == 0 {
 			running++
-			r.start(ctx, name, r.fn[name], resc, log)
+			r.start(ctx, name, r.fn[name], resc, log, cancel)
 		}
 	}
 
@@ -188,7 +207,7 @@ func (r *runner) runDag(ctx context.Context, log livelog.Livelog) error {
 			deps[vertex]--
 			if deps[vertex] == 0 {
 				running++
-				r.start(ctx, vertex, r.fn[vertex], resc, log)
+				r.start(ctx, vertex, r.fn[vertex], resc, log, cancel)
 			}
 		}
 	}
@@ -232,11 +251,11 @@ func (r *runner) detectCyclesHelper(ctx context.Context, vertex string, visited,
 	return false
 }
 
-func (r *runner) start(ctx context.Context, name string, fn function, resc chan<- result, log livelog.Livelog) {
+func (r *runner) start(ctx context.Context, name string, fn function, resc chan<- result, log livelog.Livelog, cancel context.CancelFunc) {
 	go func() {
 		resc <- result{
 			name: name,
-			err:  fn.name(ctx, fn.args, log),
+			err:  fn.name(ctx, fn.args, log, cancel),
 		}
 	}()
 }

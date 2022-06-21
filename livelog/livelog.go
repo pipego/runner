@@ -34,6 +34,10 @@ type livelog struct {
 	streams map[int64]*stream
 }
 
+const (
+	ID = 0
+)
+
 func New(_ context.Context, cfg *Config) Livelog {
 	return &livelog{
 		cfg: cfg,
