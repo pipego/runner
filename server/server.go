@@ -18,7 +18,7 @@ import (
 
 const (
 	KIND    = "runner"
-	TIMEOUT = 24 * time.Hour
+	TIMEOUT = 10 * time.Second
 )
 
 type Server interface {
