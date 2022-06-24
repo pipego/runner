@@ -38,7 +38,7 @@ type runner struct {
 
 type function struct {
 	args []string
-	name func(context.Context, []string, livelog.Livelog, context.CancelFunc) error
+	name func(context.Context, []string, livelog.Livelog) error
 }
 
 type result struct {
@@ -73,8 +73,8 @@ func (r *runner) Run(ctx context.Context, dag *builder.Dag, log livelog.Livelog,
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *runner) AddVertex(_ context.Context, name string, fn func(context.Context, []string,
-	livelog.Livelog, context.CancelFunc) error, args []string) {
+func (r *runner) AddVertex(_ context.Context, name string,
+	fn func(context.Context, []string, livelog.Livelog) error, args []string) {
 	if r.fn == nil {
 		r.fn = make(map[string]function)
 	}
@@ -95,8 +95,20 @@ func (r *runner) AddEdge(_ context.Context, from, to string) {
 	r.graph[from] = append(r.graph[from], to)
 }
 
-func (r *runner) routine(ctx context.Context, args []string, log livelog.Livelog, cancel context.CancelFunc) error {
-	cmd := exec.Command("echo", "task")
+func (r *runner) routine(ctx context.Context, args []string, log livelog.Livelog) error {
+	var a []string
+	var n string
+
+	if len(args) > 1 {
+		n, _ = exec.LookPath(args[0])
+		a = args[1:]
+	} else if len(args) == 1 {
+		n, _ = exec.LookPath(args[0])
+	} else {
+		return errors.New("invalid args")
+	}
+
+	cmd := exec.Command(n, a...)
 
 	// TODO: cmd.StderrPipe()
 	stdout, _ := cmd.StdoutPipe()
@@ -119,8 +131,6 @@ func (r *runner) routine(ctx context.Context, args []string, log livelog.Livelog
 	}(scanner)
 
 	_ = cmd.Wait()
-
-	// TODO: cancel
 
 	return nil
 }
@@ -163,7 +173,7 @@ func (r *runner) runDag(ctx context.Context, log livelog.Livelog, cancel context
 	for name := range r.fn {
 		if deps[name] == 0 {
 			running++
-			r.start(ctx, name, r.fn[name], resc, log, cancel)
+			r.start(ctx, name, r.fn[name], resc, log)
 		}
 	}
 
@@ -187,7 +197,7 @@ func (r *runner) runDag(ctx context.Context, log livelog.Livelog, cancel context
 			deps[vertex]--
 			if deps[vertex] == 0 {
 				running++
-				r.start(ctx, vertex, r.fn[vertex], resc, log, cancel)
+				r.start(ctx, vertex, r.fn[vertex], resc, log)
 			}
 		}
 	}
@@ -231,11 +241,11 @@ func (r *runner) detectCyclesHelper(ctx context.Context, vertex string, visited,
 	return false
 }
 
-func (r *runner) start(ctx context.Context, name string, fn function, resc chan<- result, log livelog.Livelog, cancel context.CancelFunc) {
+func (r *runner) start(ctx context.Context, name string, fn function, resc chan<- result, log livelog.Livelog) {
 	go func() {
 		resc <- result{
 			name: name,
-			err:  fn.name(ctx, fn.args, log, cancel),
+			err:  fn.name(ctx, fn.args, log),
 		}
 	}()
 }

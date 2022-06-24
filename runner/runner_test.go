@@ -18,14 +18,12 @@ var (
 
 func TestRoutine(t *testing.T) {
 	var r runner
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
 
-	err := r.routine(ctx, args, log, cancel)
+	err := r.routine(ctx, args, log)
 	assert.Equal(t, nil, err)
 
 	_ = log.Delete(ctx, livelog.ID)
@@ -65,7 +63,7 @@ func TestOne(t *testing.T) {
 	_ = log.Create(ctx, livelog.ID)
 
 	err := errors.New("error")
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return err }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return err }, []string{})
 
 	res := make(chan error)
 	go func() { res <- r.runDag(ctx, log, cancel) }()
@@ -92,10 +90,10 @@ func TestManyNoDeps(t *testing.T) {
 	_ = log.Create(ctx, livelog.ID)
 
 	err := errors.New("error")
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return err }, []string{})
-	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "fout", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return err }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "fout", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
 
 	res := make(chan error)
 	go func() { res <- r.runDag(ctx, log, cancel) }()
@@ -121,10 +119,10 @@ func TestManyWithCycle(t *testing.T) {
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
 
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
 
 	r.AddEdge(ctx, "one", "two")
 	r.AddEdge(ctx, "two", "three")
@@ -155,10 +153,10 @@ func TestInvalidToVertex(t *testing.T) {
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
 
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
 
 	r.AddEdge(ctx, "one", "two")
 	r.AddEdge(ctx, "two", "three")
@@ -189,10 +187,10 @@ func TestInvalidFromVertex(t *testing.T) {
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
 
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
-	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error { return nil }, []string{})
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
+	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
 
 	r.AddEdge(ctx, "one", "two")
 	r.AddEdge(ctx, "two", "three")
@@ -224,31 +222,31 @@ func TestManyWithDepsSuccess(t *testing.T) {
 	_ = log.Create(ctx, livelog.ID)
 
 	res := make(chan string, 7)
-	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
+	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error {
 		res <- "one"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
+	r.AddVertex(ctx, "two", func(context.Context, []string, livelog.Livelog) error {
 		res <- "two"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
+	r.AddVertex(ctx, "three", func(context.Context, []string, livelog.Livelog) error {
 		res <- "three"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
+	r.AddVertex(ctx, "four", func(context.Context, []string, livelog.Livelog) error {
 		res <- "four"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "five", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
+	r.AddVertex(ctx, "five", func(context.Context, []string, livelog.Livelog) error {
 		res <- "five"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "six", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
+	r.AddVertex(ctx, "six", func(context.Context, []string, livelog.Livelog) error {
 		res <- "six"
 		return nil
 	}, []string{})
-	r.AddVertex(ctx, "seven", func(context.Context, []string, livelog.Livelog, context.CancelFunc) error {
+	r.AddVertex(ctx, "seven", func(context.Context, []string, livelog.Livelog) error {
 		res <- "seven"
 		return nil
 	}, []string{})
