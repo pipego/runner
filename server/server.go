@@ -142,10 +142,6 @@ func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerS
 		return spec
 	}
 
-	timeout := time.After(TIMEOUT)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	if in.GetKind() != KIND {
 		return srv.Send(&pb.ServerReply{Error: "invalid kind"})
 	}
@@ -157,6 +153,9 @@ func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerS
 		Spec:       specHelper(),
 	}
 
+	ctx := context.Background()
+	timeout := time.After(TIMEOUT)
+
 	b, err := s.cfg.Builder.Run(ctx, cfg)
 	if err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to build"})
@@ -166,7 +165,7 @@ func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerS
 		return srv.Send(&pb.ServerReply{Error: "failed to create"})
 	}
 
-	if err := s.cfg.Runner.Run(ctx, &b, s.cfg.Livelog, cancel); err != nil {
+	if err := s.cfg.Runner.Run(ctx, &b, s.cfg.Livelog); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to run"})
 	}
 

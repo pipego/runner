@@ -31,15 +31,13 @@ func TestRoutine(t *testing.T) {
 
 func TestZero(t *testing.T) {
 	var r runner
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log, cancel) }()
+	go func() { res <- r.runDag(ctx, log) }()
 
 	select {
 	case err := <-res:
@@ -55,9 +53,7 @@ func TestZero(t *testing.T) {
 
 func TestOne(t *testing.T) {
 	var r runner
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
@@ -66,7 +62,7 @@ func TestOne(t *testing.T) {
 	r.AddVertex(ctx, "one", func(context.Context, []string, livelog.Livelog) error { return err }, []string{})
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log, cancel) }()
+	go func() { res <- r.runDag(ctx, log) }()
 
 	select {
 	case err := <-res:
@@ -82,9 +78,7 @@ func TestOne(t *testing.T) {
 
 func TestManyNoDeps(t *testing.T) {
 	var r runner
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
@@ -96,7 +90,7 @@ func TestManyNoDeps(t *testing.T) {
 	r.AddVertex(ctx, "fout", func(context.Context, []string, livelog.Livelog) error { return nil }, []string{})
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log, cancel) }()
+	go func() { res <- r.runDag(ctx, log) }()
 
 	select {
 	case err := <-res:
@@ -112,9 +106,7 @@ func TestManyNoDeps(t *testing.T) {
 
 func TestManyWithCycle(t *testing.T) {
 	var r runner
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
@@ -130,7 +122,7 @@ func TestManyWithCycle(t *testing.T) {
 	r.AddEdge(ctx, "three", "one")
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log, cancel) }()
+	go func() { res <- r.runDag(ctx, log) }()
 
 	select {
 	case err := <-res:
@@ -146,9 +138,7 @@ func TestManyWithCycle(t *testing.T) {
 
 func TestInvalidToVertex(t *testing.T) {
 	var r runner
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
@@ -164,7 +154,7 @@ func TestInvalidToVertex(t *testing.T) {
 	r.AddEdge(ctx, "three", "definitely-not-a-valid-vertex")
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log, cancel) }()
+	go func() { res <- r.runDag(ctx, log) }()
 
 	select {
 	case err := <-res:
@@ -180,9 +170,7 @@ func TestInvalidToVertex(t *testing.T) {
 
 func TestInvalidFromVertex(t *testing.T) {
 	var r runner
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
@@ -198,7 +186,7 @@ func TestInvalidFromVertex(t *testing.T) {
 	r.AddEdge(ctx, "definitely-not-a-valid-vertex", "three")
 
 	res := make(chan error)
-	go func() { res <- r.runDag(ctx, log, cancel) }()
+	go func() { res <- r.runDag(ctx, log) }()
 
 	select {
 	case err := <-res:
@@ -214,9 +202,7 @@ func TestInvalidFromVertex(t *testing.T) {
 
 func TestManyWithDepsSuccess(t *testing.T) {
 	var r runner
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	_ = log.Init(ctx)
 	_ = log.Create(ctx, livelog.ID)
@@ -258,7 +244,7 @@ func TestManyWithDepsSuccess(t *testing.T) {
 	r.AddEdge(ctx, "five", "six")
 
 	err := make(chan error)
-	go func() { err <- r.runDag(ctx, log, cancel) }()
+	go func() { err <- r.runDag(ctx, log) }()
 
 	select {
 	case err := <-err:

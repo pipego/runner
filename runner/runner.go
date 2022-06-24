@@ -9,6 +9,7 @@ package runner
 import (
 	"bufio"
 	"context"
+	"io"
 	"os/exec"
 	"time"
 
@@ -20,7 +21,7 @@ import (
 )
 
 type Runner interface {
-	Run(context.Context, *builder.Dag, livelog.Livelog, context.CancelFunc) error
+	Run(context.Context, *builder.Dag, livelog.Livelog) error
 }
 
 type Config struct {
@@ -59,7 +60,7 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (r *runner) Run(ctx context.Context, dag *builder.Dag, log livelog.Livelog, cancel context.CancelFunc) error {
+func (r *runner) Run(ctx context.Context, dag *builder.Dag, log livelog.Livelog) error {
 	for _, vertex := range dag.Vertex {
 		r.AddVertex(ctx, vertex.Name, r.routine, vertex.Run)
 	}
@@ -68,7 +69,7 @@ func (r *runner) Run(ctx context.Context, dag *builder.Dag, log livelog.Livelog,
 		r.AddEdge(ctx, edge.From, edge.To)
 	}
 
-	return r.runDag(ctx, log, cancel)
+	return r.runDag(ctx, log)
 }
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
@@ -113,24 +114,21 @@ func (r *runner) routine(ctx context.Context, args []string, log livelog.Livelog
 	// TODO: cmd.StderrPipe()
 	stdout, _ := cmd.StdoutPipe()
 
-	_ = cmd.Start()
-
-	scanner := bufio.NewScanner(stdout)
-
-	go func(scanner *bufio.Scanner) {
-		var pos int64
+	go func(c *exec.Cmd, o io.ReadCloser) {
+		_ = c.Start()
+		scanner := bufio.NewScanner(o)
+		pos := 1
 		for scanner.Scan() {
-			pos += 1
-			if err := log.Write(ctx, livelog.ID, &livelog.Line{Pos: pos, Time: time.Now().Unix(), Message: scanner.Text()}); err != nil {
+			if err := log.Write(ctx, livelog.ID, &livelog.Line{Pos: int64(pos), Time: time.Now().Unix(), Message: scanner.Text()}); err != nil {
 				// TODO: error
 			}
+			pos += 1
 		}
 		if scanner.Err() != nil {
 			// TODO: error
 		}
-	}(scanner)
-
-	_ = cmd.Wait()
+		_ = c.Wait()
+	}(cmd, stdout)
 
 	return nil
 }
@@ -139,7 +137,7 @@ func (r *runner) routine(ctx context.Context, args []string, log livelog.Livelog
 // no dependency cycles. After validation, each vertex will be run, deterministically, in parallel
 // topological order. If any vertex returns an error, no more vertices will be scheduled and
 // Run will exit and return that error once all in-flight functions finish execution.
-func (r *runner) runDag(ctx context.Context, log livelog.Livelog, cancel context.CancelFunc) error {
+func (r *runner) runDag(ctx context.Context, log livelog.Livelog) error {
 	var err error
 
 	// sanity check
@@ -166,8 +164,8 @@ func (r *runner) runDag(ctx context.Context, log livelog.Livelog, cancel context
 		return errCycleDetected
 	}
 
-	running := 0
 	resc := make(chan result, len(r.fn))
+	running := 0
 
 	// start any vertex that has no deps
 	for name := range r.fn {
