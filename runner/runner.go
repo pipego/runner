@@ -9,7 +9,6 @@ package runner
 import (
 	"bufio"
 	"context"
-	"os"
 	"os/exec"
 	"time"
 
@@ -97,50 +96,31 @@ func (r *runner) AddEdge(_ context.Context, from, to string) {
 }
 
 func (r *runner) routine(ctx context.Context, args []string, log livelog.Livelog, cancel context.CancelFunc) error {
-	var a []string
-	var n string
+	cmd := exec.Command("echo", "task")
 
-	outr, outw, _ := os.Pipe()
-	defer func() { _ = outr.Close() }()
-	defer func() { _ = outw.Close() }()
+	// TODO: cmd.StderrPipe()
+	stdout, _ := cmd.StdoutPipe()
 
-	inr, inw, _ := os.Pipe()
-	defer func() { _ = inr.Close() }()
-	defer func() { _ = inw.Close() }()
+	_ = cmd.Start()
 
-	if len(args) > 1 {
-		n, _ = exec.LookPath(args[0])
-		a = args[1:]
-	} else if len(args) == 1 {
-		n, _ = exec.LookPath(args[0])
-	} else {
-		return errors.New("invalid args")
-	}
-
-	_, err := os.StartProcess(n, a, &os.ProcAttr{
-		Env:   os.Environ(),
-		Files: []*os.File{inr, outw, outw},
-	})
-
-	if err != nil {
-		return errors.Wrap(err, "failed to start")
-	}
-
-	scanner := bufio.NewScanner(outr)
+	scanner := bufio.NewScanner(stdout)
 
 	go func(scanner *bufio.Scanner) {
 		var pos int64
 		for scanner.Scan() {
 			pos += 1
 			if err := log.Write(ctx, livelog.ID, &livelog.Line{Pos: pos, Time: time.Now().Unix(), Message: scanner.Text()}); err != nil {
-				cancel()
-				return
+				// TODO: error
 			}
 		}
-		cancel()
+		if scanner.Err() != nil {
+			// TODO: error
+		}
 	}(scanner)
 
-	_ = scanner.Err()
+	_ = cmd.Wait()
+
+	// TODO: cancel
 
 	return nil
 }

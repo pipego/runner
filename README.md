@@ -105,6 +105,7 @@ Project License can be found [here](LICENSE).
 - [drone-dag](https://github.com/drone/dag)
 - [drone-livelog](https://github.com/harness/drone/tree/master/livelog)
 - [drone-pipeline](https://docs.drone.io/pipeline/overview/)
+- [go-exec](https://gist.github.com/craftslab/1fe9151fbf069a9e1341e4daebe43b5c)
 - [grpctest](https://github.com/grpc/grpc-go/tree/master/internal/grpctest)
 - [grpc-streaming](https://www.freecodecamp.org/news/grpc-server-side-streaming-with-go/)
 - [kube-parallelize](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/framework/parallelize/parallelism.go)
