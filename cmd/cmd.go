@@ -11,7 +11,6 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/pipego/runner/config"
-	"github.com/pipego/runner/livelog"
 	"github.com/pipego/runner/server"
 )
 
@@ -28,18 +27,13 @@ func Run(ctx context.Context) error {
 		return errors.Wrap(err, "failed to init config")
 	}
 
-	l, err := initLivelog(ctx, c)
-	if err != nil {
-		return errors.Wrap(err, "failed to init livelog")
-	}
-
 	s, err := initServer(ctx, c)
 	if err != nil {
 		return errors.Wrap(err, "failed to init server")
 	}
 
-	if err := runPipe(ctx, l, s); err != nil {
-		return errors.Wrap(err, "failed to run pipe")
+	if err := runServer(ctx, s); err != nil {
+		return errors.Wrap(err, "failed to run server")
 	}
 
 	return nil
@@ -48,15 +42,6 @@ func Run(ctx context.Context) error {
 func initConfig(_ context.Context) (*config.Config, error) {
 	c := config.New()
 	return c, nil
-}
-
-func initLivelog(ctx context.Context, _ *config.Config) (livelog.Livelog, error) {
-	c := livelog.DefaultConfig()
-	if c == nil {
-		return nil, errors.New("failed to config")
-	}
-
-	return livelog.New(ctx, c), nil
 }
 
 func initServer(ctx context.Context, _ *config.Config) (server.Server, error) {
@@ -70,7 +55,7 @@ func initServer(ctx context.Context, _ *config.Config) (server.Server, error) {
 	return server.New(ctx, c), nil
 }
 
-func runPipe(ctx context.Context, ll livelog.Livelog, srv server.Server) error {
+func runServer(ctx context.Context, srv server.Server) error {
 	if err := srv.Init(ctx); err != nil {
 		return errors.New("failed to init")
 	}

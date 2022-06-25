@@ -11,14 +11,13 @@ import (
 
 	pb "github.com/pipego/runner/server/proto"
 
-	"github.com/pipego/runner/builder"
 	"github.com/pipego/runner/livelog"
 	"github.com/pipego/runner/runner"
 )
 
 const (
 	KIND    = "runner"
-	TIMEOUT = 10 * time.Second
+	TIMEOUT = 24 * time.Hour
 )
 
 type Server interface {
@@ -29,7 +28,6 @@ type Server interface {
 
 type Config struct {
 	Addr    string
-	Builder builder.Builder
 	Livelog livelog.Livelog
 	Runner  runner.Runner
 }
@@ -50,10 +48,6 @@ func DefaultConfig() *Config {
 }
 
 func (s *server) Init(ctx context.Context) error {
-	if err := s.initBuilder(ctx); err != nil {
-		return errors.Wrap(err, "failed to init builder")
-	}
-
 	if err := s.initLivelog(ctx); err != nil {
 		return errors.Wrap(err, "failed to init livelog")
 	}
@@ -61,17 +55,6 @@ func (s *server) Init(ctx context.Context) error {
 	if err := s.initRunner(ctx); err != nil {
 		return errors.Wrap(err, "failed to init runner")
 	}
-
-	return nil
-}
-
-func (s *server) initBuilder(ctx context.Context) error {
-	b := builder.DefaultConfig()
-	if b == nil {
-		return errors.New("failed to config")
-	}
-
-	s.cfg.Builder = builder.New(ctx, b)
 
 	return nil
 }
@@ -120,52 +103,21 @@ func (s *server) Run(_ context.Context) error {
 }
 
 func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerServer) error {
-	metaDataHelper := func() builder.MetaData {
-		var metadata builder.MetaData
-		metadata.Name = in.GetMetadata().Name
-		return metadata
-	}
-
-	specHelper := func() builder.Spec {
-		var tasks []builder.Task
-		var spec builder.Spec
-		buf := in.GetSpec().GetTasks()
-		for _, val := range buf {
-			b := builder.Task{
-				Name:     val.GetName(),
-				Commands: val.GetCommands(),
-				Depends:  val.GetDepends(),
-			}
-			tasks = append(tasks, b)
-		}
-		spec.Tasks = tasks
-		return spec
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
 
 	if in.GetKind() != KIND {
 		return srv.Send(&pb.ServerReply{Error: "invalid kind"})
-	}
-
-	cfg := &builder.Config{
-		ApiVersion: in.GetApiVersion(),
-		Kind:       in.GetKind(),
-		MetaData:   metaDataHelper(),
-		Spec:       specHelper(),
-	}
-
-	ctx := context.Background()
-	timeout := time.After(TIMEOUT)
-
-	b, err := s.cfg.Builder.Run(ctx, cfg)
-	if err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to build"})
 	}
 
 	if err := s.cfg.Livelog.Create(ctx, livelog.ID); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to create"})
 	}
 
-	if err := s.cfg.Runner.Run(ctx, &b, s.cfg.Livelog); err != nil {
+	name := in.GetSpec().GetTask().GetName()
+	args := in.GetSpec().GetTask().GetCommands()
+
+	if err := s.cfg.Runner.Run(ctx, name, args, s.cfg.Livelog, cancel); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to run"})
 	}
 
@@ -174,10 +126,6 @@ func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerS
 L:
 	for {
 		select {
-		case <-ctx.Done():
-			break L
-		case <-timeout:
-			break L
 		case line := <-lines:
 			_ = srv.Send(&pb.ServerReply{
 				Output: &pb.Output{
@@ -186,6 +134,8 @@ L:
 					Message: line.Message,
 				},
 			})
+		case <-ctx.Done():
+			break L
 		}
 	}
 

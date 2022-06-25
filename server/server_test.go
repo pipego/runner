@@ -7,12 +7,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInitBuilder(t *testing.T) {
+func TestInitLivelog(t *testing.T) {
 	s := server{
 		cfg: DefaultConfig(),
 	}
 
-	err := s.initBuilder(context.Background())
+	err := s.initLivelog(context.Background())
 	assert.Equal(t, nil, err)
 }
 
