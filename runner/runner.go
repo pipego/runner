@@ -17,6 +17,10 @@ import (
 	"github.com/pipego/runner/config"
 )
 
+const (
+	LIVELOG = 5000
+)
+
 type Runner interface {
 	Init(context.Context) error
 	Deinit(context.Context) error
@@ -56,8 +60,8 @@ func DefaultConfig() *Config {
 
 func (r *runner) Init(_ context.Context) error {
 	r.log = Livelog{
-		Error: make(chan error),
-		Line:  make(chan *Line),
+		Error: make(chan error, LIVELOG),
+		Line:  make(chan *Line, LIVELOG),
 	}
 
 	return nil
