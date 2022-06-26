@@ -7,12 +7,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/pipego/runner/livelog"
-)
-
-var (
-	log = livelog.New(context.Background(), livelog.DefaultConfig())
 )
 
 func TestRun(t *testing.T) {
@@ -23,26 +17,26 @@ func TestRun(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_ = log.Init(ctx)
-	_ = log.Create(ctx, livelog.ID)
+	err = r.Init(ctx)
+	assert.Equal(t, nil, err)
 
-	err = r.Run(ctx, "", args, log, cancel)
+	err = r.Run(ctx, "", args, cancel)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"invalid"}
-	err = r.Run(ctx, "", args, log, cancel)
+	err = r.Run(ctx, "", args, cancel)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"echo", "task"}
-	err = r.Run(ctx, "", args, log, cancel)
+	err = r.Run(ctx, "", args, cancel)
 	assert.Equal(t, nil, err)
 
-	lines, _ := log.Tail(ctx, livelog.ID)
+	log := r.Tail(ctx)
 
 L:
 	for {
 		select {
-		case line := <-lines:
+		case line := <-log.Line:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
 			fmt.Println("Message:", line.Message)
@@ -52,5 +46,6 @@ L:
 		}
 	}
 
-	_ = log.Delete(ctx, livelog.ID)
+	err = r.Deinit(ctx)
+	assert.Equal(t, nil, err)
 }

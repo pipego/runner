@@ -15,19 +15,33 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/pipego/runner/config"
-	"github.com/pipego/runner/livelog"
 )
 
 type Runner interface {
-	Run(context.Context, string, []string, livelog.Livelog, context.CancelFunc) error
+	Init(context.Context) error
+	Deinit(context.Context) error
+	Run(context.Context, string, []string, context.CancelFunc) error
+	Tail(ctx context.Context) Livelog
 }
 
 type Config struct {
 	Config config.Config
 }
 
+type Livelog struct {
+	Error chan error
+	Line  chan *Line
+}
+
+type Line struct {
+	Pos     int64
+	Time    int64
+	Message string
+}
+
 type runner struct {
 	cfg *Config
+	log Livelog
 }
 
 func New(_ context.Context, cfg *Config) Runner {
@@ -40,7 +54,20 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (r *runner) Run(ctx context.Context, _ string, args []string, log livelog.Livelog, cancel context.CancelFunc) error {
+func (r *runner) Init(_ context.Context) error {
+	r.log = Livelog{
+		Error: make(chan error),
+		Line:  make(chan *Line),
+	}
+
+	return nil
+}
+
+func (r *runner) Deinit(_ context.Context) error {
+	return nil
+}
+
+func (r *runner) Run(ctx context.Context, _ string, args []string, cancel context.CancelFunc) error {
 	var a []string
 	var n string
 	var err error
@@ -66,7 +93,7 @@ func (r *runner) Run(ctx context.Context, _ string, args []string, log livelog.L
 	_ = cmd.Start()
 
 	scanner := bufio.NewScanner(stdout)
-	r.routine(ctx, scanner, log)
+	r.routine(ctx, scanner)
 
 	go func() {
 		_ = cmd.Wait()
@@ -76,12 +103,16 @@ func (r *runner) Run(ctx context.Context, _ string, args []string, log livelog.L
 	return nil
 }
 
-func (r *runner) routine(ctx context.Context, scanner *bufio.Scanner, log livelog.Livelog) {
+func (r *runner) Tail(_ context.Context) Livelog {
+	return r.log
+}
+
+func (r *runner) routine(_ context.Context, scanner *bufio.Scanner) {
 	go func() {
 		p := 1
 		for scanner.Scan() {
-			if err := log.Write(ctx, livelog.ID, &livelog.Line{Pos: int64(p), Time: time.Now().Unix(), Message: scanner.Text()}); err != nil {
-				return
+			r.log.Line <- &Line{
+				Pos: int64(p), Time: time.Now().Unix(), Message: scanner.Text(),
 			}
 			p += 1
 		}
