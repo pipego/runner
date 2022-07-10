@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/goleak"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,6 +15,8 @@ func TestRun(t *testing.T) {
 	var args []string
 	var err error
 	var r runner
+
+	defer goleak.VerifyNone(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
