@@ -68,6 +68,9 @@ func (r *runner) Init(_ context.Context) error {
 }
 
 func (r *runner) Deinit(_ context.Context) error {
+	close(r.log.Line)
+	close(r.log.Error)
+
 	return nil
 }
 
