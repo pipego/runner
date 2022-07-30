@@ -68,11 +68,27 @@ Flags:
       "commands": [
         "cmd1",
         "argv1"
-      ]
+      ],
+      "timeout": {
+        "time": 10,
+        "unit": "second"
+      }
     }
   }
 }
 ```
+
+`timeout`: Enforce time limit
+
+- `time`: int
+
+  The length of time for which this task will wait before cancelling the commands.
+
+- `unit`: string
+
+  The unit of the time parameter.
+
+  **values**: `second`, `minute`, `hour`
 
 
 

@@ -14,8 +14,20 @@ import (
 )
 
 const (
-	KIND    = "runner"
-	TIMEOUT = 24 * time.Hour
+	KIND = "runner"
+)
+
+const (
+	TIME = 12
+	UNIT = "hour"
+)
+
+var (
+	UnitMap = map[string]time.Duration{
+		"second": time.Second,
+		"minute": time.Minute,
+		"hour":   time.Hour,
+	}
 )
 
 type Server interface {
@@ -84,15 +96,16 @@ func (s *server) Run(_ context.Context) error {
 }
 
 func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerServer) error {
-	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
-
 	if in.GetKind() != KIND {
 		return srv.Send(&pb.ServerReply{Error: "invalid kind"})
 	}
 
 	name := in.GetSpec().GetTask().GetName()
 	args := in.GetSpec().GetTask().GetCommands()
+	timeout := s.setTimeout(in.GetSpec().GetTask().GetTimeout())
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
 	if err := s.cfg.Runner.Run(ctx, name, args, cancel); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to run"})
@@ -112,9 +125,37 @@ L:
 				},
 			})
 		case <-ctx.Done():
+			if err := ctx.Err(); err != nil {
+				out := &pb.Output{}
+				if errors.Is(err, context.Canceled) {
+					out.Message = "task completed"
+				} else if errors.Is(err, context.DeadlineExceeded) {
+					out.Message = "deadline exceeded"
+				} else {
+					// PASS
+				}
+				_ = srv.Send(&pb.ServerReply{Output: out})
+			}
 			break L
 		}
 	}
 
 	return nil
+}
+
+func (s *server) setTimeout(timeout *pb.Timeout) time.Duration {
+	t := int64(TIME)
+	u := int64(UnitMap[UNIT])
+
+	if timeout.Time != 0 {
+		t = timeout.Time
+	}
+
+	if timeout.Unit != "" {
+		if val, ok := UnitMap[timeout.Unit]; ok {
+			u = int64(val)
+		}
+	}
+
+	return time.Duration(t * u)
 }

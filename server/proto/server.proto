@@ -28,6 +28,12 @@ message Spec {
 message Task {
   string name = 1;
   repeated string commands = 2;
+  Timeout timeout = 3;
+}
+
+message Timeout {
+  int64 time = 1;
+  string unit = 2;
 }
 
 // The response message.
