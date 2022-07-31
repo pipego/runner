@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net"
 	"time"
@@ -126,15 +127,13 @@ L:
 			})
 		case <-ctx.Done():
 			if err := ctx.Err(); err != nil {
-				out := &pb.Output{}
 				if errors.Is(err, context.Canceled) {
-					out.Message = "task completed"
+					fmt.Println("task completed")
 				} else if errors.Is(err, context.DeadlineExceeded) {
-					out.Message = "deadline exceeded"
+					fmt.Println("deadline exceeded")
 				} else {
 					// PASS
 				}
-				_ = srv.Send(&pb.ServerReply{Output: out})
 			}
 			break L
 		}
