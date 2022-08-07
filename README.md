@@ -64,8 +64,11 @@ Flags:
   },
   "spec": {
     "task": {
-      "name": "task1",
-      "file": "base64.gzip",
+      "name": "task",
+      "file": {
+        "content": "bash",
+        "gzip": true
+      },
       "commands": [
         "cmd1",
         "argv1"

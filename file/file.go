@@ -1,10 +1,13 @@
 package file
 
 import (
-	"archive/zip"
+	"bufio"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -17,14 +20,22 @@ const (
 )
 
 const (
-	Bash int = 0
+	Bash = iota
+	Invalid
+)
+
+var (
+	Shebang = []string{
+		"#!/bin/bash",
+		"#!/usr/bin/env bash",
+	}
 )
 
 type File interface {
 	Init(context.Context) error
 	Deinit(context.Context) error
+	Unzip(context.Context, []byte) ([]byte, error)
 	Write(context.Context, string, []byte) error
-	Unzip(context.Context, string) error
 	Remove(context.Context, string) error
 	Type(context.Context, string) int
 }
@@ -55,6 +66,24 @@ func (f *file) Deinit(_ context.Context) error {
 	return nil
 }
 
+func (f *file) Unzip(_ context.Context, data []byte) ([]byte, error) {
+	r, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to new")
+	}
+
+	defer func(r *gzip.Reader) {
+		_ = r.Close()
+	}(r)
+
+	buf, err := io.ReadAll(r)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return nil, errors.Wrap(err, "failed to read")
+	}
+
+	return buf, nil
+}
+
 func (f *file) Write(_ context.Context, name string, data []byte) error {
 	file, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, PERM)
 	if err != nil {
@@ -72,68 +101,37 @@ func (f *file) Write(_ context.Context, name string, data []byte) error {
 	return nil
 }
 
-func (f *file) Unzip(_ context.Context, name string) error {
-	r, err := zip.OpenReader(name)
-	if err != nil {
-		return errors.Wrap(err, "failed to read")
-	}
-
-	defer func(r *zip.ReadCloser) {
-		_ = r.Close()
-	}(r)
-
-	if len(r.File) != 1 {
-		return errors.Wrap(err, "multiple files not supported")
-	}
-
-	src := r.File[0]
-	if src.FileInfo().IsDir() {
-		return errors.Wrap(err, "directory not supported")
-	}
-
-	dst, err := os.OpenFile(name+".tmp", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, PERM)
-	if err != nil {
-		return errors.Wrap(err, "failed to open")
-	}
-
-	defer func(dst *os.File) {
-		_ = dst.Close()
-	}(dst)
-
-	buf, err := src.Open()
-	if err != nil {
-		return errors.Wrap(err, "failed to open")
-	}
-
-	defer func(buf io.ReadCloser) {
-		_ = buf.Close()
-	}(buf)
-
-	for {
-		if _, err = io.CopyN(dst, buf, LEN); err != nil {
-			if err == io.EOF {
-				break
-			}
-			return errors.Wrap(err, "failed to copy")
-		}
-	}
-
-	if err := os.Remove(name); err != nil {
-		return errors.Wrap(err, "failed to remove")
-	}
-
-	if err := os.Rename(name+".tmp", name); err != nil {
-		return errors.Wrap(err, "failed to rename")
-	}
-
-	return nil
-}
-
 func (f *file) Remove(_ context.Context, name string) error {
 	return os.Remove(name)
 }
 
 func (f *file) Type(_ context.Context, name string) int {
-	// TODO: Type
-	return Bash
+	file, err := os.Open(name)
+	defer file.Close()
+
+	if err != nil {
+		return Invalid
+	}
+
+	reader := bufio.NewReader(file)
+
+	buf, _, err := reader.ReadLine()
+	if err != nil {
+		return Invalid
+	}
+
+	var buffer bytes.Buffer
+	buffer.Write(buf)
+	line := buffer.String()
+
+	ret := Invalid
+
+	for _, item := range Shebang {
+		if strings.Contains(line, item) {
+			ret = Bash
+			break
+		}
+	}
+
+	return ret
 }

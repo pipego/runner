@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"net"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -22,6 +23,10 @@ const (
 const (
 	TIME = 12
 	UNIT = "hour"
+)
+
+const (
+	LAYOUT = "20060102150405"
 )
 
 var (
@@ -132,12 +137,12 @@ func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerS
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	if len(file) != 0 && len(commands) != 0 {
+	if len(file.GetContent()) != 0 && len(commands) != 0 {
 		return srv.Send(&pb.ServerReply{Error: "file and commands not supported meanwhile"})
 	}
 
-	if len(file) != 0 {
-		n, err := s.loadFile(ctx, file)
+	if len(file.GetContent()) != 0 {
+		n, err := s.loadFile(ctx, file.GetContent(), file.GetGzip())
 		defer func(ctx context.Context, n string) {
 			_ = s.cfg.File.Remove(ctx, n)
 		}(ctx, n)
@@ -192,11 +197,23 @@ func (s *server) setTimeout(timeout *pb.Timeout) time.Duration {
 	return time.Duration(t * u)
 }
 
-func (s *server) loadFile(ctx context.Context, data []byte) (string, error) {
-	suffix := time.Now().Format("20060102150405")
-	name := filepath.Join("tmp", "pipego-runner-file-"+suffix)
+func (s *server) loadFile(ctx context.Context, data []byte, gzip bool) (string, error) {
+	var buf []byte
+	var err error
 
-	err := s.cfg.File.Write(ctx, name, data)
+	if gzip {
+		buf, err = s.cfg.File.Unzip(ctx, data)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to unzip")
+		}
+	} else {
+		buf = data
+	}
+
+	suffix := time.Now().Format(LAYOUT)
+	name := filepath.Join(string(os.PathSeparator), "tmp", "pipego-runner-file-"+suffix)
+
+	err = s.cfg.File.Write(ctx, name, buf)
 	defer func(ctx context.Context, name string) {
 		_ = s.cfg.File.Remove(ctx, name)
 	}(ctx, name)
@@ -205,12 +222,8 @@ func (s *server) loadFile(ctx context.Context, data []byte) (string, error) {
 		return "", errors.Wrap(err, "failed to write")
 	}
 
-	if err = s.cfg.File.Unzip(ctx, name); err != nil {
-		return "", errors.Wrap(err, "failed to unzip")
-	}
-
 	if s.cfg.File.Type(ctx, name) != fl.Bash {
-		return "", errors.Wrap(err, "invalid type")
+		return "", errors.New("invalid type")
 	}
 
 	return name, nil
