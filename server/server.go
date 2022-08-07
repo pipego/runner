@@ -4,11 +4,13 @@ import (
 	"context"
 	"math"
 	"net"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
+	fl "github.com/pipego/runner/file"
 	"github.com/pipego/runner/runner"
 	pb "github.com/pipego/runner/server/proto"
 )
@@ -38,6 +40,7 @@ type Server interface {
 
 type Config struct {
 	Addr   string
+	File   fl.File
 	Runner runner.Runner
 }
 
@@ -57,6 +60,10 @@ func DefaultConfig() *Config {
 }
 
 func (s *server) Init(ctx context.Context) error {
+	if err := s.initFile(ctx); err != nil {
+		return errors.Wrap(err, "failed to init file")
+	}
+
 	if err := s.initRunner(ctx); err != nil {
 		return errors.Wrap(err, "failed to init runner")
 	}
@@ -66,16 +73,33 @@ func (s *server) Init(ctx context.Context) error {
 
 func (s *server) Deinit(ctx context.Context) error {
 	_ = s.deinitRunner(ctx)
+	_ = s.deinitFile(ctx)
+
 	return nil
 }
 
-func (s *server) initRunner(ctx context.Context) error {
-	r := runner.DefaultConfig()
-	if r == nil {
+func (s *server) initFile(ctx context.Context) error {
+	c := fl.DefaultConfig()
+	if c == nil {
 		return errors.New("failed to config")
 	}
 
-	s.cfg.Runner = runner.New(ctx, r)
+	s.cfg.File = fl.New(ctx, c)
+
+	return s.cfg.File.Init(ctx)
+}
+
+func (s *server) deinitFile(ctx context.Context) error {
+	return s.cfg.File.Deinit(ctx)
+}
+
+func (s *server) initRunner(ctx context.Context) error {
+	c := runner.DefaultConfig()
+	if c == nil {
+		return errors.New("failed to config")
+	}
+
+	s.cfg.Runner = runner.New(ctx, c)
 
 	return s.cfg.Runner.Init(ctx)
 }
@@ -101,13 +125,29 @@ func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerS
 	}
 
 	name := in.GetSpec().GetTask().GetName()
-	args := in.GetSpec().GetTask().GetCommands()
+	file := in.GetSpec().GetTask().GetFile()
+	commands := in.GetSpec().GetTask().GetCommands()
 	timeout := s.setTimeout(in.GetSpec().GetTask().GetTimeout())
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	if err := s.cfg.Runner.Run(ctx, name, args, cancel); err != nil {
+	if len(file) != 0 && len(commands) != 0 {
+		return srv.Send(&pb.ServerReply{Error: "file and commands not supported meanwhile"})
+	}
+
+	if len(file) != 0 {
+		n, err := s.loadFile(ctx, file)
+		defer func(ctx context.Context, n string) {
+			_ = s.cfg.File.Remove(ctx, n)
+		}(ctx, n)
+		if err != nil {
+			return srv.Send(&pb.ServerReply{Error: "failed to load"})
+		}
+		commands = []string{"bash", n}
+	}
+
+	if err := s.cfg.Runner.Run(ctx, name, commands, cancel); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to run"})
 	}
 
@@ -150,4 +190,28 @@ func (s *server) setTimeout(timeout *pb.Timeout) time.Duration {
 	}
 
 	return time.Duration(t * u)
+}
+
+func (s *server) loadFile(ctx context.Context, data []byte) (string, error) {
+	suffix := time.Now().Format("20060102150405")
+	name := filepath.Join("tmp", "pipego-runner-file-"+suffix)
+
+	err := s.cfg.File.Write(ctx, name, data)
+	defer func(ctx context.Context, name string) {
+		_ = s.cfg.File.Remove(ctx, name)
+	}(ctx, name)
+
+	if err != nil {
+		return "", errors.Wrap(err, "failed to write")
+	}
+
+	if err = s.cfg.File.Unzip(ctx, name); err != nil {
+		return "", errors.Wrap(err, "failed to unzip")
+	}
+
+	if s.cfg.File.Type(ctx, name) != fl.Bash {
+		return "", errors.Wrap(err, "invalid type")
+	}
+
+	return name, nil
 }

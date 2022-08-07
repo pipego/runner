@@ -15,3 +15,8 @@ func TestInitRunner(t *testing.T) {
 	err := s.initRunner(context.Background())
 	assert.Equal(t, nil, err)
 }
+
+func TestLoadFile(t *testing.T) {
+	// TODO: TestLoadFile
+	assert.Equal(t, nil, nil)
+}

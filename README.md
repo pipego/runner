@@ -65,6 +65,7 @@ Flags:
   "spec": {
     "task": {
       "name": "task1",
+      "file": "base64.gzip",
       "commands": [
         "cmd1",
         "argv1"

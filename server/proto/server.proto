@@ -27,8 +27,9 @@ message Spec {
 
 message Task {
   string name = 1;
-  repeated string commands = 2;
-  Timeout timeout = 3;
+  bytes file = 2;
+  repeated string commands = 3;
+  Timeout timeout = 4;
 }
 
 message Timeout {
