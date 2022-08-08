@@ -213,16 +213,13 @@ func (s *server) loadFile(ctx context.Context, data []byte, gzip bool) (string, 
 	suffix := time.Now().Format(LAYOUT)
 	name := filepath.Join(string(os.PathSeparator), "tmp", "pipego-runner-file-"+suffix)
 
-	err = s.cfg.File.Write(ctx, name, buf)
-	defer func(ctx context.Context, name string) {
+	if err = s.cfg.File.Write(ctx, name, buf); err != nil {
 		_ = s.cfg.File.Remove(ctx, name)
-	}(ctx, name)
-
-	if err != nil {
 		return "", errors.Wrap(err, "failed to write")
 	}
 
 	if s.cfg.File.Type(ctx, name) != fl.Bash {
+		_ = s.cfg.File.Remove(ctx, name)
 		return "", errors.New("invalid type")
 	}
 
