@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	LEN  = 1024
 	PERM = 0755
 )
 

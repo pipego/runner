@@ -66,7 +66,7 @@ Flags:
     "task": {
       "name": "task",
       "file": {
-        "content": "bash",
+        "content": "bytes",
         "gzip": true
       },
       "commands": [
@@ -81,6 +81,17 @@ Flags:
   }
 }
 ```
+
+`file`: Script file in `Bash`
+
+- `content`: bytes
+
+  `Bash` shebang required as below:
+
+  - `#!/bin/bash`
+  - `#!/usr/bin/env bash`
+
+- `gzip`: bool
 
 `timeout`: Enforce time limit
 
