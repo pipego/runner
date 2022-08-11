@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"io"
 	"math"
 	"net"
 	"os"
@@ -124,22 +125,40 @@ func (s *server) Run(_ context.Context) error {
 	return g.Serve(lis)
 }
 
-func (s *server) SendServer(in *pb.ServerRequest, srv pb.ServerProto_SendServerServer) error {
-	if in.GetKind() != KIND {
-		return srv.Send(&pb.ServerReply{Error: "invalid kind"})
+func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
+	helper := func(srv pb.ServerProto_SendServerServer) (string, *pb.File, []string, error) {
+		var name string
+		var file *pb.File
+		var commands []string
+		for {
+			r, err := srv.Recv()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				return "", nil, nil, errors.Wrap(err, "failed to receive")
+			}
+			if r.Kind != KIND {
+				return "", nil, nil, errors.New("invalid kind")
+			}
+			name = r.Spec.Task.GetName()
+			file = r.Spec.Task.GetFile()
+			commands = r.Spec.Task.GetCommands()
+		}
+		return name, file, commands, nil
 	}
 
-	name := in.GetSpec().GetTask().GetName()
-	file := in.GetSpec().GetTask().GetFile()
-	commands := in.GetSpec().GetTask().GetCommands()
-	timeout := s.setTimeout(in.GetSpec().GetTask().GetTimeout())
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	name, file, commands, err := helper(srv)
+	if err != nil {
+		return srv.Send(&pb.ServerReply{Error: err.Error()})
+	}
 
 	if len(file.GetContent()) != 0 && len(commands) != 0 {
 		return srv.Send(&pb.ServerReply{Error: "file and commands not supported meanwhile"})
 	}
+
+	ctx, cancel := context.WithCancel(srv.Context())
+	defer cancel()
 
 	if len(file.GetContent()) != 0 {
 		n, err := s.loadFile(ctx, file.GetContent(), file.GetGzip())
@@ -178,23 +197,6 @@ L:
 	}
 
 	return nil
-}
-
-func (s *server) setTimeout(timeout *pb.Timeout) time.Duration {
-	t := int64(TIME)
-	u := int64(UnitMap[UNIT])
-
-	if timeout.Time != 0 {
-		t = timeout.Time
-	}
-
-	if timeout.Unit != "" {
-		if val, ok := UnitMap[timeout.Unit]; ok {
-			u = int64(val)
-		}
-	}
-
-	return time.Duration(t * u)
 }
 
 func (s *server) loadFile(ctx context.Context, data []byte, gzip bool) (string, error) {

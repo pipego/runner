@@ -6,7 +6,7 @@ package runner;
 
 // The service definition.
 service ServerProto {
-  rpc SendServer (ServerRequest) returns (stream ServerReply) {}
+  rpc SendServer (stream ServerRequest) returns (stream ServerReply) {}
 }
 
 // The request message.
@@ -29,17 +29,11 @@ message Task {
   string name = 1;
   File file = 2;
   repeated string commands = 3;
-  Timeout timeout = 4;
 }
 
 message File {
   bytes content = 1;
   bool gzip = 2;
-}
-
-message Timeout {
-  int64 time = 1;
-  string unit = 2;
 }
 
 // The response message.

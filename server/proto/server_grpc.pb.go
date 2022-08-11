@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ServerProtoClient interface {
-	SendServer(ctx context.Context, in *ServerRequest, opts ...grpc.CallOption) (ServerProto_SendServerClient, error)
+	SendServer(ctx context.Context, opts ...grpc.CallOption) (ServerProto_SendServerClient, error)
 }
 
 type serverProtoClient struct {
@@ -33,28 +33,27 @@ func NewServerProtoClient(cc grpc.ClientConnInterface) ServerProtoClient {
 	return &serverProtoClient{cc}
 }
 
-func (c *serverProtoClient) SendServer(ctx context.Context, in *ServerRequest, opts ...grpc.CallOption) (ServerProto_SendServerClient, error) {
+func (c *serverProtoClient) SendServer(ctx context.Context, opts ...grpc.CallOption) (ServerProto_SendServerClient, error) {
 	stream, err := c.cc.NewStream(ctx, &ServerProto_ServiceDesc.Streams[0], "/runner.ServerProto/SendServer", opts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &serverProtoSendServerClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
 	return x, nil
 }
 
 type ServerProto_SendServerClient interface {
+	Send(*ServerRequest) error
 	Recv() (*ServerReply, error)
 	grpc.ClientStream
 }
 
 type serverProtoSendServerClient struct {
 	grpc.ClientStream
+}
+
+func (x *serverProtoSendServerClient) Send(m *ServerRequest) error {
+	return x.ClientStream.SendMsg(m)
 }
 
 func (x *serverProtoSendServerClient) Recv() (*ServerReply, error) {
@@ -69,7 +68,7 @@ func (x *serverProtoSendServerClient) Recv() (*ServerReply, error) {
 // All implementations must embed UnimplementedServerProtoServer
 // for forward compatibility
 type ServerProtoServer interface {
-	SendServer(*ServerRequest, ServerProto_SendServerServer) error
+	SendServer(ServerProto_SendServerServer) error
 	mustEmbedUnimplementedServerProtoServer()
 }
 
@@ -77,7 +76,7 @@ type ServerProtoServer interface {
 type UnimplementedServerProtoServer struct {
 }
 
-func (UnimplementedServerProtoServer) SendServer(*ServerRequest, ServerProto_SendServerServer) error {
+func (UnimplementedServerProtoServer) SendServer(ServerProto_SendServerServer) error {
 	return status.Errorf(codes.Unimplemented, "method SendServer not implemented")
 }
 func (UnimplementedServerProtoServer) mustEmbedUnimplementedServerProtoServer() {}
@@ -94,15 +93,12 @@ func RegisterServerProtoServer(s grpc.ServiceRegistrar, srv ServerProtoServer) {
 }
 
 func _ServerProto_SendServer_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(ServerRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(ServerProtoServer).SendServer(m, &serverProtoSendServerServer{stream})
+	return srv.(ServerProtoServer).SendServer(&serverProtoSendServerServer{stream})
 }
 
 type ServerProto_SendServerServer interface {
 	Send(*ServerReply) error
+	Recv() (*ServerRequest, error)
 	grpc.ServerStream
 }
 
@@ -112,6 +108,14 @@ type serverProtoSendServerServer struct {
 
 func (x *serverProtoSendServerServer) Send(m *ServerReply) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func (x *serverProtoSendServerServer) Recv() (*ServerRequest, error) {
+	m := new(ServerRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // ServerProto_ServiceDesc is the grpc.ServiceDesc for ServerProto service.
@@ -126,6 +130,7 @@ var ServerProto_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "SendServer",
 			Handler:       _ServerProto_SendServer_Handler,
 			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "server/proto/server.proto",

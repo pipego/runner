@@ -72,11 +72,7 @@ Flags:
       "commands": [
         "cmd1",
         "argv1"
-      ],
-      "timeout": {
-        "time": 10,
-        "unit": "second"
-      }
+      ]
     }
   }
 }
@@ -86,24 +82,12 @@ Flags:
 
 - `content`: bytes
 
-  `Bash` shebang required as below:
+  The shebang of `Bash` SHOULD be one of below:
 
   - `#!/bin/bash`
   - `#!/usr/bin/env bash`
 
 - `gzip`: bool
-
-`timeout`: Enforce time limit
-
-- `time`: int
-
-  The length of time for which this task will wait before cancelling the commands.
-
-- `unit`: string
-
-  The unit of the time parameter.
-
-  **values**: `second`, `minute`, `hour`
 
 
 
