@@ -144,6 +144,7 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 			name = r.Spec.Task.GetName()
 			file = r.Spec.Task.GetFile()
 			commands = r.Spec.Task.GetCommands()
+			break
 		}
 		return name, file, commands, nil
 	}
