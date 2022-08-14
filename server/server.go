@@ -22,20 +22,7 @@ const (
 )
 
 const (
-	TIME = 12
-	UNIT = "hour"
-)
-
-const (
 	LAYOUT = "20060102150405"
-)
-
-var (
-	UnitMap = map[string]time.Duration{
-		"second": time.Second,
-		"minute": time.Minute,
-		"hour":   time.Hour,
-	}
 )
 
 type Server interface {
