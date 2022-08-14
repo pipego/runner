@@ -72,22 +72,27 @@ Flags:
       "commands": [
         "cmd1",
         "argv1"
-      ]
+      ],
+      "livelog": 5000
     }
   }
 }
 ```
 
-`file`: Script file in `Bash`
+`file`: Script file in Bash
 
 - `content`: bytes
 
-  The shebang of `Bash` SHOULD be one of below:
+  The shebang in `content` should be one of below:
 
   - `#!/bin/bash`
   - `#!/usr/bin/env bash`
 
 - `gzip`: bool
+
+`commands`: Command and arguments
+
+`livelog`: Maximum lines in livelog
 
 
 

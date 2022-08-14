@@ -94,11 +94,11 @@ func (s *server) initRunner(ctx context.Context) error {
 
 	s.cfg.Runner = runner.New(ctx, c)
 
-	return s.cfg.Runner.Init(ctx)
+	return nil
 }
 
 func (s *server) deinitRunner(ctx context.Context) error {
-	return s.cfg.Runner.Deinit(ctx)
+	return nil
 }
 
 func (s *server) Run(_ context.Context) error {
@@ -113,36 +113,17 @@ func (s *server) Run(_ context.Context) error {
 }
 
 func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
-	helper := func(srv pb.ServerProto_SendServerServer) (string, *pb.File, []string, error) {
-		var name string
-		var file *pb.File
-		var commands []string
-		for {
-			r, err := srv.Recv()
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-				return "", nil, nil, errors.Wrap(err, "failed to receive")
-			}
-			if r.Kind != KIND {
-				return "", nil, nil, errors.New("invalid kind")
-			}
-			name = r.Spec.Task.GetName()
-			file = r.Spec.Task.GetFile()
-			commands = r.Spec.Task.GetCommands()
-			break
-		}
-		return name, file, commands, nil
-	}
-
-	name, file, commands, err := helper(srv)
+	name, file, commands, livelog, err := s.recvClient(srv)
 	if err != nil {
 		return srv.Send(&pb.ServerReply{Error: err.Error()})
 	}
 
 	if len(file.GetContent()) != 0 && len(commands) != 0 {
 		return srv.Send(&pb.ServerReply{Error: "file and commands not supported meanwhile"})
+	}
+
+	if livelog <= 0 {
+		return srv.Send(&pb.ServerReply{Error: "invalid livelog"})
 	}
 
 	ctx, cancel := context.WithCancel(srv.Context())
@@ -159,6 +140,14 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 		commands = []string{"bash", n}
 	}
 
+	if err := s.cfg.Runner.Init(ctx, livelog); err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to init"})
+	}
+
+	defer func() {
+		_ = s.cfg.Runner.Deinit(ctx)
+	}()
+
 	if err := s.cfg.Runner.Run(ctx, name, commands, cancel); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to run"})
 	}
@@ -168,23 +157,47 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 L:
 	for {
 		select {
-		case line := <-log.Line:
-			_ = srv.Send(&pb.ServerReply{
-				Output: &pb.Output{
-					Pos:     line.Pos,
-					Time:    line.Time,
-					Message: line.Message,
-				},
-			})
 		case <-ctx.Done():
-			if err := ctx.Err(); err != nil {
-				// TODO: fmt.Println(err.Error())
-			}
 			break L
+		case line, ok := <-log.Line:
+			if ok {
+				_ = srv.Send(&pb.ServerReply{
+					Output: &pb.Output{
+						Pos:     line.Pos,
+						Time:    line.Time,
+						Message: line.Message,
+					}})
+			}
 		}
 	}
 
 	return nil
+}
+
+func (s *server) recvClient(srv pb.ServerProto_SendServerServer) (name string, file *pb.File, commands []string,
+	livelog int, err error) {
+	for {
+		r, err := srv.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return "", nil, nil, 0, errors.Wrap(err, "failed to receive")
+		}
+
+		if r.Kind != KIND {
+			return "", nil, nil, 0, errors.New("invalid kind")
+		}
+
+		name = r.Spec.Task.GetName()
+		file = r.Spec.Task.GetFile()
+		commands = r.Spec.Task.GetCommands()
+		livelog = int(r.Spec.Task.GetLivelog())
+
+		break
+	}
+
+	return name, file, commands, livelog, nil
 }
 
 func (s *server) loadFile(ctx context.Context, data []byte, gzip bool) (string, error) {

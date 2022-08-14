@@ -22,7 +22,7 @@ const (
 )
 
 type Runner interface {
-	Init(context.Context) error
+	Init(context.Context, int) error
 	Deinit(context.Context) error
 	Run(context.Context, string, []string, context.CancelFunc) error
 	Tail(ctx context.Context) Livelog
@@ -58,19 +58,22 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (r *runner) Init(_ context.Context) error {
+func (r *runner) Init(_ context.Context, log int) error {
+	l := LIVELOG
+
+	if log > 0 {
+		l = log
+	}
+
 	r.log = Livelog{
-		Error: make(chan error, LIVELOG),
-		Line:  make(chan *Line, LIVELOG),
+		Error: make(chan error, l),
+		Line:  make(chan *Line, l),
 	}
 
 	return nil
 }
 
 func (r *runner) Deinit(_ context.Context) error {
-	close(r.log.Line)
-	close(r.log.Error)
-
 	return nil
 }
 
@@ -114,14 +117,16 @@ func (r *runner) Tail(_ context.Context) Livelog {
 	return r.log
 }
 
-func (r *runner) routine(_ context.Context, scanner *bufio.Scanner) {
+func (r *runner) routine(ctx context.Context, scanner *bufio.Scanner) {
 	go func() {
 		p := 1
 		for scanner.Scan() {
-			r.log.Line <- &Line{
-				Pos: int64(p), Time: time.Now().Unix(), Message: scanner.Text(),
+			select {
+			case <-ctx.Done():
+				break
+			case r.log.Line <- &Line{Pos: int64(p), Time: time.Now().Unix(), Message: scanner.Text()}:
+				p += 1
 			}
-			p += 1
 		}
 	}()
 }

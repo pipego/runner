@@ -21,7 +21,7 @@ func TestRun(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err = r.Init(ctx)
+	err = r.Init(ctx, LIVELOG)
 	assert.Equal(t, nil, err)
 
 	err = r.Run(ctx, "", args, cancel)

@@ -29,6 +29,7 @@ message Task {
   string name = 1;
   File file = 2;
   repeated string commands = 3;
+  int64 livelog = 4;
 }
 
 message File {
