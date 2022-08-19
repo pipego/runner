@@ -60,11 +60,11 @@ func runServer(ctx context.Context, srv server.Server) error {
 		return errors.New("failed to init")
 	}
 
-	go func() {
+	go func(ctx context.Context, srv server.Server) {
 		if err := srv.Run(ctx); err != nil {
 			log.Fatalf("failed to run: %v", err)
 		}
-	}()
+	}(ctx, srv)
 
 	s := make(chan os.Signal, 1)
 
@@ -75,11 +75,11 @@ func runServer(ctx context.Context, srv server.Server) error {
 
 	done := make(chan bool, 1)
 
-	go func() {
+	go func(ctx context.Context, srv server.Server, s chan os.Signal, done chan bool) {
 		<-s
 		_ = srv.Deinit(ctx)
 		done <- true
-	}()
+	}(ctx, srv, s, done)
 
 	<-done
 
