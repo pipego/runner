@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	PERM = 0755
+	Perm = 0755
 )
 
 const (
@@ -84,7 +84,7 @@ func (f *file) Unzip(_ context.Context, data []byte) ([]byte, error) {
 }
 
 func (f *file) Write(_ context.Context, name string, data []byte) error {
-	file, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, PERM)
+	file, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, Perm)
 	if err != nil {
 		return errors.Wrap(err, "failed to open")
 	}

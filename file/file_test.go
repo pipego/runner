@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	FILE_INVALID = "file-invalid"
-	FILE_TEST    = "file-test"
+	FileInvalid = "file-invalid"
+	FileTest    = "file-test"
 )
 
 func initZip() ([]byte, error) {
@@ -62,14 +62,14 @@ func TestWrite(t *testing.T) {
 	ctx := context.Background()
 
 	buf := []byte("#!/bin/bash\necho \"Hello World!\"")
-	err := f.Write(ctx, FILE_TEST, buf)
+	err := f.Write(ctx, FileTest, buf)
 	assert.Equal(t, nil, err)
 
-	if _, err = os.Stat(FILE_TEST); errors.Is(err, os.ErrNotExist) {
+	if _, err = os.Stat(FileTest); errors.Is(err, os.ErrNotExist) {
 		assert.Error(t, err)
 	}
 
-	_ = f.Remove(ctx, FILE_TEST)
+	_ = f.Remove(ctx, FileTest)
 }
 
 func TestRemove(t *testing.T) {
@@ -80,11 +80,11 @@ func TestRemove(t *testing.T) {
 	ctx := context.Background()
 
 	buf := []byte("#!/bin/bash\necho \"Hello World!\"")
-	_ = f.Write(ctx, FILE_TEST, buf)
-	err := f.Remove(ctx, FILE_TEST)
+	_ = f.Write(ctx, FileTest, buf)
+	err := f.Remove(ctx, FileTest)
 	assert.Equal(t, nil, err)
 
-	err = f.Remove(ctx, FILE_INVALID)
+	err = f.Remove(ctx, FileInvalid)
 	assert.NotEqual(t, nil, err)
 }
 
@@ -96,23 +96,23 @@ func TestType(t *testing.T) {
 	ctx := context.Background()
 
 	buf := []byte("#!/bin/bash\necho \"Hello World!\"")
-	_ = f.Write(ctx, FILE_TEST, buf)
-	ret := f.Type(ctx, FILE_TEST)
+	_ = f.Write(ctx, FileTest, buf)
+	ret := f.Type(ctx, FileTest)
 	assert.Equal(t, Bash, ret)
-	_ = f.Remove(ctx, FILE_TEST)
+	_ = f.Remove(ctx, FileTest)
 
-	ret = f.Type(ctx, FILE_INVALID)
+	ret = f.Type(ctx, FileInvalid)
 	assert.Equal(t, Invalid, ret)
 
 	buf = []byte("")
-	_ = f.Write(ctx, FILE_TEST, buf)
-	ret = f.Type(ctx, FILE_TEST)
+	_ = f.Write(ctx, FileTest, buf)
+	ret = f.Type(ctx, FileTest)
 	assert.Equal(t, Invalid, ret)
-	_ = f.Remove(ctx, FILE_TEST)
+	_ = f.Remove(ctx, FileTest)
 
 	buf = []byte("#!/bin/sh")
-	_ = f.Write(ctx, FILE_TEST, buf)
-	ret = f.Type(ctx, FILE_TEST)
+	_ = f.Write(ctx, FileTest, buf)
+	ret = f.Type(ctx, FileTest)
 	assert.Equal(t, Invalid, ret)
-	_ = f.Remove(ctx, FILE_TEST)
+	_ = f.Remove(ctx, FileTest)
 }

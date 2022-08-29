@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	LIVELOG = 5000
+	Log = 5000
 )
 
 type Runner interface {
@@ -59,7 +59,7 @@ func DefaultConfig() *Config {
 }
 
 func (r *runner) Init(_ context.Context, log int) error {
-	l := LIVELOG
+	l := Log
 
 	if log > 0 {
 		l = log

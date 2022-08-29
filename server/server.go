@@ -18,11 +18,11 @@ import (
 )
 
 const (
-	KIND = "runner"
+	Kind = "runner"
 )
 
 const (
-	LAYOUT = "20060102150405"
+	Layout = "20060102150405"
 )
 
 type Server interface {
@@ -185,7 +185,7 @@ func (s *server) recvClient(srv pb.ServerProto_SendServerServer) (name string, f
 			return "", nil, nil, 0, errors.Wrap(err, "failed to receive")
 		}
 
-		if r.Kind != KIND {
+		if r.Kind != Kind {
 			return "", nil, nil, 0, errors.New("invalid kind")
 		}
 
@@ -213,7 +213,7 @@ func (s *server) loadFile(ctx context.Context, data []byte, gzip bool) (string, 
 		buf = data
 	}
 
-	suffix := time.Now().Format(LAYOUT)
+	suffix := time.Now().Format(Layout)
 	name := filepath.Join(string(os.PathSeparator), "tmp", "pipego-runner-file-"+suffix)
 
 	if err = s.cfg.File.Write(ctx, name, buf); err != nil {
