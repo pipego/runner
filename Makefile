@@ -20,7 +20,7 @@ lint: go-lint
 .PHONY: lint
 
 proto: go-proto
- .PHONY: proto
+.PHONY: proto
 
 test: go-test
 .PHONY: test
