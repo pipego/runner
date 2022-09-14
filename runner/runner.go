@@ -124,7 +124,7 @@ func (r *runner) routine(ctx context.Context, scanner *bufio.Scanner) {
 			select {
 			case <-ctx.Done():
 				break
-			case log.Line <- &Line{Pos: int64(p), Time: time.Now().Unix(), Message: scanner.Text()}:
+			case log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixMilli(), Message: scanner.Text()}:
 				p += 1
 			}
 		}
