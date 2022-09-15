@@ -102,7 +102,7 @@ func (r *runner) Run(ctx context.Context, _ string, args []string, cancel contex
 	scanner := bufio.NewScanner(reader)
 
 	_ = cmd.Start()
-	r.routine(ctx, scanner)
+	r.routine(ctx, scanner, cancel)
 
 	go func(cmd *exec.Cmd, _ context.CancelFunc) {
 		_ = cmd.Wait()
@@ -115,16 +115,15 @@ func (r *runner) Tail(_ context.Context) Livelog {
 	return r.log
 }
 
-func (r *runner) routine(ctx context.Context, scanner *bufio.Scanner) {
-	go func(ctx context.Context, scanner *bufio.Scanner, log Livelog) {
+func (r *runner) routine(ctx context.Context, scanner *bufio.Scanner, cancel context.CancelFunc) {
+	go func(_ context.Context, scanner *bufio.Scanner, log Livelog, cancel context.CancelFunc) {
 		p := 1
 		for scanner.Scan() {
 			select {
-			case <-ctx.Done():
-				break
 			case log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: scanner.Text()}:
 				p += 1
 			}
 		}
-	}(ctx, scanner, r.log)
+		cancel()
+	}(ctx, scanner, r.log, cancel)
 }

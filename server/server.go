@@ -155,6 +155,12 @@ L:
 	for {
 		select {
 		case <-ctx.Done():
+			_ = srv.Send(&pb.ServerReply{
+				Output: &pb.Output{
+					Pos:     0,
+					Time:    0,
+					Message: "EOF",
+				}})
 			break L
 		case line, ok := <-log.Line:
 			if ok {
