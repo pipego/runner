@@ -96,18 +96,16 @@ func (r *runner) Run(ctx context.Context, _ string, args []string, cancel contex
 	}
 
 	cmd := exec.CommandContext(ctx, n, a...)
-
-	reader, _ := cmd.StdoutPipe()
 	cmd.Stderr = cmd.Stdout
 
-	_ = cmd.Start()
-
+	reader, _ := cmd.StdoutPipe()
 	scanner := bufio.NewScanner(reader)
+
+	_ = cmd.Start()
 	r.routine(ctx, scanner)
 
-	go func(cmd *exec.Cmd, cancel context.CancelFunc) {
+	go func(cmd *exec.Cmd, _ context.CancelFunc) {
 		_ = cmd.Wait()
-		cancel()
 	}(cmd, cancel)
 
 	return nil

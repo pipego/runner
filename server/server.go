@@ -18,10 +18,7 @@ import (
 )
 
 const (
-	Kind = "runner"
-)
-
-const (
+	Kind   = "runner"
 	Layout = "20060102150405"
 )
 
