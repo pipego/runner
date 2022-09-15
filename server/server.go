@@ -145,7 +145,7 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 		_ = s.cfg.Runner.Deinit(ctx)
 	}()
 
-	if err := s.cfg.Runner.Run(ctx, name, commands, cancel); err != nil {
+	if err := s.cfg.Runner.Run(ctx, name, commands); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to run"})
 	}
 
@@ -155,12 +155,6 @@ L:
 	for {
 		select {
 		case <-ctx.Done():
-			_ = srv.Send(&pb.ServerReply{
-				Output: &pb.Output{
-					Pos:     0,
-					Time:    0,
-					Message: "EOF",
-				}})
 			break L
 		case line, ok := <-log.Line:
 			if ok {
@@ -170,6 +164,9 @@ L:
 						Time:    line.Time,
 						Message: line.Message,
 					}})
+				if line.Message == "EOF" {
+					break L
+				}
 			}
 		}
 	}

@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
-
-	"go.uber.org/goleak"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/goleak"
 )
 
 func TestRun(t *testing.T) {
@@ -18,21 +16,20 @@ func TestRun(t *testing.T) {
 
 	defer goleak.VerifyNone(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	err = r.Init(ctx, Log)
 	assert.Equal(t, nil, err)
 
-	err = r.Run(ctx, "", args, cancel)
+	err = r.Run(ctx, "", args)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"invalid"}
-	err = r.Run(ctx, "", args, cancel)
+	err = r.Run(ctx, "", args)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"echo", "task"}
-	err = r.Run(ctx, "", args, cancel)
+	err = r.Run(ctx, "", args)
 	assert.Equal(t, nil, err)
 
 	log := r.Tail(ctx)
@@ -44,9 +41,9 @@ L:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
 			fmt.Println("Message:", line.Message)
-			assert.Equal(t, "task", line.Message)
-		case <-ctx.Done():
-			break L
+			if line.Message == "EOF" {
+				break L
+			}
 		}
 	}
 

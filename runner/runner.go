@@ -24,7 +24,7 @@ const (
 type Runner interface {
 	Init(context.Context, int) error
 	Deinit(context.Context) error
-	Run(context.Context, string, []string, context.CancelFunc) error
+	Run(context.Context, string, []string) error
 	Tail(ctx context.Context) Livelog
 }
 
@@ -77,7 +77,7 @@ func (r *runner) Deinit(_ context.Context) error {
 	return nil
 }
 
-func (r *runner) Run(ctx context.Context, _ string, args []string, cancel context.CancelFunc) error {
+func (r *runner) Run(ctx context.Context, _ string, args []string) error {
 	var a []string
 	var n string
 	var err error
@@ -102,11 +102,11 @@ func (r *runner) Run(ctx context.Context, _ string, args []string, cancel contex
 	scanner := bufio.NewScanner(reader)
 
 	_ = cmd.Start()
-	r.routine(ctx, scanner, cancel)
+	r.routine(ctx, scanner)
 
-	go func(cmd *exec.Cmd, _ context.CancelFunc) {
+	go func(cmd *exec.Cmd) {
 		_ = cmd.Wait()
-	}(cmd, cancel)
+	}(cmd)
 
 	return nil
 }
@@ -115,8 +115,8 @@ func (r *runner) Tail(_ context.Context) Livelog {
 	return r.log
 }
 
-func (r *runner) routine(ctx context.Context, scanner *bufio.Scanner, cancel context.CancelFunc) {
-	go func(_ context.Context, scanner *bufio.Scanner, log Livelog, cancel context.CancelFunc) {
+func (r *runner) routine(ctx context.Context, scanner *bufio.Scanner) {
+	go func(_ context.Context, scanner *bufio.Scanner, log Livelog) {
 		p := 1
 		for scanner.Scan() {
 			select {
@@ -124,6 +124,6 @@ func (r *runner) routine(ctx context.Context, scanner *bufio.Scanner, cancel con
 				p += 1
 			}
 		}
-		cancel()
-	}(ctx, scanner, r.log, cancel)
+		log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: "EOF"}
+	}(ctx, scanner, r.log)
 }
