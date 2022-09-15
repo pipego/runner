@@ -95,14 +95,14 @@ func (r *runner) Run(ctx context.Context, _ string, args []string, cancel contex
 		return errors.New("name not found")
 	}
 
-	cmd := exec.Command(n, a...)
+	cmd := exec.CommandContext(ctx, n, a...)
 
-	// TODO: cmd.StderrPipe()
-	stdout, _ := cmd.StdoutPipe()
+	reader, _ := cmd.StdoutPipe()
+	cmd.Stderr = cmd.Stdout
 
 	_ = cmd.Start()
 
-	scanner := bufio.NewScanner(stdout)
+	scanner := bufio.NewScanner(reader)
 	r.routine(ctx, scanner)
 
 	go func(cmd *exec.Cmd, cancel context.CancelFunc) {
