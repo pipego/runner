@@ -35,7 +35,7 @@ func TestInitRunner(t *testing.T) {
 		cfg: DefaultConfig(),
 	}
 
-	err := s.initRunner(context.Background())
+	_, err := s.newRunner(context.Background())
 	assert.Equal(t, nil, err)
 }
 
@@ -46,20 +46,21 @@ func TestLoadUnzipped(t *testing.T) {
 
 	ctx := context.Background()
 
-	err := s.initFile(ctx)
+	f, err := s.newFile(ctx)
 	assert.Equal(t, nil, err)
 
 	buf := []byte("#!/bin/bash\necho \"Hello World!\"")
-	name, err := s.loadFile(ctx, buf, false)
+	name, err := s.loadFile(ctx, f, buf, false)
 	assert.Equal(t, nil, err)
 
 	if _, err = os.Stat(name); errors.Is(err, os.ErrNotExist) {
 		assert.Error(t, err)
 	}
-	_ = s.cfg.File.Remove(ctx, name)
+
+	_ = f.Remove(ctx, name)
 
 	buf = []byte("echo \"Hello World!\"")
-	_, err = s.loadFile(ctx, buf, false)
+	_, err = s.loadFile(ctx, f, buf, false)
 	assert.NotEqual(t, nil, err)
 }
 
@@ -70,27 +71,28 @@ func TestLoadZipped(t *testing.T) {
 
 	ctx := context.Background()
 
-	err := s.initFile(ctx)
+	f, err := s.newFile(ctx)
 	assert.Equal(t, nil, err)
 
 	buf := []byte("#!/bin/bash\necho \"Hello World!\"")
 	buf, err = initZip(buf)
 	assert.Equal(t, nil, err)
 
-	name, err := s.loadFile(ctx, buf, true)
+	name, err := s.loadFile(ctx, f, buf, true)
 	assert.Equal(t, nil, err)
 
 	if _, err = os.Stat(name); errors.Is(err, os.ErrNotExist) {
 		assert.Error(t, err)
 	}
-	_ = s.cfg.File.Remove(ctx, name)
+
+	_ = f.Remove(ctx, name)
 
 	buf = []byte("echo \"Hello World!\"")
 	buf, err = initZip(buf)
 	assert.Equal(t, nil, err)
 
-	name, err = s.loadFile(ctx, buf, true)
+	name, err = s.loadFile(ctx, f, buf, true)
 	assert.NotEqual(t, nil, err)
 
-	_ = s.cfg.File.Remove(ctx, name)
+	_ = f.Remove(ctx, name)
 }

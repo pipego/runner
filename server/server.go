@@ -29,9 +29,7 @@ type Server interface {
 }
 
 type Config struct {
-	Addr   string
-	File   fl.File
-	Runner runner.Runner
+	Addr string
 }
 
 type server struct {
@@ -50,51 +48,10 @@ func DefaultConfig() *Config {
 }
 
 func (s *server) Init(ctx context.Context) error {
-	if err := s.initFile(ctx); err != nil {
-		return errors.Wrap(err, "failed to init file")
-	}
-
-	if err := s.initRunner(ctx); err != nil {
-		return errors.Wrap(err, "failed to init runner")
-	}
-
 	return nil
 }
 
 func (s *server) Deinit(ctx context.Context) error {
-	_ = s.deinitRunner(ctx)
-	_ = s.deinitFile(ctx)
-
-	return nil
-}
-
-func (s *server) initFile(ctx context.Context) error {
-	c := fl.DefaultConfig()
-	if c == nil {
-		return errors.New("failed to config")
-	}
-
-	s.cfg.File = fl.New(ctx, c)
-
-	return s.cfg.File.Init(ctx)
-}
-
-func (s *server) deinitFile(ctx context.Context) error {
-	return s.cfg.File.Deinit(ctx)
-}
-
-func (s *server) initRunner(ctx context.Context) error {
-	c := runner.DefaultConfig()
-	if c == nil {
-		return errors.New("failed to config")
-	}
-
-	s.cfg.Runner = runner.New(ctx, c)
-
-	return nil
-}
-
-func (s *server) deinitRunner(ctx context.Context) error {
 	return nil
 }
 
@@ -109,6 +66,7 @@ func (s *server) Run(_ context.Context) error {
 	return g.Serve(lis)
 }
 
+// nolint: gocyclo
 func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 	name, file, commands, livelog, err := s.recvClient(srv)
 	if err != nil {
@@ -126,30 +84,45 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 	ctx, cancel := context.WithCancel(srv.Context())
 	defer cancel()
 
+	f, err := s.newFile(ctx)
+	if err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to new file"})
+	}
+
+	if err = f.Init(ctx); err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to init file"})
+	}
+
 	if len(file.GetContent()) != 0 {
-		n, err := s.loadFile(ctx, file.GetContent(), file.GetGzip())
+		n, e := s.loadFile(ctx, f, file.GetContent(), file.GetGzip())
 		defer func(ctx context.Context, n string) {
-			_ = s.cfg.File.Remove(ctx, n)
+			_ = f.Remove(ctx, n)
+			_ = f.Deinit(ctx)
 		}(ctx, n)
-		if err != nil {
-			return srv.Send(&pb.ServerReply{Error: "failed to load"})
+		if e != nil {
+			return srv.Send(&pb.ServerReply{Error: "failed to load file"})
 		}
 		commands = []string{"bash", n}
 	}
 
-	if err := s.cfg.Runner.Init(ctx, livelog); err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to init"})
+	r, err := s.newRunner(ctx)
+	if err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to new runner"})
+	}
+
+	if err := r.Init(ctx, livelog); err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to init runner"})
 	}
 
 	defer func() {
-		_ = s.cfg.Runner.Deinit(ctx)
+		_ = r.Deinit(ctx)
 	}()
 
-	if err := s.cfg.Runner.Run(ctx, name, commands); err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to run"})
+	if err := r.Run(ctx, name, commands); err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to run runner"})
 	}
 
-	log := s.cfg.Runner.Tail(ctx)
+	log := r.Tail(ctx)
 
 L:
 	for {
@@ -200,12 +173,21 @@ func (s *server) recvClient(srv pb.ServerProto_SendServerServer) (name string, f
 	return name, file, commands, livelog, nil
 }
 
-func (s *server) loadFile(ctx context.Context, data []byte, gzip bool) (string, error) {
+func (s *server) newFile(ctx context.Context) (fl.File, error) {
+	c := fl.DefaultConfig()
+	if c == nil {
+		return nil, errors.New("failed to config")
+	}
+
+	return fl.New(ctx, c), nil
+}
+
+func (s *server) loadFile(ctx context.Context, file fl.File, data []byte, gzip bool) (string, error) {
 	var buf []byte
 	var err error
 
 	if gzip {
-		buf, err = s.cfg.File.Unzip(ctx, data)
+		buf, err = file.Unzip(ctx, data)
 		if err != nil {
 			return "", errors.Wrap(err, "failed to unzip")
 		}
@@ -216,15 +198,24 @@ func (s *server) loadFile(ctx context.Context, data []byte, gzip bool) (string, 
 	suffix := time.Now().Format(Layout)
 	name := filepath.Join(string(os.PathSeparator), "tmp", "pipego-runner-file-"+suffix)
 
-	if err = s.cfg.File.Write(ctx, name, buf); err != nil {
-		_ = s.cfg.File.Remove(ctx, name)
+	if err = file.Write(ctx, name, buf); err != nil {
+		_ = file.Remove(ctx, name)
 		return "", errors.Wrap(err, "failed to write")
 	}
 
-	if s.cfg.File.Type(ctx, name) != fl.Bash {
-		_ = s.cfg.File.Remove(ctx, name)
+	if file.Type(ctx, name) != fl.Bash {
+		_ = file.Remove(ctx, name)
 		return "", errors.New("invalid type")
 	}
 
 	return name, nil
+}
+
+func (s *server) newRunner(ctx context.Context) (runner.Runner, error) {
+	c := runner.DefaultConfig()
+	if c == nil {
+		return nil, errors.New("failed to config")
+	}
+
+	return runner.New(ctx, c), nil
 }
