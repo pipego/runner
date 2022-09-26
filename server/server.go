@@ -93,11 +93,14 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 		return srv.Send(&pb.ServerReply{Error: "failed to init file"})
 	}
 
+	defer func(ctx context.Context) {
+		_ = f.Deinit(ctx)
+	}(ctx)
+
 	if len(file.GetContent()) != 0 {
 		n, e := s.loadFile(ctx, f, file.GetContent(), file.GetGzip())
 		defer func(ctx context.Context, n string) {
 			_ = f.Remove(ctx, n)
-			_ = f.Deinit(ctx)
 		}(ctx, n)
 		if e != nil {
 			return srv.Send(&pb.ServerReply{Error: "failed to load file"})
