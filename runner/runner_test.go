@@ -29,12 +29,8 @@ func TestRun(t *testing.T) {
 	err = r.Run(ctx, "", envs, args)
 	assert.NotEqual(t, nil, err)
 
-	args = []string{"echo", "task"}
-	err = r.Run(ctx, "", envs, args)
-	assert.Equal(t, nil, err)
-
 	envs = []string{"ENV1=task1", "ENV2=task2"}
-	args = []string{"echo", "$ENV1", "$ENV2"}
+	args = []string{"bash", "-c", "echo $ENV1 $ENV2"}
 	err = r.Run(ctx, "", envs, args)
 	assert.Equal(t, nil, err)
 

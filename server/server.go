@@ -105,7 +105,7 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 		if e != nil {
 			return srv.Send(&pb.ServerReply{Error: "failed to load file"})
 		}
-		commands = []string{"bash", n}
+		commands = []string{"bash", "-c", n}
 	}
 
 	r, err := s.newRunner(ctx)
