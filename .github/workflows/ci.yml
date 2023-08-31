@@ -39,7 +39,7 @@ jobs:
     strategy:
       matrix:
         golang:
-          - 1.18
+          - 1.19
     steps:
       - uses: actions/checkout@v2
         with:
