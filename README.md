@@ -69,9 +69,15 @@ Flags:
         "content": "bytes",
         "gzip": true
       },
+      "params": [
+        {
+          "name": "env",
+          "value": "val"
+        }
+      ],
       "commands": [
-        "cmd1",
-        "argv1"
+        "cmd",
+        "argv"
       ],
       "livelog": 5000
     }
@@ -90,7 +96,9 @@ Flags:
 
 - `gzip`: bool
 
-`commands`: Command and arguments
+`params`: Parameter and value
+
+`commands`: Command and argument
 
 `livelog`: Maximum lines in livelog
 

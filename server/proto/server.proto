@@ -28,13 +28,19 @@ message Spec {
 message Task {
   string name = 1;
   File file = 2;
-  repeated string commands = 3;
-  int64 livelog = 4;
+  repeated Param params = 3;
+  repeated string commands = 4;
+  int64 livelog = 5;
 }
 
 message File {
   bytes content = 1;
   bool gzip = 2;
+}
+
+message Param {
+  string name = 1;
+  string value = 2;
 }
 
 // The response message.

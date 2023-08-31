@@ -106,7 +106,9 @@ func (f *file) Remove(_ context.Context, name string) error {
 
 func (f *file) Type(_ context.Context, name string) int {
 	file, err := os.Open(name)
-	defer file.Close()
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
 
 	if err != nil {
 		return Invalid

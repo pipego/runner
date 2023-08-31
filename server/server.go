@@ -68,7 +68,7 @@ func (s *server) Run(_ context.Context) error {
 
 // nolint: gocyclo
 func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
-	name, file, commands, livelog, err := s.recvClient(srv)
+	name, file, params, commands, livelog, err := s.recvClient(srv)
 	if err != nil {
 		return srv.Send(&pb.ServerReply{Error: err.Error()})
 	}
@@ -121,7 +121,7 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 		_ = r.Deinit(ctx)
 	}()
 
-	if err := r.Run(ctx, name, commands); err != nil {
+	if err := r.Run(ctx, name, s.buildEnvs(ctx, params), commands); err != nil {
 		return srv.Send(&pb.ServerReply{Error: "failed to run runner"})
 	}
 
@@ -150,30 +150,32 @@ L:
 	return nil
 }
 
-func (s *server) recvClient(srv pb.ServerProto_SendServerServer) (name string, file *pb.File, commands []string,
-	livelog int, err error) {
+// nolint: gocritic
+func (s *server) recvClient(srv pb.ServerProto_SendServerServer) (name string, file *pb.File, params []*pb.Param,
+	commands []string, livelog int, err error) {
 	for {
 		r, err := srv.Recv()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return "", nil, nil, 0, errors.Wrap(err, "failed to receive")
+			return "", nil, nil, nil, 0, errors.Wrap(err, "failed to receive")
 		}
 
 		if r.Kind != Kind {
-			return "", nil, nil, 0, errors.New("invalid kind")
+			return "", nil, nil, nil, 0, errors.New("invalid kind")
 		}
 
 		name = r.Spec.Task.GetName()
 		file = r.Spec.Task.GetFile()
+		params = r.Spec.Task.GetParams()
 		commands = r.Spec.Task.GetCommands()
 		livelog = int(r.Spec.Task.GetLivelog())
 
 		break
 	}
 
-	return name, file, commands, livelog, nil
+	return name, file, params, commands, livelog, nil
 }
 
 func (s *server) newFile(ctx context.Context) (fl.File, error) {
@@ -221,4 +223,14 @@ func (s *server) newRunner(ctx context.Context) (runner.Runner, error) {
 	}
 
 	return runner.New(ctx, c), nil
+}
+
+func (s *server) buildEnvs(_ context.Context, params []*pb.Param) []string {
+	var buf []string
+
+	for _, item := range params {
+		buf = append(buf, item.GetName()+"="+item.GetValue())
+	}
+
+	return buf
 }

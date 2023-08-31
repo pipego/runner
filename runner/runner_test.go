@@ -11,6 +11,7 @@ import (
 
 func TestRun(t *testing.T) {
 	var args []string
+	var envs []string
 	var err error
 	var r runner
 
@@ -21,15 +22,20 @@ func TestRun(t *testing.T) {
 	err = r.Init(ctx, Log)
 	assert.Equal(t, nil, err)
 
-	err = r.Run(ctx, "", args)
+	err = r.Run(ctx, "", envs, args)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"invalid"}
-	err = r.Run(ctx, "", args)
+	err = r.Run(ctx, "", envs, args)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"echo", "task"}
-	err = r.Run(ctx, "", args)
+	err = r.Run(ctx, "", envs, args)
+	assert.Equal(t, nil, err)
+
+	envs = []string{"ENV1=task1", "ENV2=task2"}
+	args = []string{"echo", "$ENV1", "$ENV2"}
+	err = r.Run(ctx, "", envs, args)
 	assert.Equal(t, nil, err)
 
 	log := r.Tail(ctx)

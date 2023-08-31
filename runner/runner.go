@@ -24,7 +24,7 @@ const (
 type Runner interface {
 	Init(context.Context, int) error
 	Deinit(context.Context) error
-	Run(context.Context, string, []string) error
+	Run(context.Context, string, []string, []string) error
 	Tail(ctx context.Context) Livelog
 }
 
@@ -77,7 +77,7 @@ func (r *runner) Deinit(_ context.Context) error {
 	return nil
 }
 
-func (r *runner) Run(ctx context.Context, _ string, args []string) error {
+func (r *runner) Run(ctx context.Context, _ string, envs, args []string) error {
 	var a []string
 	var n string
 	var err error
@@ -96,6 +96,7 @@ func (r *runner) Run(ctx context.Context, _ string, args []string) error {
 	}
 
 	cmd := exec.CommandContext(ctx, n, a...)
+	cmd.Env = append(cmd.Environ(), envs...)
 	cmd.Stderr = cmd.Stdout
 
 	reader, _ := cmd.StdoutPipe()
