@@ -85,22 +85,23 @@ Flags:
 }
 ```
 
-`file`: Script file in Bash
+`task.file`: Script file in Bash
 
-- `content`: bytes
+`task.file.content`: bytes
 
-  The shebang in `content` should be one of below:
+> The shebang in `task.file.content` should be one of below:
+>
+> `#!/bin/bash`
+>
+> `#!/usr/bin/env bash`
 
-  - `#!/bin/bash`
-  - `#!/usr/bin/env bash`
+`task.file.gzip`: bool
 
-- `gzip`: bool
+`task.params`: Parameter and value
 
-`params`: Parameter and value
+`task.commands`: Command and argument
 
-`commands`: Command and argument
-
-`livelog`: Maximum lines in livelog
+`task.livelog`: Maximum lines in livelog
 
 
 
