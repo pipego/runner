@@ -55,6 +55,8 @@ Flags:
 
 ## Protobuf
 
+### 1. Task
+
 ```json
 {
   "apiVersion": "v1",
@@ -85,23 +87,149 @@ Flags:
 }
 ```
 
-`task.file`: Script file in Bash
-
-`task.file.content`: bytes
-
-> The shebang in `task.file.content` should be one of below:
+> `task.file`: script file in Bash
 >
-> `#!/bin/bash`
+> `task.file.content`: bytes
 >
-> `#!/usr/bin/env bash`
+> > The shebang in `task.file.content` should be one of below:
+> >
+> > `#!/bin/bash`
+> >
+> > `#!/usr/bin/env bash`
+>
+> `task.file.gzip`: boolean
+>
+> `task.params`: parameter and value
+>
+> `task.commands`: command and argument
+>
+> `task.livelog`: maximum lines in livelog
 
-`task.file.gzip`: bool
+**Output**
 
-`task.params`: Parameter and value
+```json
+{
+  "output": {
+    "pos": 1,
+    "time": "2023-10-01 00:00",
+    "message": "content"
+  },
+  "error": "content"
+}
+```
 
-`task.commands`: Command and argument
 
-`task.livelog`: Maximum lines in livelog
+
+### 2. Glance
+
+```json
+{
+  "apiVersion": "v1",
+  "kind": "runner",
+  "metadata": {
+    "name": "runner"
+  },
+  "spec": {
+    "glance": {
+      "dir": {
+        "path": "/path/to/dir"
+      },
+      "file": {
+        "maxSize": 1000,
+        "path": "/path/to/file"
+      },
+      "sys": {
+        "enable": true
+      }
+    }
+  }
+}
+```
+
+> `glance.dir`: list directory contents
+>
+> `glance.file`: fetch file content in base64
+>
+> `glance.file.maxSize`: maximum file size in bytes
+>
+> `glance.sys`: show system info
+>
+> `glance.sys.enable`: boolean
+
+**Output**
+
+```json
+{
+  "dir": {
+    "total": 10,
+    "entries": [
+      {
+        "group": "name",
+        "mode": "0744",
+        "name": "name",
+        "owner": "name",
+        "size": 1000,
+        "time": "2023-10-01 00:00",
+        "type": "f"
+      }
+    ]
+  },
+  "file": {
+    "content": "base64",
+    "readable": true
+  },
+  "sys": {
+    "resource": {
+      "allocatable": {
+        "milliCPU": 16000,
+        "memory": 12871671808,
+        "storage": 269490393088
+      },
+      "requested": {
+        "milliCPU": 12,
+        "memory": 618688512,
+        "storage": 19994185728
+      }
+    },
+    "stats": {
+      "cpu": {
+        "total": "16 CPU",
+        "used": "0%"
+      },
+      "ip": "172.23.179.208",
+      "memory": {
+        "total": "11 GB",
+        "used": "0 GB"
+      },
+      "os": "Ubuntu 20.04",
+      "storage": {
+        "total": "250 GB",
+        "used": "18 GB"
+      }
+    }
+  }
+}
+```
+
+> `dir.entries.type`: file type
+>
+> > The file type will be one of below:
+> >
+> > b: block (buffered) special
+> >
+> > c: character (unbuffered) special
+> >
+> > d: directory
+> >
+> > p: named pipe (FIFO)
+> >
+> > f: regular file
+> >
+> > l: symbolic link
+> >
+> > s: socket
+
+> `file.readable`: boolean
 
 
 
