@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc"
 
 	fl "github.com/pipego/runner/file"
-	"github.com/pipego/runner/runner"
 	pb "github.com/pipego/runner/server/proto"
+	"github.com/pipego/runner/task"
 )
 
 const (
@@ -111,24 +111,24 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 		commands = []string{"bash", "-c", n}
 	}
 
-	r, err := s.newRunner(ctx)
+	t, err := s.newTask(ctx)
 	if err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to new runner"})
+		return srv.Send(&pb.ServerReply{Error: "failed to new task"})
 	}
 
-	if err := r.Init(ctx, livelog); err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to init runner"})
+	if err := t.Init(ctx, livelog); err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to init task"})
 	}
 
 	defer func() {
-		_ = r.Deinit(ctx)
+		_ = t.Deinit(ctx)
 	}()
 
-	if err := r.Run(ctx, name, s.buildEnvs(ctx, params), commands); err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to run runner"})
+	if err := t.Run(ctx, name, s.buildEnvs(ctx, params), commands); err != nil {
+		return srv.Send(&pb.ServerReply{Error: "failed to run task"})
 	}
 
-	log := r.Tail(ctx)
+	log := t.Tail(ctx)
 
 L:
 	for {
@@ -219,13 +219,13 @@ func (s *server) loadFile(ctx context.Context, file fl.File, data []byte, gzip b
 	return name, nil
 }
 
-func (s *server) newRunner(ctx context.Context) (runner.Runner, error) {
-	c := runner.DefaultConfig()
+func (s *server) newTask(ctx context.Context) (task.Task, error) {
+	c := task.DefaultConfig()
 	if c == nil {
 		return nil, errors.New("failed to config")
 	}
 
-	return runner.New(ctx, c), nil
+	return task.New(ctx, c), nil
 }
 
 func (s *server) buildEnvs(_ context.Context, params []*pb.Param) []string {

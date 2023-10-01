@@ -1,10 +1,4 @@
-// Package runner implements a directed acyclic graph task runner with deterministic teardown.
-// it is similar to package errgroup, in that it runs multiple tasks in parallel and returns
-// the first error it encounters. Users define a Runner as a set vertices (functions) and edges
-// between them. During Run, the directed acyclec graph will be validated and each vertex
-// will run in parallel as soon as it's dependencies have been resolved. The Runner will only
-// return after all running goroutines have stopped.
-package runner
+package task
 
 import (
 	"bufio"
@@ -21,7 +15,7 @@ const (
 	Log = 5000
 )
 
-type Runner interface {
+type Task interface {
 	Init(context.Context, int) error
 	Deinit(context.Context) error
 	Run(context.Context, string, []string, []string) error
@@ -43,13 +37,13 @@ type Line struct {
 	Message string
 }
 
-type runner struct {
+type task struct {
 	cfg *Config
 	log Livelog
 }
 
-func New(_ context.Context, cfg *Config) Runner {
-	return &runner{
+func New(_ context.Context, cfg *Config) Task {
+	return &task{
 		cfg: cfg,
 	}
 }
@@ -58,14 +52,14 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (r *runner) Init(_ context.Context, log int) error {
+func (t *task) Init(_ context.Context, log int) error {
 	l := Log
 
 	if log > 0 {
 		l = log
 	}
 
-	r.log = Livelog{
+	t.log = Livelog{
 		Error: make(chan error, l),
 		Line:  make(chan *Line, l),
 	}
@@ -73,11 +67,11 @@ func (r *runner) Init(_ context.Context, log int) error {
 	return nil
 }
 
-func (r *runner) Deinit(_ context.Context) error {
+func (t *task) Deinit(_ context.Context) error {
 	return nil
 }
 
-func (r *runner) Run(ctx context.Context, _ string, envs, args []string) error {
+func (t *task) Run(ctx context.Context, _ string, envs, args []string) error {
 	var a []string
 	var n string
 	var err error
@@ -103,7 +97,7 @@ func (r *runner) Run(ctx context.Context, _ string, envs, args []string) error {
 	scanner := bufio.NewScanner(reader)
 
 	_ = cmd.Start()
-	r.routine(ctx, scanner)
+	t.routine(ctx, scanner)
 
 	go func(cmd *exec.Cmd) {
 		_ = cmd.Wait()
@@ -112,11 +106,11 @@ func (r *runner) Run(ctx context.Context, _ string, envs, args []string) error {
 	return nil
 }
 
-func (r *runner) Tail(_ context.Context) Livelog {
-	return r.log
+func (t *task) Tail(_ context.Context) Livelog {
+	return t.log
 }
 
-func (r *runner) routine(ctx context.Context, scanner *bufio.Scanner) {
+func (t *task) routine(ctx context.Context, scanner *bufio.Scanner) {
 	go func(_ context.Context, scanner *bufio.Scanner, log Livelog) {
 		p := 1
 		for scanner.Scan() {
@@ -126,5 +120,5 @@ func (r *runner) routine(ctx context.Context, scanner *bufio.Scanner) {
 			}
 		}
 		log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: "EOF"}
-	}(ctx, scanner, r.log)
+	}(ctx, scanner, t.log)
 }

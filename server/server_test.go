@@ -30,12 +30,12 @@ func initZip(data []byte) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func TestInitRunner(t *testing.T) {
+func TestInitTask(t *testing.T) {
 	s := server{
 		cfg: DefaultConfig(),
 	}
 
-	_, err := s.newRunner(context.Background())
+	_, err := s.newTask(context.Background())
 	assert.Equal(t, nil, err)
 }
 

@@ -1,4 +1,4 @@
-package runner
+package task
 
 import (
 	"context"
@@ -13,28 +13,28 @@ func TestRun(t *testing.T) {
 	var args []string
 	var envs []string
 	var err error
-	var r runner
+	var _t task
 
 	defer goleak.VerifyNone(t)
 
 	ctx := context.Background()
 
-	err = r.Init(ctx, Log)
+	err = _t.Init(ctx, Log)
 	assert.Equal(t, nil, err)
 
-	err = r.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"invalid"}
-	err = r.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args)
 	assert.NotEqual(t, nil, err)
 
 	envs = []string{"ENV1=task1", "ENV2=task2"}
 	args = []string{"bash", "-c", "echo $ENV1 $ENV2"}
-	err = r.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args)
 	assert.Equal(t, nil, err)
 
-	log := r.Tail(ctx)
+	log := _t.Tail(ctx)
 
 L:
 	for {
@@ -49,6 +49,6 @@ L:
 		}
 	}
 
-	err = r.Deinit(ctx)
+	err = _t.Deinit(ctx)
 	assert.Equal(t, nil, err)
 }
