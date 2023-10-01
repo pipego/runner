@@ -68,18 +68,18 @@ func (s *server) Run(_ context.Context) error {
 }
 
 // nolint: gocyclo
-func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
-	name, file, params, commands, livelog, err := s.recvClient(srv)
+func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
+	name, file, params, commands, livelog, err := s.recvTask(srv)
 	if err != nil {
-		return srv.Send(&pb.ServerReply{Error: err.Error()})
+		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	if len(file.GetContent()) != 0 && len(commands) != 0 {
-		return srv.Send(&pb.ServerReply{Error: "file and commands not supported meanwhile"})
+		return srv.Send(&pb.TaskReply{Error: "file and commands not supported meanwhile"})
 	}
 
 	if livelog <= 0 {
-		return srv.Send(&pb.ServerReply{Error: "invalid livelog"})
+		return srv.Send(&pb.TaskReply{Error: "invalid livelog"})
 	}
 
 	ctx, cancel := context.WithCancel(srv.Context())
@@ -87,11 +87,11 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 
 	f, err := s.newFile(ctx)
 	if err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to new file"})
+		return srv.Send(&pb.TaskReply{Error: "failed to new file"})
 	}
 
 	if err = f.Init(ctx); err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to init file"})
+		return srv.Send(&pb.TaskReply{Error: "failed to init file"})
 	}
 
 	defer func(ctx context.Context) {
@@ -106,18 +106,18 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 			_ = f.Remove(ctx, n)
 		}(ctx, n)
 		if e != nil {
-			return srv.Send(&pb.ServerReply{Error: "failed to load file"})
+			return srv.Send(&pb.TaskReply{Error: "failed to load file"})
 		}
 		commands = []string{"bash", "-c", n}
 	}
 
 	t, err := s.newTask(ctx)
 	if err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to new task"})
+		return srv.Send(&pb.TaskReply{Error: "failed to new task"})
 	}
 
 	if err := t.Init(ctx, livelog); err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to init task"})
+		return srv.Send(&pb.TaskReply{Error: "failed to init task"})
 	}
 
 	defer func() {
@@ -125,7 +125,7 @@ func (s *server) SendServer(srv pb.ServerProto_SendServerServer) error {
 	}()
 
 	if err := t.Run(ctx, name, s.buildEnvs(ctx, params), commands); err != nil {
-		return srv.Send(&pb.ServerReply{Error: "failed to run task"})
+		return srv.Send(&pb.TaskReply{Error: "failed to run task"})
 	}
 
 	log := t.Tail(ctx)
@@ -137,8 +137,8 @@ L:
 			break L
 		case line, ok := <-log.Line:
 			if ok {
-				_ = srv.Send(&pb.ServerReply{
-					Output: &pb.Output{
+				_ = srv.Send(&pb.TaskReply{
+					Output: &pb.TaskOutput{
 						Pos:     line.Pos,
 						Time:    line.Time,
 						Message: line.Message,
@@ -154,7 +154,7 @@ L:
 }
 
 // nolint: gocritic
-func (s *server) recvClient(srv pb.ServerProto_SendServerServer) (name string, file *pb.File, params []*pb.Param,
+func (s *server) recvTask(srv pb.ServerProto_SendTaskServer) (name string, file *pb.TaskFile, params []*pb.TaskParam,
 	commands []string, livelog int, err error) {
 	for {
 		r, err := srv.Recv()
@@ -228,7 +228,7 @@ func (s *server) newTask(ctx context.Context) (task.Task, error) {
 	return task.New(ctx, c), nil
 }
 
-func (s *server) buildEnvs(_ context.Context, params []*pb.Param) []string {
+func (s *server) buildEnvs(_ context.Context, params []*pb.TaskParam) []string {
 	var buf []string
 
 	for _, item := range params {

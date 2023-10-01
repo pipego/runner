@@ -196,7 +196,7 @@ Flags:
         "total": "16 CPU",
         "used": "0%"
       },
-      "ip": "172.23.179.208",
+      "host": "172.23.179.208",
       "memory": {
         "total": "11 GB",
         "used": "0 GB"
