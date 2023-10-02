@@ -119,11 +119,15 @@ func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, 
 func (g *glance) entry(ent os.DirEntry) Entry {
 	i, _ := ent.Info()
 	t := i.ModTime()
-	s, _ := os.Stat(ent.Name())
+
 	uid := i.Sys().(*syscall.Stat_t).Uid
 	_user, _ := user.LookupId(strconv.FormatUint(uint64(uid), Base))
+
 	gid := i.Sys().(*syscall.Stat_t).Gid
 	_group, _ := user.LookupGroupId(strconv.FormatUint(uint64(gid), Base))
+
+	s, _ := os.Stat(ent.Name())
+
 	return Entry{
 		Name:  ent.Name(),
 		IsDir: i.IsDir(),
