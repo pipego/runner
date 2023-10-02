@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"os"
+	"os/user"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -33,7 +36,7 @@ const (
 type Glance interface {
 	Init(context.Context) error
 	Deinit(context.Context) error
-	Dir(context.Context, string) (int, []Entries, error)
+	Dir(context.Context, string) ([]Entry, error)
 	File(context.Context, string, int) (bool, string, error)
 	Sys(context.Context) (Resource, Resource, Stats, Stats, Stats, string, string, error)
 }
@@ -42,14 +45,14 @@ type Config struct {
 	Config config.Config
 }
 
-type Entries struct {
+type Entry struct {
+	Name  string `json:"name"`
+	IsDir bool   `json:"isDir"`
+	Size  int64  `json:"size"`
+	Time  string `json:"time"`
+	User  string `json:"user"`
 	Group string `json:"group"`
 	Mode  string `json:"mode"`
-	Name  string `json:"name"`
-	Owner string `json:"owner"`
-	Size  int    `json:"size"`
-	Time  string `json:"time"`
-	Type  string `json:"type"`
 }
 
 type Resource struct {
@@ -78,18 +81,21 @@ func DefaultConfig() *Config {
 }
 
 func (g *glance) Init(_ context.Context) error {
-	// TODO: FIXME
 	return nil
 }
 
 func (g *glance) Deinit(_ context.Context) error {
-	// TODO: FIXME
 	return nil
 }
 
-func (g *glance) Dir(_ context.Context, path string) (total int, entries []Entries, err error) {
-	// TODO: FIXME
-	return 0, nil, nil
+func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error) {
+	buf, err := os.ReadDir(path)
+
+	for _, item := range buf {
+		entries = append(entries, g.entry(item))
+	}
+
+	return entries, err
 }
 
 func (g *glance) File(_ context.Context, path string, maxSize int) (readable bool, content string, err error) {
@@ -99,19 +105,34 @@ func (g *glance) File(_ context.Context, path string, maxSize int) (readable boo
 
 // nolint: gocritic
 func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, _memory, _storage Stats, _host, _os string, err error) {
-	// TODO: FIXME
-	return allocatable, requested, _cpu, _memory, _storage, "", "", nil
+	allocatable.MilliCPU, requested.MilliCPU = g.milliCPU()
+	allocatable.Memory, requested.Memory = g.memory()
+	allocatable.Storage, requested.Storage = g.storage()
+
+	_cpu, _memory, _storage = g.stats(allocatable, requested)
+	_host = g._host()
+	_os = g._os()
+
+	return allocatable, requested, _cpu, _memory, _storage, _host, _os, nil
 }
 
-func (g *glance) _host() string {
-	conn, _ := net.Dial("udp", "8.8.8.8:8")
-	defer func(conn net.Conn) {
-		_ = conn.Close()
-	}(conn)
-
-	buf := conn.LocalAddr().(*net.UDPAddr)
-
-	return strings.Split(buf.String(), ":")[0]
+func (g *glance) entry(ent os.DirEntry) Entry {
+	i, _ := ent.Info()
+	t := i.ModTime()
+	s, _ := os.Stat(ent.Name())
+	uid := i.Sys().(*syscall.Stat_t).Uid
+	_user, _ := user.LookupId(strconv.FormatUint(uint64(uid), Base))
+	gid := i.Sys().(*syscall.Stat_t).Gid
+	_group, _ := user.LookupGroupId(strconv.FormatUint(uint64(gid), Base))
+	return Entry{
+		Name:  ent.Name(),
+		IsDir: i.IsDir(),
+		Size:  i.Size(),
+		Time:  t.Format("2006-01-02 15:04:05"),
+		User:  _user.Name,
+		Group: _group.Name,
+		Mode:  s.Mode().String(),
+	}
 }
 
 func (g *glance) milliCPU() (alloc, request int64) {
@@ -188,13 +209,9 @@ func (g *glance) storage() (alloc, request int64) {
 	return int64(total), int64(used)
 }
 
-func (g *glance) stats(alloc, req Resource) (_cpu, memory, storage Stats, _os string) {
+func (g *glance) stats(alloc, req Resource) (_cpu, memory, storage Stats) {
 	_cpu.Total = strconv.FormatInt(alloc.MilliCPU/Milli, Base) + " CPU"
 	_cpu.Used = strconv.FormatInt(req.MilliCPU*100/alloc.MilliCPU, Base) + "%"
-
-	info, _ := host.Info()
-	caser := cases.Title(language.BrazilianPortuguese)
-	_os = fmt.Sprintf("%s %s", caser.String(info.Platform), info.PlatformVersion)
 
 	memory.Total = strconv.FormatInt(alloc.Memory>>Bitwise, Base) + " GB"
 	memory.Used = strconv.FormatInt(req.Memory>>Bitwise, Base) + " GB"
@@ -202,5 +219,23 @@ func (g *glance) stats(alloc, req Resource) (_cpu, memory, storage Stats, _os st
 	storage.Total = strconv.FormatInt(alloc.Storage>>Bitwise, Base) + " GB"
 	storage.Used = strconv.FormatInt(req.Storage>>Bitwise, Base) + " GB"
 
-	return _cpu, memory, storage, _os
+	return _cpu, memory, storage
+}
+
+func (g *glance) _host() string {
+	conn, _ := net.Dial("udp", "8.8.8.8:8")
+	defer func(conn net.Conn) {
+		_ = conn.Close()
+	}(conn)
+
+	buf := conn.LocalAddr().(*net.UDPAddr)
+
+	return strings.Split(buf.String(), ":")[0]
+}
+
+func (g *glance) _os() string {
+	info, _ := host.Info()
+	caser := cases.Title(language.BrazilianPortuguese)
+
+	return fmt.Sprintf("%s %s", caser.String(info.Platform), info.PlatformVersion)
 }

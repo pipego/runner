@@ -94,18 +94,17 @@ message GlanceReply {
 }
 
 message GlanceDirRep {
-  int64 total = 1;
   repeated GlanceEntry entries = 2;
 }
 
 message GlanceEntry {
-  string group = 1;
-  string mode = 2;
-  string name = 3;
-  string owner = 4;
-  int64 size = 5;
-  string time = 6;
-  string type = 7;
+  string name = 1;
+  bool isDir = 2;
+  int64 size = 3;
+  string time = 4;
+  string user = 5;
+  string group = 6;
+  string mode = 7;
 }
 
 message GlanceFileRep {

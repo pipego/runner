@@ -111,10 +111,10 @@ Flags:
 {
   "output": {
     "pos": 1,
-    "time": "2023-10-01 00:00",
-    "message": "content"
+    "time": "1136214245000000000",
+    "message": "text"
   },
-  "error": "content"
+  "error": "text"
 }
 ```
 
@@ -161,16 +161,15 @@ Flags:
 ```json
 {
   "dir": {
-    "total": 10,
     "entries": [
       {
-        "group": "name",
-        "mode": "0744",
         "name": "name",
-        "owner": "name",
+        "isDir": true,
         "size": 1000,
-        "time": "2023-10-01 00:00",
-        "type": "f"
+        "time": "2006-01-02 15:04:05",
+        "user": "name",
+        "group": "name",
+        "mode": "drwxr-xr-x"
       }
     ]
   },
@@ -210,26 +209,6 @@ Flags:
   }
 }
 ```
-
-> `dir.entries.type`: file type
->
-> > The file type will be one of below:
-> >
-> > b: block (buffered) special
-> >
-> > c: character (unbuffered) special
-> >
-> > d: directory
-> >
-> > p: named pipe (FIFO)
-> >
-> > f: regular file
-> >
-> > l: symbolic link
-> >
-> > s: socket
-
-> `file.readable`: boolean
 
 
 
