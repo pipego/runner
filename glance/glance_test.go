@@ -20,7 +20,7 @@ func TestDir(t *testing.T) {
 
 	entries, err := g.Dir(ctx, "/")
 	assert.Equal(t, nil, err)
-	assert.LessOrEqual(t, 2, len(entries))
+	assert.Less(t, 2, len(entries))
 }
 
 func TestFile(t *testing.T) {
