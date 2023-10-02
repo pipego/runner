@@ -91,24 +91,22 @@ func (g *glance) Deinit(_ context.Context) error {
 }
 
 func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error) {
-	if s, err := os.Stat(path); err != nil {
-		return entries, err
-	} else {
-		if s.IsDir() == false {
-			return entries, errors.New("invalid directory")
-		}
+	if stat, e := os.Stat(path); e != nil {
+		return entries, e
+	} else if stat.IsDir() == false {
+		return entries, errors.New("invalid directory")
 	}
 
-	if e, err := g.entry(filepath.Join(path, ".")); err == nil {
-		entries = append(entries, e)
+	if ent, e := g.entry(filepath.Join(path, ".")); e == nil {
+		entries = append(entries, ent)
 	} else {
-		return entries, err
+		return entries, e
 	}
 
-	if e, err := g.entry(filepath.Join(path, "..")); err == nil {
-		entries = append(entries, e)
+	if ent, e := g.entry(filepath.Join(path, "..")); e == nil {
+		entries = append(entries, ent)
 	} else {
-		return entries, err
+		return entries, e
 	}
 
 	buf, err := os.ReadDir(path)
@@ -117,12 +115,12 @@ func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error
 	}
 
 	for _, item := range buf {
-		if e, err := g.entry(item.Name()); err == nil {
-			entries = append(entries, e)
+		if ent, e := g.entry(item.Name()); e == nil {
+			entries = append(entries, ent)
 		}
 	}
 
-	return entries, err
+	return entries, nil
 }
 
 func (g *glance) File(_ context.Context, path string, maxSize int) (readable bool, content string, err error) {
