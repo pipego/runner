@@ -120,11 +120,19 @@ func (g *glance) entry(ent os.DirEntry) Entry {
 	i, _ := ent.Info()
 	t := i.ModTime()
 
-	uid := i.Sys().(*syscall.Stat_t).Uid
-	_user, _ := user.LookupId(strconv.FormatUint(uint64(uid), Base))
+	uid := strconv.FormatUint(uint64(i.Sys().(*syscall.Stat_t).Uid), Base)
+	_user, _ := user.LookupId(uid)
+	uname := _user.Name
+	if uname == "" {
+		uname = uid
+	}
 
-	gid := i.Sys().(*syscall.Stat_t).Gid
-	_group, _ := user.LookupGroupId(strconv.FormatUint(uint64(gid), Base))
+	gid := strconv.FormatUint(uint64(i.Sys().(*syscall.Stat_t).Gid), Base)
+	_group, _ := user.LookupGroupId(gid)
+	gname := _group.Name
+	if gname == "" {
+		gname = gid
+	}
 
 	s, _ := os.Stat(ent.Name())
 
@@ -133,8 +141,8 @@ func (g *glance) entry(ent os.DirEntry) Entry {
 		IsDir: i.IsDir(),
 		Size:  i.Size(),
 		Time:  t.Format("2006-01-02 15:04:05"),
-		User:  _user.Name,
-		Group: _group.Name,
+		User:  uname,
+		Group: gname,
 		Mode:  s.Mode().String(),
 	}
 }
