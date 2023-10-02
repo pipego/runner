@@ -1,11 +1,52 @@
 package glance
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestDir(t *testing.T) {
+	g := glance{
+		cfg: DefaultConfig(),
+	}
+
+	ctx := context.Background()
+
+	_, err := g.Dir(ctx, "/path/to/invalid")
+	assert.NotEqual(t, nil, err)
+
+	entries, err := g.Dir(ctx, "/")
+	assert.Equal(t, nil, err)
+	assert.LessOrEqual(t, 2, len(entries))
+}
+
+func TestFile(t *testing.T) {
+	// TODO: FIXME
+}
+
+func TestSys(t *testing.T) {
+	g := glance{
+		cfg: DefaultConfig(),
+	}
+
+	ctx := context.Background()
+
+	alloc, request, _cpu, _memory, _storage, _host, _os, _ := g.Sys(ctx)
+	assert.NotEqual(t, -1, alloc.MilliCPU)
+	assert.NotEqual(t, -1, alloc.Memory)
+	assert.NotEqual(t, -1, alloc.Storage)
+	assert.NotEqual(t, -1, request.MilliCPU)
+	assert.NotEqual(t, -1, request.Memory)
+	assert.NotEqual(t, -1, request.Storage)
+	assert.NotEqual(t, nil, _cpu)
+	assert.NotEqual(t, nil, _memory)
+	assert.NotEqual(t, nil, _storage)
+	assert.NotEqual(t, "", _host)
+	assert.NotEqual(t, "", _os)
+}
 
 func TestEntry(t *testing.T) {
 	g := glance{
