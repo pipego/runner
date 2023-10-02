@@ -7,11 +7,13 @@ import (
 	"net"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/host"
@@ -89,10 +91,35 @@ func (g *glance) Deinit(_ context.Context) error {
 }
 
 func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error) {
+	if s, err := os.Stat(path); err != nil {
+		return entries, err
+	} else {
+		if s.IsDir() == false {
+			return entries, errors.New("invalid directory")
+		}
+	}
+
+	if e, err := g.entry(filepath.Join(path, ".")); err == nil {
+		entries = append(entries, e)
+	} else {
+		return entries, err
+	}
+
+	if e, err := g.entry(filepath.Join(path, "..")); err == nil {
+		entries = append(entries, e)
+	} else {
+		return entries, err
+	}
+
 	buf, err := os.ReadDir(path)
+	if err != nil {
+		return entries, err
+	}
 
 	for _, item := range buf {
-		entries = append(entries, g.entry(item.Name()))
+		if e, err := g.entry(item.Name()); err == nil {
+			entries = append(entries, e)
+		}
 	}
 
 	return entries, err
@@ -116,8 +143,11 @@ func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, 
 	return allocatable, requested, _cpu, _memory, _storage, _host, _os, nil
 }
 
-func (g *glance) entry(name string) Entry {
-	s, _ := os.Stat(name)
+func (g *glance) entry(name string) (Entry, error) {
+	s, err := os.Stat(name)
+	if err != nil {
+		return Entry{}, err
+	}
 
 	uid := strconv.FormatUint(uint64(s.Sys().(*syscall.Stat_t).Uid), Base)
 	_user, _ := user.LookupId(uid)
@@ -141,7 +171,7 @@ func (g *glance) entry(name string) Entry {
 		User:  uname,
 		Group: gname,
 		Mode:  s.Mode().String(),
-	}
+	}, nil
 }
 
 func (g *glance) milliCPU() (alloc, request int64) {

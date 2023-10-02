@@ -16,7 +16,7 @@ func TestEntry(t *testing.T) {
 	buf, _ := os.ReadDir(d)
 
 	for _, item := range buf {
-		e := g.entry(item.Name())
+		e, _ := g.entry(item.Name())
 		assert.NotEqual(t, "", e.Name)
 		assert.NotEqual(t, "", e.Time)
 		assert.NotEqual(t, "", e.User)
