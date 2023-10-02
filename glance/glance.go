@@ -92,7 +92,7 @@ func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error
 	buf, err := os.ReadDir(path)
 
 	for _, item := range buf {
-		entries = append(entries, g.entry(item))
+		entries = append(entries, g.entry(item.Name()))
 	}
 
 	return entries, err
@@ -116,31 +116,28 @@ func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, 
 	return allocatable, requested, _cpu, _memory, _storage, _host, _os, nil
 }
 
-func (g *glance) entry(ent os.DirEntry) Entry {
-	i, _ := ent.Info()
-	t := i.ModTime()
+func (g *glance) entry(name string) Entry {
+	s, _ := os.Stat(name)
 
-	uid := strconv.FormatUint(uint64(i.Sys().(*syscall.Stat_t).Uid), Base)
+	uid := strconv.FormatUint(uint64(s.Sys().(*syscall.Stat_t).Uid), Base)
 	_user, _ := user.LookupId(uid)
 	uname := _user.Name
 	if uname == "" {
 		uname = uid
 	}
 
-	gid := strconv.FormatUint(uint64(i.Sys().(*syscall.Stat_t).Gid), Base)
+	gid := strconv.FormatUint(uint64(s.Sys().(*syscall.Stat_t).Gid), Base)
 	_group, _ := user.LookupGroupId(gid)
 	gname := _group.Name
 	if gname == "" {
 		gname = gid
 	}
 
-	s, _ := os.Stat(ent.Name())
-
 	return Entry{
-		Name:  ent.Name(),
-		IsDir: i.IsDir(),
-		Size:  i.Size(),
-		Time:  t.Format("2006-01-02 15:04:05"),
+		Name:  name,
+		IsDir: s.IsDir(),
+		Size:  s.Size(),
+		Time:  s.ModTime().Format("2006-01-02 15:04:05"),
 		User:  uname,
 		Group: gname,
 		Mode:  s.Mode().String(),
