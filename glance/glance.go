@@ -188,7 +188,7 @@ func (g *glance) storage() (alloc, request int64) {
 	return int64(total), int64(used)
 }
 
-func (g *glance) stats(alloc, req Resource) (_cpu, memory, storage Stats, _host, _os string) {
+func (g *glance) stats(alloc, req Resource) (_cpu, memory, storage Stats, _os string) {
 	_cpu.Total = strconv.FormatInt(alloc.MilliCPU/Milli, Base) + " CPU"
 	_cpu.Used = strconv.FormatInt(req.MilliCPU*100/alloc.MilliCPU, Base) + "%"
 
@@ -202,5 +202,5 @@ func (g *glance) stats(alloc, req Resource) (_cpu, memory, storage Stats, _host,
 	storage.Total = strconv.FormatInt(alloc.Storage>>Bitwise, Base) + " GB"
 	storage.Used = strconv.FormatInt(req.Storage>>Bitwise, Base) + " GB"
 
-	return _cpu, memory, storage, _host, _os
+	return _cpu, memory, storage, _os
 }

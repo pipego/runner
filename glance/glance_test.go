@@ -72,10 +72,9 @@ func TestStats(t *testing.T) {
 	alloc.Memory, request.Memory = g.memory()
 	alloc.Storage, request.Storage = g.storage()
 
-	_cpu, _memory, _storage, _host, _os := g.stats(alloc, request)
+	_cpu, _memory, _storage, _os := g.stats(alloc, request)
 	assert.NotEqual(t, nil, _cpu)
 	assert.NotEqual(t, nil, _memory)
 	assert.NotEqual(t, nil, _storage)
-	assert.NotEqual(t, "", _host)
 	assert.NotEqual(t, "", _os)
 }
