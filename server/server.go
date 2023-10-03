@@ -157,11 +157,10 @@ L:
 func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	var buf []*pb.GlanceEntry
 	var entries []glance.Entry
-	var content string
+	var content, _host, _os string
 	var readable bool
 	var allocatable, requested glance.Resource
 	var _cpu, _memory, _storage glance.Stats
-	var _host, _os string
 
 	dir, file, sys, err := s.recvGlance(srv)
 	if err != nil {
@@ -343,6 +342,7 @@ func (s *server) buildEnv(_ context.Context, params []*pb.TaskParam) []string {
 	return buf
 }
 
+// nolint: lll
 func (s *server) recvGlance(srv pb.ServerProto_SendGlanceServer) (dir *pb.GlanceDirReq, file *pb.GlanceFileReq, sys *pb.GlanceSysReq, err error) {
 	for {
 		r, err := srv.Recv()
