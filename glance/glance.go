@@ -30,9 +30,12 @@ const (
 	Duration = 2 * time.Second
 	Milli    = 1000
 
+	Current = "."
+	Parent  = ".."
+
+	Root = "/"
 	Dev  = "/dev/"
 	Home = "/home"
-	Root = "/"
 )
 
 type Glance interface {
@@ -97,13 +100,15 @@ func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error
 		return entries, errors.New("invalid directory")
 	}
 
-	if ent, e := g.entry(filepath.Join(path, ".")); e == nil {
+	if ent, e := g.entry(path, Current); e == nil {
+		ent.Name = Current
 		entries = append(entries, ent)
 	} else {
 		return entries, e
 	}
 
-	if ent, e := g.entry(filepath.Join(path, "..")); e == nil {
+	if ent, e := g.entry(path, Parent); e == nil {
+		ent.Name = Parent
 		entries = append(entries, ent)
 	} else {
 		return entries, e
@@ -115,7 +120,7 @@ func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error
 	}
 
 	for _, item := range buf {
-		if ent, e := g.entry(item.Name()); e == nil {
+		if ent, e := g.entry(path, item.Name()); e == nil {
 			entries = append(entries, ent)
 		}
 	}
@@ -141,8 +146,8 @@ func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, 
 	return allocatable, requested, _cpu, _memory, _storage, _host, _os, nil
 }
 
-func (g *glance) entry(name string) (Entry, error) {
-	s, err := os.Stat(name)
+func (g *glance) entry(dname, fname string) (Entry, error) {
+	s, err := os.Stat(filepath.Join(dname, fname))
 	if err != nil {
 		return Entry{}, err
 	}
@@ -162,7 +167,7 @@ func (g *glance) entry(name string) (Entry, error) {
 	}
 
 	return Entry{
-		Name:  name,
+		Name:  fname,
 		IsDir: s.IsDir(),
 		Size:  s.Size(),
 		Time:  s.ModTime().Format("2006-01-02 15:04:05"),
