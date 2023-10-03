@@ -147,7 +147,7 @@ func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, 
 }
 
 func (g *glance) entry(dname, fname string) (Entry, error) {
-	s, err := os.Stat(filepath.Join(dname, fname))
+	s, err := os.Lstat(filepath.Join(dname, fname))
 	if err != nil {
 		return Entry{}, err
 	}
