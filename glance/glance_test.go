@@ -37,13 +37,13 @@ func TestFile(t *testing.T) {
 
 	ctx := context.Background()
 
-	readable, _, err := g.File(ctx, invalidFile, maxSize)
+	_, readable, err := g.File(ctx, invalidFile, maxSize)
 	assert.Equal(t, false, readable)
 	assert.NotEqual(t, nil, err)
 
-	readable, content, err := g.File(ctx, validFile, maxSize)
-	assert.Equal(t, true, readable)
+	content, readable, err := g.File(ctx, validFile, maxSize)
 	assert.NotEqual(t, "", content)
+	assert.Equal(t, true, readable)
 	assert.Equal(t, nil, err)
 }
 
