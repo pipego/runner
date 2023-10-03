@@ -66,6 +66,18 @@ func TestEntry(t *testing.T) {
 	}
 }
 
+func TestIsText(t *testing.T) {
+	// TODO: FIXME
+}
+
+func TestValidSize(t *testing.T) {
+	// TODO: FIXME
+}
+
+func TestReadFile(t *testing.T) {
+	// TODO: FIXME
+}
+
 func TestMilliCPU(t *testing.T) {
 	g := glance{
 		cfg: DefaultConfig(),

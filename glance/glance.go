@@ -1,7 +1,9 @@
 package glance
 
 import (
+	"bufio"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"math"
 	"net"
@@ -12,6 +14,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"github.com/pkg/errors"
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -42,7 +45,7 @@ type Glance interface {
 	Init(context.Context) error
 	Deinit(context.Context) error
 	Dir(context.Context, string) ([]Entry, error)
-	File(context.Context, string, int) (bool, string, error)
+	File(context.Context, string, int64) (bool, string, error)
 	Sys(context.Context) (Resource, Resource, Stats, Stats, Stats, string, string, error)
 }
 
@@ -95,28 +98,28 @@ func (g *glance) Deinit(_ context.Context) error {
 
 func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error) {
 	if stat, e := os.Lstat(path); e != nil {
-		return entries, e
+		return entries, errors.Wrap(e, "failed to list file")
 	} else if !stat.IsDir() {
-		return entries, errors.New("invalid directory")
+		return entries, errors.New("invalid dir")
 	}
 
 	if ent, e := g.entry(path, Current); e == nil {
 		ent.Name = Current
 		entries = append(entries, ent)
 	} else {
-		return entries, e
+		return entries, errors.Wrap(e, "faied to get entry")
 	}
 
 	if ent, e := g.entry(path, Parent); e == nil {
 		ent.Name = Parent
 		entries = append(entries, ent)
 	} else {
-		return entries, e
+		return entries, errors.Wrap(e, "faied to get entry")
 	}
 
-	buf, err := os.ReadDir(path)
+	buf, e := os.ReadDir(path)
 	if err != nil {
-		return entries, err
+		return entries, errors.Wrap(e, "faied to read dir")
 	}
 
 	for _, item := range buf {
@@ -128,9 +131,21 @@ func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error
 	return entries, nil
 }
 
-func (g *glance) File(_ context.Context, path string, maxSize int) (readable bool, content string, err error) {
-	// TODO: FIXME
-	return false, "", nil
+func (g *glance) File(_ context.Context, path string, maxSize int64) (readable bool, content string, err error) {
+	if !g.isText(path) {
+		return false, content, errors.New("invalid text")
+	}
+
+	if !g.validSize(path, maxSize) {
+		return false, content, errors.New("invalid size")
+	}
+
+	content, e := g.readFile(path)
+	if e != nil {
+		return false, content, errors.Wrap(e, "failed to read file")
+	}
+
+	return true, content, nil
 }
 
 // nolint: gocritic
@@ -149,7 +164,7 @@ func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, 
 func (g *glance) entry(dname, fname string) (Entry, error) {
 	s, err := os.Lstat(filepath.Join(dname, fname))
 	if err != nil {
-		return Entry{}, err
+		return Entry{}, errors.Wrap(err, "failed to list file")
 	}
 
 	uid := strconv.FormatUint(uint64(s.Sys().(*syscall.Stat_t).Uid), Base)
@@ -175,6 +190,50 @@ func (g *glance) entry(dname, fname string) (Entry, error) {
 		Group: gname,
 		Mode:  s.Mode().String(),
 	}, nil
+}
+
+func (g *glance) isText(name string) bool {
+	stat, e := os.Lstat(name)
+	if e != nil {
+		return false
+	}
+
+	if mode := stat.Mode(); !mode.IsRegular() {
+		return false
+	}
+
+	file, err := os.Open(name)
+	if err != nil {
+		return false
+	}
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	scanner.Scan()
+
+	return utf8.ValidString(scanner.Text())
+}
+
+func (g *glance) validSize(name string, size int64) bool {
+	s, err := os.Lstat(name)
+	if err != nil {
+		return false
+	}
+
+	if s.Size() > size {
+		return false
+	}
+
+	return true
+}
+
+func (g *glance) readFile(name string) (string, error) {
+	buf, err := os.ReadFile(name)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to read file")
+	}
+
+	return base64.StdEncoding.EncodeToString(buf), nil
 }
 
 func (g *glance) milliCPU() (alloc, request int64) {
