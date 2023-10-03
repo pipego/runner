@@ -8,6 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	invalidFile = "/path/to/invalid"
+	validFile   = "/etc/hostname"
+
+	maxSize = 1000
+)
+
 func TestDir(t *testing.T) {
 	g := glance{
 		cfg: DefaultConfig(),
@@ -24,7 +31,23 @@ func TestDir(t *testing.T) {
 }
 
 func TestFile(t *testing.T) {
-	// TODO: FIXME
+	g := glance{
+		cfg: DefaultConfig(),
+	}
+
+	ctx := context.Background()
+
+	readable, _, err := g.File(ctx, invalidFile, maxSize)
+	assert.Equal(t, false, readable)
+	assert.NotEqual(t, nil, err)
+
+	readable, _, err = g.File(ctx, validFile, maxSize)
+	assert.Equal(t, false, readable)
+	assert.NotEqual(t, nil, err)
+
+	readable, _, err = g.File(ctx, validFile, maxSize)
+	assert.Equal(t, true, readable)
+	assert.Equal(t, nil, err)
 }
 
 func TestSys(t *testing.T) {
@@ -67,15 +90,42 @@ func TestEntry(t *testing.T) {
 }
 
 func TestIsText(t *testing.T) {
-	// TODO: FIXME
+	g := glance{
+		cfg: DefaultConfig(),
+	}
+
+	s := g.isText(invalidFile)
+	assert.Equal(t, false, s)
+
+	s = g.isText(validFile)
+	assert.Equal(t, true, s)
 }
 
 func TestValidSize(t *testing.T) {
-	// TODO: FIXME
+	g := glance{
+		cfg: DefaultConfig(),
+	}
+
+	s := g.validSize(invalidFile, maxSize)
+	assert.Equal(t, false, s)
+
+	s = g.validSize(validFile, 0)
+	assert.Equal(t, false, s)
+
+	s = g.validSize(validFile, maxSize)
+	assert.Equal(t, true, s)
 }
 
 func TestReadFile(t *testing.T) {
-	// TODO: FIXME
+	g := glance{
+		cfg: DefaultConfig(),
+	}
+
+	_, err := g.readFile(invalidFile)
+	assert.NotEqual(t, nil, err)
+
+	_, err = g.readFile(validFile)
+	assert.Equal(t, nil, err)
 }
 
 func TestMilliCPU(t *testing.T) {
