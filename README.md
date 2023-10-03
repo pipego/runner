@@ -132,11 +132,11 @@ Flags:
   "spec": {
     "glance": {
       "dir": {
-        "path": "/path/to/dir"
+        "path": "/path/to/name"
       },
       "file": {
-        "maxSize": 1000,
-        "path": "/path/to/file"
+        "path": "/path/to/name",
+        "maxSize": 1000
       },
       "sys": {
         "enable": true
@@ -206,7 +206,8 @@ Flags:
         "used": "18 GB"
       }
     }
-  }
+  },
+  "error": "text"
 }
 ```
 

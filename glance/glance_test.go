@@ -41,8 +41,9 @@ func TestFile(t *testing.T) {
 	assert.Equal(t, false, readable)
 	assert.NotEqual(t, nil, err)
 
-	readable, _, err = g.File(ctx, validFile, maxSize)
+	readable, content, err := g.File(ctx, validFile, maxSize)
 	assert.Equal(t, true, readable)
+	assert.NotEqual(t, "", content)
 	assert.Equal(t, nil, err)
 }
 
@@ -120,8 +121,9 @@ func TestReadFile(t *testing.T) {
 	_, err := g.readFile(invalidFile)
 	assert.NotEqual(t, nil, err)
 
-	_, err = g.readFile(validFile)
+	b, err := g.readFile(validFile)
 	assert.Equal(t, nil, err)
+	assert.NotEqual(t, "", b)
 }
 
 func TestMilliCPU(t *testing.T) {

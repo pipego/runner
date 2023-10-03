@@ -45,7 +45,7 @@ type Glance interface {
 	Init(context.Context) error
 	Deinit(context.Context) error
 	Dir(context.Context, string) ([]Entry, error)
-	File(context.Context, string, int64) (bool, string, error)
+	File(context.Context, string, int64) (string, bool, error)
 	Sys(context.Context) (Resource, Resource, Stats, Stats, Stats, string, string, error)
 }
 
@@ -131,21 +131,21 @@ func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error
 	return entries, nil
 }
 
-func (g *glance) File(_ context.Context, path string, maxSize int64) (readable bool, content string, err error) {
+func (g *glance) File(_ context.Context, path string, maxSize int64) (content string, readable bool, err error) {
 	if !g.isText(path) {
-		return false, content, errors.New("invalid text")
+		return content, false, errors.New("invalid text")
 	}
 
 	if !g.validSize(path, maxSize) {
-		return false, content, errors.New("invalid size")
+		return content, false, errors.New("invalid size")
 	}
 
 	content, e := g.readFile(path)
 	if e != nil {
-		return false, content, errors.Wrap(e, "failed to read file")
+		return content, false, errors.Wrap(e, "failed to read file")
 	}
 
-	return true, content, nil
+	return content, true, nil
 }
 
 // nolint: gocritic

@@ -39,6 +39,15 @@ func TestInitTask(t *testing.T) {
 	assert.Equal(t, nil, err)
 }
 
+func TestInitGlance(t *testing.T) {
+	s := server{
+		cfg: DefaultConfig(),
+	}
+
+	_, err := s.newGlance(context.Background())
+	assert.Equal(t, nil, err)
+}
+
 func TestLoadUnzipped(t *testing.T) {
 	s := server{
 		cfg: DefaultConfig(),

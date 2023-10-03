@@ -79,8 +79,8 @@ message GlanceDirReq {
 }
 
 message GlanceFileReq {
-  int64 maxSize = 1;
-  string path = 2;
+  string path = 1;
+  int64 maxSize = 2;
 }
 
 message GlanceSysReq {
@@ -91,6 +91,7 @@ message GlanceReply {
   GlanceDirRep dir = 1;
   GlanceFileRep file = 2;
   GlanceSysRep sys = 3;
+  string error = 4;
 }
 
 message GlanceDirRep {
@@ -136,7 +137,7 @@ message GlanceRequested {
 
 message GlanceStats {
   GlanceCPU cpu = 1;
-  string ip = 2;
+  string host = 2;
   GlanceMemory memory = 3;
   string os = 4;
   GlanceStorage storage = 5;

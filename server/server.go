@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	fl "github.com/pipego/runner/file"
+	"github.com/pipego/runner/glance"
 	pb "github.com/pipego/runner/server/proto"
 	"github.com/pipego/runner/task"
 )
@@ -120,11 +121,11 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 		return srv.Send(&pb.TaskReply{Error: "failed to init task"})
 	}
 
-	defer func() {
+	defer func(ctx context.Context) {
 		_ = t.Deinit(ctx)
-	}()
+	}(ctx)
 
-	if err := t.Run(ctx, name, s.buildEnvs(ctx, params), commands); err != nil {
+	if err := t.Run(ctx, name, s.buildEnv(ctx, params), commands); err != nil {
 		return srv.Send(&pb.TaskReply{Error: "failed to run task"})
 	}
 
@@ -149,6 +150,110 @@ L:
 			}
 		}
 	}
+
+	return nil
+}
+
+func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
+	var buf []*pb.GlanceEntry
+	var entries []glance.Entry
+	var content string
+	var readable bool
+	var allocatable, requested glance.Resource
+	var _cpu, _memory, _storage glance.Stats
+	var _host, _os string
+
+	dir, file, sys, err := s.recvGlance(srv)
+	if err != nil {
+		return srv.Send(&pb.GlanceReply{Error: err.Error()})
+	}
+
+	ctx, cancel := context.WithCancel(srv.Context())
+	defer cancel()
+
+	g, err := s.newGlance(ctx)
+	if err != nil {
+		return srv.Send(&pb.GlanceReply{Error: "failed to new glance"})
+	}
+
+	if err = g.Init(ctx); err != nil {
+		return srv.Send(&pb.GlanceReply{Error: "failed to init glance"})
+	}
+
+	defer func(ctx context.Context) {
+		_ = g.Deinit(ctx)
+	}(ctx)
+
+	if dir.GetPath() != "" {
+		entries, err = g.Dir(ctx, dir.GetPath())
+		if err != nil {
+			return srv.Send(&pb.GlanceReply{Error: "failed to run dir"})
+		}
+		for _, item := range entries {
+			buf = append(buf, &pb.GlanceEntry{
+				Name:  item.Name,
+				IsDir: item.IsDir,
+				Size:  item.Size,
+				Time:  item.Time,
+				User:  item.User,
+				Group: item.Group,
+				Mode:  item.Mode,
+			})
+		}
+	}
+
+	if file.GetPath() != "" {
+		content, readable, err = g.File(ctx, file.GetPath(), file.GetMaxSize())
+		if err != nil {
+			return srv.Send(&pb.GlanceReply{Error: "failed to run file"})
+		}
+	}
+
+	if sys.GetEnable() {
+		allocatable, requested, _cpu, _memory, _storage, _host, _os, err = g.Sys(ctx)
+		if err != nil {
+			return srv.Send(&pb.GlanceReply{Error: "failed to run sys"})
+		}
+	}
+
+	_ = srv.Send(&pb.GlanceReply{
+		Dir: &pb.GlanceDirRep{
+			Entries: buf,
+		},
+		File: &pb.GlanceFileRep{
+			Content:  content,
+			Readable: readable,
+		},
+		Sys: &pb.GlanceSysRep{
+			Resource: &pb.GlanceResource{
+				Allocatable: &pb.GlanceAllocatable{
+					MilliCPU: allocatable.MilliCPU,
+					Memory:   allocatable.Memory,
+					Storage:  allocatable.Storage,
+				},
+				Requested: &pb.GlanceRequested{
+					MilliCPU: requested.MilliCPU,
+					Memory:   requested.Memory,
+					Storage:  requested.Storage,
+				},
+			},
+			Stats: &pb.GlanceStats{
+				Cpu: &pb.GlanceCPU{
+					Total: _cpu.Total,
+					Used:  _cpu.Used,
+				},
+				Host: _host,
+				Memory: &pb.GlanceMemory{
+					Total: _memory.Total,
+					Used:  _memory.Used,
+				},
+				Os: _os,
+				Storage: &pb.GlanceStorage{
+					Total: _storage.Total,
+					Used:  _storage.Used,
+				},
+			},
+		}})
 
 	return nil
 }
@@ -228,7 +333,7 @@ func (s *server) newTask(ctx context.Context) (task.Task, error) {
 	return task.New(ctx, c), nil
 }
 
-func (s *server) buildEnvs(_ context.Context, params []*pb.TaskParam) []string {
+func (s *server) buildEnv(_ context.Context, params []*pb.TaskParam) []string {
 	var buf []string
 
 	for _, item := range params {
@@ -236,4 +341,37 @@ func (s *server) buildEnvs(_ context.Context, params []*pb.TaskParam) []string {
 	}
 
 	return buf
+}
+
+func (s *server) recvGlance(srv pb.ServerProto_SendGlanceServer) (dir *pb.GlanceDirReq, file *pb.GlanceFileReq, sys *pb.GlanceSysReq, err error) {
+	for {
+		r, err := srv.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, nil, nil, errors.Wrap(err, "failed to receive")
+		}
+
+		if r.Kind != Kind {
+			return nil, nil, nil, errors.Wrap(err, "invalid kind")
+		}
+
+		dir = r.Spec.Glance.GetDir()
+		file = r.Spec.Glance.GetFile()
+		sys = r.Spec.Glance.GetSys()
+
+		break
+	}
+
+	return dir, file, sys, nil
+}
+
+func (s *server) newGlance(ctx context.Context) (glance.Glance, error) {
+	c := glance.DefaultConfig()
+	if c == nil {
+		return nil, errors.New("failed to config")
+	}
+
+	return glance.New(ctx, c), nil
 }
