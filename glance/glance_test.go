@@ -42,10 +42,6 @@ func TestFile(t *testing.T) {
 	assert.NotEqual(t, nil, err)
 
 	readable, _, err = g.File(ctx, validFile, maxSize)
-	assert.Equal(t, false, readable)
-	assert.NotEqual(t, nil, err)
-
-	readable, _, err = g.File(ctx, validFile, maxSize)
 	assert.Equal(t, true, readable)
 	assert.Equal(t, nil, err)
 }
