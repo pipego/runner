@@ -94,7 +94,7 @@ func (g *glance) Deinit(_ context.Context) error {
 }
 
 func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error) {
-	if stat, e := os.Stat(path); e != nil {
+	if stat, e := os.Lstat(path); e != nil {
 		return entries, e
 	} else if !stat.IsDir() {
 		return entries, errors.New("invalid directory")

@@ -18,7 +18,7 @@ func TestDir(t *testing.T) {
 	_, err := g.Dir(ctx, "/path/to/invalid")
 	assert.NotEqual(t, nil, err)
 
-	entries, err := g.Dir(ctx, "/")
+	entries, err := g.Dir(ctx, Root)
 	assert.Equal(t, nil, err)
 	assert.Less(t, 2, len(entries))
 }
