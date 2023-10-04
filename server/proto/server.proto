@@ -95,7 +95,7 @@ message GlanceReply {
 }
 
 message GlanceDirRep {
-  repeated GlanceEntry entries = 2;
+  repeated GlanceEntry entries = 1;
 }
 
 message GlanceEntry {
