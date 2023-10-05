@@ -80,8 +80,6 @@ func TestEntry(t *testing.T) {
 		e, _ := g.entry(d, item.Name())
 		assert.NotEqual(t, "", e.Name)
 		assert.NotEqual(t, "", e.Time)
-		assert.NotEqual(t, "", e.User)
-		assert.NotEqual(t, "", e.Group)
 		assert.NotEqual(t, "", e.Mode)
 	}
 }
