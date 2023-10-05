@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 	"unicode/utf8"
 
@@ -162,22 +161,24 @@ func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, 
 }
 
 func (g *glance) entry(dname, fname string) (Entry, error) {
+	var uname, gname string
+
 	s, err := os.Lstat(filepath.Join(dname, fname))
 	if err != nil {
 		return Entry{}, errors.Wrap(err, "failed to list file")
 	}
 
-	uid := strconv.FormatUint(uint64(s.Sys().(*syscall.Stat_t).Uid), Base)
-	_user, _ := user.LookupId(uid)
-	uname := _user.Name
-	if uname == "" {
+	uid, gid := g.statId(s)
+
+	if _user, err := user.LookupId(uid); err == nil {
+		uname = _user.Name
+	} else {
 		uname = uid
 	}
 
-	gid := strconv.FormatUint(uint64(s.Sys().(*syscall.Stat_t).Gid), Base)
-	_group, _ := user.LookupGroupId(gid)
-	gname := _group.Name
-	if gname == "" {
+	if _group, err := user.LookupGroupId(gid); err == nil {
+		gname = _group.Name
+	} else {
 		gname = gid
 	}
 
