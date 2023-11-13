@@ -30,6 +30,7 @@ const (
 	Base     = 10
 	Bitwise  = 30
 	Duration = 2 * time.Second
+	GB       = "GB"
 	Milli    = 1000
 
 	Current = "."
@@ -316,10 +317,10 @@ func (g *glance) stats(alloc, req Resource) (_cpu, memory, storage Stats) {
 	_cpu.Used = strconv.FormatInt(req.MilliCPU*100/alloc.MilliCPU, Base) + "%"
 
 	memory.Total = strconv.FormatInt(alloc.Memory>>Bitwise, Base) + " GB"
-	memory.Used = strconv.FormatInt(req.Memory>>Bitwise, Base) + " GB"
+	memory.Used = strconv.FormatInt(req.Memory>>Bitwise, Base) + " " + GB
 
-	storage.Total = strconv.FormatInt(alloc.Storage>>Bitwise, Base) + " GB"
-	storage.Used = strconv.FormatInt(req.Storage>>Bitwise, Base) + " GB"
+	storage.Total = strconv.FormatInt(alloc.Storage>>Bitwise, Base) + " " + GB
+	storage.Used = strconv.FormatInt(req.Storage>>Bitwise, Base) + " " + GB
 
 	return _cpu, memory, storage
 }
