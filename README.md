@@ -100,6 +100,27 @@ Flags:
 > `task.file.gzip`: boolean
 >
 > `task.params`: parameter and value
+> ```
+> name1=value1
+> $name1: value1
+>
+> name2=$name1
+> $name2: value1
+>
+> name3=$name2
+> $name3: value1
+>
+> # $$: The process ID (PID) of the script itself.
+> # $BASHPID: The process ID of the current instance of Bash.
+> name4=$$name1
+> $name4: 790name1
+> name4=${BASHPID}name1
+> $name4: 790name1
+>
+> # Invalid symbol in Bash
+> name5=#name1
+> $name5: #name1
+> ```
 >
 > `task.commands`: command and argument
 >

@@ -9,6 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+
+	pb "github.com/pipego/runner/server/proto"
 )
 
 func initZip(data []byte) ([]byte, error) {
@@ -104,4 +106,48 @@ func TestLoadZipped(t *testing.T) {
 	assert.NotEqual(t, nil, err)
 
 	_ = f.Remove(ctx, name)
+}
+
+func TestBuildEnv(t *testing.T) {
+	var params []*pb.TaskParam
+
+	s := server{
+		cfg: DefaultConfig(),
+	}
+
+	ctx := context.Background()
+
+	buf := s.buildEnv(ctx, params)
+	assert.Equal(t, 0, len(buf))
+
+	params = append(params,
+		&pb.TaskParam{
+			Name:  "name1",
+			Value: "value1",
+		},
+		&pb.TaskParam{
+			Name:  "name2",
+			Value: "$name1",
+		},
+		&pb.TaskParam{
+			Name:  "name3",
+			Value: "$name2",
+		},
+		&pb.TaskParam{
+			Name:  "name4",
+			Value: "$$name1",
+		},
+		&pb.TaskParam{
+			Name:  "name5",
+			Value: "#name1",
+		},
+	)
+
+	buf = s.buildEnv(ctx, params)
+	assert.NotEqual(t, 0, len(buf))
+	assert.Equal(t, "name1=value1", buf[0])
+	assert.Equal(t, "name2=value1", buf[1])
+	assert.Equal(t, "name3=value1", buf[2])
+	assert.Equal(t, "name4=$$name1", buf[3])
+	assert.Equal(t, "name5=#name1", buf[4])
 }
