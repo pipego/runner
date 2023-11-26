@@ -332,7 +332,7 @@ func (s *server) newTask(ctx context.Context) (task.Task, error) {
 	return task.New(ctx, c), nil
 }
 
-func (s *server) buildEnv(ctx context.Context, params []*pb.TaskParam) []string {
+func (s *server) buildEnv(_ context.Context, params []*pb.TaskParam) []string {
 	var buf []string
 
 	for _, item := range params {
