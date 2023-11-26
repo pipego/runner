@@ -100,18 +100,6 @@ Flags:
 > `task.file.gzip`: boolean
 >
 > `task.params`: parameter and value
-> >
-> > `name1=value1` (`$name1: value1`)
-> >
-> > `name2=$name1` (`$name2: value1`)
-> >
-> > `name3=$name2` (`$name3: value1`)
-> >
-> > `name4=$$name1` (`$name4: 790name1`, the PID of this script)
-> >
-> > `name4=${BASHPID}name1` (`$name4: 790name1`, the PID of current instance)
-> >
-> > `name5=#name1` (`$name5: #name1`, invalid symbol in Bash)
 >
 > `task.commands`: command and argument
 >

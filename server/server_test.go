@@ -146,8 +146,8 @@ func TestBuildEnv(t *testing.T) {
 	buf = s.buildEnv(ctx, params)
 	assert.NotEqual(t, 0, len(buf))
 	assert.Equal(t, "name1=value1", buf[0])
-	assert.Equal(t, "name2=value1", buf[1])
-	assert.Equal(t, "name3=value1", buf[2])
+	assert.Equal(t, "name2=$name1", buf[1])
+	assert.Equal(t, "name3=$name2", buf[2])
 	assert.Equal(t, "name4=$$name1", buf[3])
 	assert.Equal(t, "name5=#name1", buf[4])
 }

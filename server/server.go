@@ -336,26 +336,10 @@ func (s *server) buildEnv(ctx context.Context, params []*pb.TaskParam) []string 
 	var buf []string
 
 	for _, item := range params {
-		buf = append(buf, item.GetName()+"="+s.evalEnv(ctx, params, item.GetValue()))
+		buf = append(buf, item.GetName()+"="+item.GetValue())
 	}
 
 	return buf
-}
-
-func (s *server) evalEnv(ctx context.Context, params []*pb.TaskParam, data string) string {
-	if strings.HasPrefix(data, "$") {
-		if strings.HasPrefix(data, "$$") {
-			return data
-		}
-
-		for _, item := range params {
-			if item.GetName() == strings.TrimPrefix(data, "$") {
-				return s.evalEnv(ctx, params, item.GetValue())
-			}
-		}
-	}
-
-	return data
 }
 
 // nolint: lll
