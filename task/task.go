@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	EOF = "EOF"
 	Log = 5000
 )
 
@@ -119,6 +120,6 @@ func (t *task) routine(ctx context.Context, scanner *bufio.Scanner) {
 				p += 1
 			}
 		}
-		log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: "EOF"}
+		log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: EOF}
 	}(ctx, scanner, t.log)
 }
