@@ -14,6 +14,7 @@ import (
 const (
 	EOF = "EOF"
 	Log = 5000
+	SEP = '\n'
 )
 
 type Task interface {
@@ -94,11 +95,11 @@ func (t *task) Run(ctx context.Context, _ string, envs, args []string) error {
 	cmd.Env = append(cmd.Environ(), envs...)
 	cmd.Stderr = cmd.Stdout
 
-	reader, _ := cmd.StdoutPipe()
-	scanner := bufio.NewScanner(reader)
+	pipe, _ := cmd.StdoutPipe()
+	reader := bufio.NewReader(pipe)
 
 	_ = cmd.Start()
-	t.routine(ctx, scanner)
+	t.routine(ctx, reader)
 
 	go func(cmd *exec.Cmd) {
 		_ = cmd.Wait()
@@ -111,15 +112,19 @@ func (t *task) Tail(_ context.Context) Livelog {
 	return t.log
 }
 
-func (t *task) routine(ctx context.Context, scanner *bufio.Scanner) {
-	go func(_ context.Context, scanner *bufio.Scanner, log Livelog) {
+func (t *task) routine(ctx context.Context, reader *bufio.Reader) {
+	go func(_ context.Context, reader *bufio.Reader, log Livelog) {
 		p := 1
-		for scanner.Scan() {
+		for {
+			line, err := reader.ReadBytes(SEP)
+			if err != nil {
+				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: EOF}
+				break
+			}
 			select {
-			case log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: scanner.Text()}:
+			case log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(line)}:
 				p += 1
 			}
 		}
-		log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: EOF}
-	}(ctx, scanner, t.log)
+	}(ctx, reader, t.log)
 }
