@@ -12,7 +12,9 @@ import (
 )
 
 const (
-	EOF = "EOF"
+	BOL = "BOL" // break of line
+	EOF = "EOF" // end of file
+	LEN = 500   // split length of line (BOL included)
 	Log = 5000
 	SEP = '\n'
 )
@@ -113,6 +115,8 @@ func (t *task) Tail(_ context.Context) Livelog {
 }
 
 func (t *task) routine(ctx context.Context, reader *bufio.Reader) {
+	l := LEN - len(BOL)
+
 	go func(_ context.Context, reader *bufio.Reader, log Livelog) {
 		p := 1
 		for {
@@ -121,10 +125,14 @@ func (t *task) routine(ctx context.Context, reader *bufio.Reader) {
 				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: EOF}
 				break
 			}
-			select {
-			case log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(line)}:
-				p += 1
+			b := string(line)
+			r := len(b) / l
+			m := len(b) % l
+			for i := 0; i < r; i++ {
+				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b[i*l:(i+1)*l] + BOL}
 			}
+			log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b[len(b)-m:]}
+			p += 1
 		}
 	}(ctx, reader, t.log)
 }

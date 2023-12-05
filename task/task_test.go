@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -69,7 +70,7 @@ func TestRunBash(t *testing.T) {
 	err = _t.Run(ctx, "", envs, args)
 	assert.NotEqual(t, nil, err)
 
-	args = []string{"bash", "-c", "../test/test.sh"}
+	args = []string{"bash", "-c", "../test/bash.sh"}
 	err = _t.Run(ctx, "", envs, args)
 	assert.Equal(t, nil, err)
 
@@ -108,7 +109,7 @@ func TestRunPython(t *testing.T) {
 	err = _t.Run(ctx, "", envs, args)
 	assert.NotEqual(t, nil, err)
 
-	args = []string{"bash", "-c", "python3 ../test/test.py"}
+	args = []string{"bash", "-c", "python3 ../test/python.py"}
 	err = _t.Run(ctx, "", envs, args)
 	assert.Equal(t, nil, err)
 
@@ -123,6 +124,45 @@ L:
 			fmt.Println("Message:", line.Message)
 			if line.Message == EOF {
 				break L
+			}
+		}
+	}
+
+	err = _t.Deinit(ctx)
+	assert.Equal(t, nil, err)
+}
+
+func TestRunSplit(t *testing.T) {
+	var args []string
+	var envs []string
+	var err error
+	var _t task
+
+	defer goleak.VerifyNone(t)
+
+	ctx := context.Background()
+
+	err = _t.Init(ctx, Log)
+	assert.Equal(t, nil, err)
+
+	err = _t.Run(ctx, "", envs, args)
+	assert.NotEqual(t, nil, err)
+
+	args = []string{"bash", "-c", "python3 ../test/split.py"}
+	err = _t.Run(ctx, "", envs, args)
+	assert.Equal(t, nil, err)
+
+	log := _t.Tail(ctx)
+
+L:
+	for {
+		select {
+		case line := <-log.Line:
+			if line.Message == EOF {
+				break L
+			}
+			if strings.HasSuffix(line.Message, BOL) {
+				assert.Equal(t, LEN, len(line.Message))
 			}
 		}
 	}

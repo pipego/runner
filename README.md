@@ -130,6 +130,22 @@ Flags:
 }
 ```
 
+> `output`: lines of live log
+>
+> `output.pos`: line position
+>
+> `output.time`: Unix timestamp
+>
+> `output.message`: line message
+>
+> > The tag in the line and file as below:
+> >
+> > `BOL`: break of line (split length: 500)
+> >
+> > `EOF`: end of file
+>
+> `error`: N/A
+
 
 
 ### 2. Glance
