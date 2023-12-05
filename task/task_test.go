@@ -170,3 +170,42 @@ L:
 	err = _t.Deinit(ctx)
 	assert.Equal(t, nil, err)
 }
+
+func TestRunError(t *testing.T) {
+	var args []string
+	var envs []string
+	var err error
+	var _t task
+
+	defer goleak.VerifyNone(t)
+
+	ctx := context.Background()
+
+	err = _t.Init(ctx, logLen)
+	assert.Equal(t, nil, err)
+
+	err = _t.Run(ctx, "", envs, args)
+	assert.NotEqual(t, nil, err)
+
+	args = []string{"bash", "-c", "../test/error.sh"}
+	err = _t.Run(ctx, "", envs, args)
+	assert.Equal(t, nil, err)
+
+	log := _t.Tail(ctx)
+
+L:
+	for {
+		select {
+		case line := <-log.Line:
+			fmt.Println("Pos:", line.Pos)
+			fmt.Println("Time:", line.Time)
+			fmt.Println("Message:", line.Message)
+			if line.Message == tagEOF {
+				break L
+			}
+		}
+	}
+
+	err = _t.Deinit(ctx)
+	assert.Equal(t, nil, err)
+}

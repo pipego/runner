@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -43,6 +44,7 @@ type Line struct {
 type task struct {
 	cfg *Config
 	log Livelog
+	wg  sync.WaitGroup
 }
 
 func New(_ context.Context, cfg *Config) Task {
@@ -93,13 +95,15 @@ func (t *task) Run(ctx context.Context, _ string, envs, args []string) error {
 
 	cmd := exec.CommandContext(ctx, n, a...)
 	cmd.Env = append(cmd.Environ(), envs...)
-	cmd.Stderr = cmd.Stdout
 
-	pipe, _ := cmd.StdoutPipe()
-	reader := bufio.NewReader(pipe)
+	stdout, _ := cmd.StdoutPipe()
+	readerStdout := bufio.NewReader(stdout)
+
+	stderr, _ := cmd.StderrPipe()
+	readerStderr := bufio.NewReader(stderr)
 
 	_ = cmd.Start()
-	t.routine(ctx, reader)
+	t.routine(ctx, readerStdout, readerStderr)
 
 	go func(cmd *exec.Cmd) {
 		_ = cmd.Wait()
@@ -112,15 +116,14 @@ func (t *task) Tail(_ context.Context) Livelog {
 	return t.log
 }
 
-func (t *task) routine(ctx context.Context, reader *bufio.Reader) {
+func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 	l := splitLen - len(tagBOL)
+	p := 1
 
-	go func(_ context.Context, reader *bufio.Reader, log Livelog) {
-		p := 1
+	helper := func(_ context.Context, reader *bufio.Reader, log Livelog) {
 		for {
 			line, err := reader.ReadBytes(lineSep)
 			if err != nil {
-				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: tagEOF}
 				break
 			}
 			b := string(line)
@@ -132,6 +135,18 @@ func (t *task) routine(ctx context.Context, reader *bufio.Reader) {
 			log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b[len(b)-m:]}
 			p += 1
 		}
-		close(log.Line)
-	}(ctx, reader, t.log)
+		t.wg.Done()
+	}
+
+	t.wg.Add(1)
+	go helper(ctx, stdout, t.log)
+
+	t.wg.Add(1)
+	go helper(ctx, stderr, t.log)
+
+	go func() {
+		t.wg.Wait()
+		t.log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: tagEOF}
+		close(t.log.Line)
+	}()
 }
