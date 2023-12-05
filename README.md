@@ -121,30 +121,23 @@ Flags:
 
 ```json
 {
-  "output": {
-    "pos": 1,
-    "time": "1136214245000000000",
-    "message": "text"
-  },
-  "error": "text"
+  "pos": 1,
+  "time": "1136214245000000000",
+  "message": "text"
 }
 ```
 
-> `output`: lines of live log
+> `pos`: line position
 >
-> `output.pos`: line position
+> `time`: Unix timestamp
 >
-> `output.time`: Unix timestamp
->
-> `output.message`: line message
+> `message`: line message
 >
 > > The tag in the line and file as below:
 > >
 > > `BOL`: break of line (split length: 500)
 > >
 > > `EOF`: end of file
->
-> `error`: N/A
 
 
 

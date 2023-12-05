@@ -31,8 +31,7 @@ type Config struct {
 }
 
 type Livelog struct {
-	Error chan error
-	Line  chan *Line
+	Line chan *Line
 }
 
 type Line struct {
@@ -64,8 +63,7 @@ func (t *task) Init(_ context.Context, log int) error {
 	}
 
 	t.log = Livelog{
-		Error: make(chan error, l),
-		Line:  make(chan *Line, l),
+		Line: make(chan *Line, l),
 	}
 
 	return nil
