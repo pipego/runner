@@ -20,7 +20,7 @@ func TestRunEcho(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = _t.Init(ctx, Log)
+	err = _t.Init(ctx, logLen)
 	assert.Equal(t, nil, err)
 
 	err = _t.Run(ctx, "", envs, args)
@@ -44,7 +44,7 @@ L:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
 			fmt.Println("Message:", line.Message)
-			if line.Message == EOF {
+			if line.Message == tagEOF {
 				break L
 			}
 		}
@@ -64,7 +64,7 @@ func TestRunBash(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = _t.Init(ctx, Log)
+	err = _t.Init(ctx, logLen)
 	assert.Equal(t, nil, err)
 
 	err = _t.Run(ctx, "", envs, args)
@@ -83,7 +83,7 @@ L:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
 			fmt.Println("Message:", line.Message)
-			if line.Message == EOF {
+			if line.Message == tagEOF {
 				break L
 			}
 		}
@@ -103,7 +103,7 @@ func TestRunPython(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = _t.Init(ctx, Log)
+	err = _t.Init(ctx, logLen)
 	assert.Equal(t, nil, err)
 
 	err = _t.Run(ctx, "", envs, args)
@@ -122,7 +122,7 @@ L:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
 			fmt.Println("Message:", line.Message)
-			if line.Message == EOF {
+			if line.Message == tagEOF {
 				break L
 			}
 		}
@@ -142,7 +142,7 @@ func TestRunSplit(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = _t.Init(ctx, Log)
+	err = _t.Init(ctx, logLen)
 	assert.Equal(t, nil, err)
 
 	err = _t.Run(ctx, "", envs, args)
@@ -158,11 +158,11 @@ L:
 	for {
 		select {
 		case line := <-log.Line:
-			if line.Message == EOF {
+			if line.Message == tagEOF {
 				break L
 			}
-			if strings.HasSuffix(line.Message, BOL) {
-				assert.Equal(t, LEN, len(line.Message))
+			if strings.HasSuffix(line.Message, tagBOL) {
+				assert.Equal(t, splitLen, len(line.Message))
 			}
 		}
 	}

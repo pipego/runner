@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	BOL = "BOL" // break of line
-	EOF = "EOF" // end of file
-	LEN = 500   // split length of line (BOL included)
-	Log = 5000
-	SEP = '\n'
+	logLen   = 5000
+	lineSep  = '\n'
+	splitLen = 500   // split length of line (BOL included)
+	tagBOL   = "BOL" // break of line
+	tagEOF   = "EOF" // end of file
 )
 
 type Task interface {
@@ -56,7 +56,7 @@ func DefaultConfig() *Config {
 }
 
 func (t *task) Init(_ context.Context, log int) error {
-	l := Log
+	l := logLen
 
 	if log > 0 {
 		l = log
@@ -113,21 +113,21 @@ func (t *task) Tail(_ context.Context) Livelog {
 }
 
 func (t *task) routine(ctx context.Context, reader *bufio.Reader) {
-	l := LEN - len(BOL)
+	l := splitLen - len(tagBOL)
 
 	go func(_ context.Context, reader *bufio.Reader, log Livelog) {
 		p := 1
 		for {
-			line, err := reader.ReadBytes(SEP)
+			line, err := reader.ReadBytes(lineSep)
 			if err != nil {
-				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: EOF}
+				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: tagEOF}
 				break
 			}
 			b := string(line)
 			r := len(b) / l
 			m := len(b) % l
 			for i := 0; i < r; i++ {
-				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b[i*l:(i+1)*l] + BOL}
+				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b[i*l:(i+1)*l] + tagBOL}
 			}
 			log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b[len(b)-m:]}
 			p += 1
