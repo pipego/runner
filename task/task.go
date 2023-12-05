@@ -132,5 +132,6 @@ func (t *task) routine(ctx context.Context, reader *bufio.Reader) {
 			log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b[len(b)-m:]}
 			p += 1
 		}
+		close(log.Line)
 	}(ctx, reader, t.log)
 }
