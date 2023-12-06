@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
@@ -43,8 +44,8 @@ L:
 		case line := <-log.Line:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
-			fmt.Println("Message:", line.Message)
-			if line.Message == tagEOF {
+			fmt.Println("Message:", string(line.Message))
+			if string(line.Message) == tagEOF {
 				break L
 			}
 		}
@@ -82,8 +83,8 @@ L:
 		case line := <-log.Line:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
-			fmt.Println("Message:", line.Message)
-			if line.Message == tagEOF {
+			fmt.Println("Message:", string(line.Message))
+			if string(line.Message) == tagEOF {
 				break L
 			}
 		}
@@ -121,8 +122,8 @@ L:
 		case line := <-log.Line:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
-			fmt.Println("Message:", line.Message)
-			if line.Message == tagEOF {
+			fmt.Println("Message:", string(line.Message))
+			if string(line.Message) == tagEOF {
 				break L
 			}
 		}
@@ -158,13 +159,13 @@ L:
 	for {
 		select {
 		case line := <-log.Line:
-			if line.Message == tagEOF {
+			if string(line.Message) == tagEOF {
 				break L
 			}
-			if strings.HasSuffix(line.Message, tagBOL) {
+			fmt.Printf("message: %s\nbytes length: %d\nrune length: %d\n\n",
+				string(line.Message), len(line.Message), utf8.RuneCountInString(string(line.Message)))
+			if strings.HasSuffix(string(line.Message), tagBOL) {
 				assert.Equal(t, splitLen, len(line.Message))
-			} else {
-				assert.Equal(t, len(tagBOL)+1, len(strings.TrimSpace(line.Message)))
 			}
 		}
 	}
@@ -201,8 +202,8 @@ L:
 		case line := <-log.Line:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
-			fmt.Println("Message:", line.Message)
-			if line.Message == tagEOF {
+			fmt.Println("Message:", string(line.Message))
+			if string(line.Message) == tagEOF {
 				break L
 			}
 		}

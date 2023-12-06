@@ -131,7 +131,7 @@ Flags:
 >
 > `time`: Unix timestamp
 >
-> `message`: line message
+> `message`: line message (bytes type)
 >
 > > The tag in the line and file as below:
 > >

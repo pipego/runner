@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install protoc
-# curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v24.4/protoc-24.4-linux-x86_64.zip
+# curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
 
 # Install plugins
 # go install google.golang.org/protobuf/cmd/protoc-gen-go@latest

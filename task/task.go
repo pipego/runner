@@ -38,7 +38,7 @@ type Livelog struct {
 type Line struct {
 	Pos     int64
 	Time    int64
-	Message string
+	Message []byte
 }
 
 type task struct {
@@ -126,13 +126,15 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 			if err != nil {
 				break
 			}
-			b := string(line)
-			r := len(b) / l
-			m := len(b) % l
+			r := len(line) / l
+			m := len(line) % l
 			for i := 0; i < r; i++ {
-				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b[i*l:(i+1)*l] + tagBOL}
+				var b []byte
+				b = append(b, line[i*l:(i+1)*l]...)
+				b = append(b, []byte(tagBOL)...)
+				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b}
 			}
-			log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b[len(b)-m:]}
+			log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: line[len(line)-m:]}
 			p += 1
 		}
 		t.wg.Done()
@@ -146,7 +148,7 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 
 	go func() {
 		t.wg.Wait()
-		t.log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: tagEOF}
+		t.log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: []byte(tagEOF)}
 		close(t.log.Line)
 	}()
 }
