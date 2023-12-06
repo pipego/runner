@@ -163,6 +163,8 @@ L:
 			}
 			if strings.HasSuffix(line.Message, tagBOL) {
 				assert.Equal(t, splitLen, len(line.Message))
+			} else {
+				assert.Equal(t, len(tagBOL)+1, len(strings.TrimSpace(line.Message)))
 			}
 		}
 	}

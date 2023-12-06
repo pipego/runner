@@ -20,6 +20,7 @@ import (
 )
 
 const (
+	EOF    = "EOF" // end of file
 	Kind   = "runner"
 	Layout = "20060102150405"
 )
@@ -144,7 +145,7 @@ L:
 						Time:    line.Time,
 						Message: line.Message,
 					}})
-				if line.Message == "EOF" {
+				if line.Message == EOF {
 					break L
 				}
 			}

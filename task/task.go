@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	logLen   = 5000
 	lineSep  = '\n'
+	logLen   = 5000
 	splitLen = 500   // split length of line (BOL included)
 	tagBOL   = "BOL" // break of line
 	tagEOF   = "EOF" // end of file
