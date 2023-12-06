@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-_len = 512*1024
+_len = 512 * 1024
 
 print("hello perf")
 
