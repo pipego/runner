@@ -145,7 +145,7 @@ L:
 						Time:    line.Time,
 						Message: line.Message,
 					}})
-				if string(line.Message) == EOF {
+				if line.Message == EOF {
 					break L
 				}
 			}

@@ -135,7 +135,7 @@ Flags:
 >
 > > The tag in the line and file as below:
 > >
-> > `BOL`: break of line (split length: 500)
+> > `BOL`: break of line (split length: 500 runes)
 > >
 > > `EOF`: end of file
 

@@ -44,8 +44,8 @@ L:
 		case line := <-log.Line:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
-			fmt.Println("Message:", string(line.Message))
-			if string(line.Message) == tagEOF {
+			fmt.Println("Message:", line.Message)
+			if line.Message == tagEOF {
 				break L
 			}
 		}
@@ -83,8 +83,8 @@ L:
 		case line := <-log.Line:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
-			fmt.Println("Message:", string(line.Message))
-			if string(line.Message) == tagEOF {
+			fmt.Println("Message:", line.Message)
+			if line.Message == tagEOF {
 				break L
 			}
 		}
@@ -122,8 +122,8 @@ L:
 		case line := <-log.Line:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
-			fmt.Println("Message:", string(line.Message))
-			if string(line.Message) == tagEOF {
+			fmt.Println("Message:", line.Message)
+			if line.Message == tagEOF {
 				break L
 			}
 		}
@@ -159,13 +159,11 @@ L:
 	for {
 		select {
 		case line := <-log.Line:
-			if string(line.Message) == tagEOF {
+			if line.Message == tagEOF {
 				break L
 			}
-			fmt.Printf("message: %s\nbytes length: %d\nrune length: %d\n\n",
-				string(line.Message), len(line.Message), utf8.RuneCountInString(string(line.Message)))
-			if strings.HasSuffix(string(line.Message), tagBOL) {
-				assert.Equal(t, splitLen, len(line.Message))
+			if strings.HasSuffix(line.Message, tagBOL) {
+				assert.Equal(t, splitLen, utf8.RuneCountInString(line.Message))
 			}
 		}
 	}
@@ -202,8 +200,8 @@ L:
 		case line := <-log.Line:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
-			fmt.Println("Message:", string(line.Message))
-			if string(line.Message) == tagEOF {
+			fmt.Println("Message:", line.Message)
+			if line.Message == tagEOF {
 				break L
 			}
 		}

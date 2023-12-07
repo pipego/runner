@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/pkg/errors"
 
@@ -38,7 +39,7 @@ type Livelog struct {
 type Line struct {
 	Pos     int64
 	Time    int64
-	Message []byte
+	Message string
 }
 
 type task struct {
@@ -117,7 +118,7 @@ func (t *task) Tail(_ context.Context) Livelog {
 }
 
 func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
-	l := splitLen - len(tagBOL)
+	l := splitLen - utf8.RuneCountInString(tagBOL)
 	p := 1
 
 	helper := func(_ context.Context, reader *bufio.Reader, log Livelog) {
@@ -126,15 +127,14 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 			if err != nil {
 				break
 			}
-			r := len(line) / l
-			m := len(line) % l
+			s := string(line)
+			r := utf8.RuneCountInString(s) / l
+			m := utf8.RuneCountInString(s) % l
+			b := []rune(s)
 			for i := 0; i < r; i++ {
-				var b []byte
-				b = append(b, line[i*l:(i+1)*l]...)
-				b = append(b, []byte(tagBOL)...)
-				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: b}
+				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[i*l:(i+1)*l]) + tagBOL}
 			}
-			log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: line[len(line)-m:]}
+			log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[len(b)-m:])}
 			p += 1
 		}
 		t.wg.Done()
@@ -148,7 +148,7 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 
 	go func() {
 		t.wg.Wait()
-		t.log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: []byte(tagEOF)}
+		t.log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: tagEOF}
 		close(t.log.Line)
 	}()
 }
