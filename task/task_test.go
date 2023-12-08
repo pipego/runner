@@ -21,7 +21,7 @@ func TestRunEcho(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = _t.Init(ctx, logLen)
+	err = _t.Init(ctx, lineCount, lineWidth)
 	assert.Equal(t, nil, err)
 
 	err = _t.Run(ctx, "", envs, args)
@@ -65,7 +65,7 @@ func TestRunBash(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = _t.Init(ctx, logLen)
+	err = _t.Init(ctx, lineCount, lineWidth)
 	assert.Equal(t, nil, err)
 
 	err = _t.Run(ctx, "", envs, args)
@@ -104,7 +104,7 @@ func TestRunPython(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = _t.Init(ctx, logLen)
+	err = _t.Init(ctx, lineCount, lineWidth)
 	assert.Equal(t, nil, err)
 
 	err = _t.Run(ctx, "", envs, args)
@@ -143,7 +143,7 @@ func TestRunSplit(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = _t.Init(ctx, logLen)
+	err = _t.Init(ctx, lineCount, lineWidth)
 	assert.Equal(t, nil, err)
 
 	err = _t.Run(ctx, "", envs, args)
@@ -163,7 +163,7 @@ L:
 				break L
 			}
 			if strings.HasSuffix(line.Message, tagBOL) {
-				assert.Equal(t, splitLen, utf8.RuneCountInString(line.Message))
+				assert.Equal(t, lineWidth, utf8.RuneCountInString(line.Message))
 			}
 		}
 	}
@@ -182,7 +182,7 @@ func TestRunError(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = _t.Init(ctx, logLen)
+	err = _t.Init(ctx, lineCount, lineWidth)
 	assert.Equal(t, nil, err)
 
 	err = _t.Run(ctx, "", envs, args)

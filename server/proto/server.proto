@@ -29,7 +29,7 @@ message Task {
   TaskFile file = 2;
   repeated TaskParam params = 3;
   repeated string commands = 4;
-  int64 livelog = 5;
+  Livelog livelog = 5;
 }
 
 message TaskFile {
@@ -40,6 +40,11 @@ message TaskFile {
 message TaskParam {
   string name = 1;
   string value = 2;
+}
+
+message Livelog {
+  int64 lineCount = 1;
+  int64 lineWidth = 2;
 }
 
 message TaskReply {

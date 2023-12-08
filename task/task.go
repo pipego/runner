@@ -14,15 +14,15 @@ import (
 )
 
 const (
-	lineSep  = '\n'
-	logLen   = 5000
-	splitLen = 500   // split length of line (BOL included)
-	tagBOL   = "BOL" // break of line
-	tagEOF   = "EOF" // end of file
+	lineCount = 5000
+	lineSep   = '\n'
+	lineWidth = 500   // BOL appended
+	tagBOL    = "BOL" // break of line
+	tagEOF    = "EOF" // end of file
 )
 
 type Task interface {
-	Init(context.Context, int) error
+	Init(context.Context, int, int) error
 	Deinit(context.Context) error
 	Run(context.Context, string, []string, []string) error
 	Tail(ctx context.Context) Livelog
@@ -33,7 +33,8 @@ type Config struct {
 }
 
 type Livelog struct {
-	Line chan *Line
+	Line  chan *Line
+	Width int
 }
 
 type Line struct {
@@ -58,15 +59,21 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (t *task) Init(_ context.Context, log int) error {
-	l := logLen
+func (t *task) Init(_ context.Context, count, width int) error {
+	c := lineCount
+	w := lineWidth
 
-	if log > 0 {
-		l = log
+	if count > 0 {
+		c = count
+	}
+
+	if width > 0 {
+		w = width
 	}
 
 	t.log = Livelog{
-		Line: make(chan *Line, l),
+		Line:  make(chan *Line, c),
+		Width: w,
 	}
 
 	return nil
@@ -118,7 +125,7 @@ func (t *task) Tail(_ context.Context) Livelog {
 }
 
 func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
-	l := splitLen - utf8.RuneCountInString(tagBOL)
+	w := t.log.Width - utf8.RuneCountInString(tagBOL)
 	p := 1
 
 	helper := func(_ context.Context, reader *bufio.Reader, log Livelog) {
@@ -128,11 +135,11 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 				break
 			}
 			s := string(line)
-			r := utf8.RuneCountInString(s) / l
-			m := utf8.RuneCountInString(s) % l
+			r := utf8.RuneCountInString(s) / w
+			m := utf8.RuneCountInString(s) % w
 			b := []rune(s)
 			for i := 0; i < r; i++ {
-				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[i*l:(i+1)*l]) + tagBOL}
+				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[i*w:(i+1)*w]) + tagBOL}
 			}
 			log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[len(b)-m:])}
 			p += 1

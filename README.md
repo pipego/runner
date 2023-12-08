@@ -81,7 +81,10 @@ Flags:
         "cmd",
         "argv"
       ],
-      "livelog": 5000
+      "livelog": {
+        "lineCount": 5000,
+        "lineWidth": 500
+      }
     }
   }
 }
@@ -115,7 +118,11 @@ Flags:
 >
 > `task.commands`: command and argument
 >
-> `task.livelog`: maximum lines in livelog
+> `task.livelog`: live log
+>
+> `task.livelog.lineCount`: line count (default: 5000)
+>
+> `task.livelog.lineWidth`: line width (default: 500 runes)
 
 **Output**
 
@@ -135,7 +142,7 @@ Flags:
 >
 > > The tag in the line and file as below:
 > >
-> > `BOL`: break of line (split length: 500 runes)
+> > `BOL`: break of line
 > >
 > > `EOF`: end of file
 

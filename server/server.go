@@ -71,17 +71,13 @@ func (s *server) Run(_ context.Context) error {
 
 // nolint: gocyclo
 func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
-	name, file, params, commands, livelog, err := s.recvTask(srv)
+	name, file, params, commands, lineCount, lineWidth, err := s.recvTask(srv)
 	if err != nil {
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	if len(file.GetContent()) != 0 && len(commands) != 0 {
 		return srv.Send(&pb.TaskReply{Error: "file and commands not supported meanwhile"})
-	}
-
-	if livelog <= 0 {
-		return srv.Send(&pb.TaskReply{Error: "invalid livelog"})
 	}
 
 	ctx, cancel := context.WithCancel(srv.Context())
@@ -118,7 +114,7 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 		return srv.Send(&pb.TaskReply{Error: "failed to new task"})
 	}
 
-	if err := t.Init(ctx, livelog); err != nil {
+	if err := t.Init(ctx, lineCount, lineWidth); err != nil {
 		return srv.Send(&pb.TaskReply{Error: "failed to init task"})
 	}
 
@@ -260,30 +256,31 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 
 // nolint: gocritic
 func (s *server) recvTask(srv pb.ServerProto_SendTaskServer) (name string, file *pb.TaskFile, params []*pb.TaskParam,
-	commands []string, livelog int, err error) {
+	commands []string, lineCount, lineWidth int, err error) {
 	for {
 		r, err := srv.Recv()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return "", nil, nil, nil, 0, errors.Wrap(err, "failed to receive")
+			return "", nil, nil, nil, 0, 0, errors.Wrap(err, "failed to receive")
 		}
 
 		if r.Kind != Kind {
-			return "", nil, nil, nil, 0, errors.New("invalid kind")
+			return "", nil, nil, nil, 0, 0, errors.New("invalid kind")
 		}
 
 		name = r.Spec.Task.GetName()
 		file = r.Spec.Task.GetFile()
 		params = r.Spec.Task.GetParams()
 		commands = r.Spec.Task.GetCommands()
-		livelog = int(r.Spec.Task.GetLivelog())
+		lineCount = int(r.Spec.Task.GetLivelog().GetLineCount())
+		lineWidth = int(r.Spec.Task.GetLivelog().GetLineWidth())
 
 		break
 	}
 
-	return name, file, params, commands, livelog, nil
+	return name, file, params, commands, lineCount, lineWidth, nil
 }
 
 func (s *server) newFile(ctx context.Context) (fl.File, error) {
