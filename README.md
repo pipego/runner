@@ -82,7 +82,6 @@ Flags:
         "argv"
       ],
       "livelog": {
-        "lineCount": 5000,
         "lineWidth": 500
       }
     }
@@ -103,7 +102,7 @@ Flags:
 > `task.file.gzip`: boolean
 >
 > `task.params`: parameter and value
-> >
+>
 > > `name1=value1` (`$name1: value1`)
 > >
 > > `name2=$name1` (`$name2: value1`)
@@ -120,9 +119,7 @@ Flags:
 >
 > `task.livelog`: live log
 >
-> `task.livelog.lineCount`: line count (default: 5000)
->
-> `task.livelog.lineWidth`: line width (default: 500 runes)
+> `task.livelog.lineWidth`: line width in runes (default: 500)
 
 **Output**
 
@@ -138,7 +135,7 @@ Flags:
 >
 > `time`: Unix timestamp
 >
-> `message`: line message (string type)
+> `message`: line message in string
 >
 > > The tag in the line and file as below:
 > >
