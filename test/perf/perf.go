@@ -9,13 +9,13 @@ import (
 )
 
 const (
-	LEN = 5000
-	SEP = '\n'
+	lineCount = 5000
+	lineSep   = '\n'
 )
 
 func main() {
 	var wg sync.WaitGroup
-	var lineChan = make(chan string, LEN)
+	var lineChan = make(chan string, lineCount)
 
 	cmd := exec.Command("python3", "perf.py")
 	cmd.Stderr = cmd.Stdout
@@ -32,7 +32,7 @@ func main() {
 
 	go func(reader *bufio.Reader, lineChan chan string) {
 		for {
-			line, err := reader.ReadBytes(SEP)
+			line, err := reader.ReadBytes(lineSep)
 			if err != nil {
 				fmt.Printf("failed to read: %s", err.Error())
 				break

@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	lineCount = 5000
 	lineSep   = '\n'
 	lineWidth = 500   // BOL appended
 	tagBOL    = "BOL" // break of line
@@ -22,17 +21,17 @@ const (
 )
 
 type Task interface {
-	Init(context.Context, int, int) error
+	Init(context.Context, int) error
 	Deinit(context.Context) error
 	Run(context.Context, string, []string, []string) error
-	Tail(ctx context.Context) Livelog
+	Tail(ctx context.Context) Log
 }
 
 type Config struct {
 	Config config.Config
 }
 
-type Livelog struct {
+type Log struct {
 	Line  chan *Line
 	Width int
 }
@@ -45,7 +44,7 @@ type Line struct {
 
 type task struct {
 	cfg *Config
-	log Livelog
+	log Log
 	wg  sync.WaitGroup
 }
 
@@ -59,19 +58,14 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (t *task) Init(_ context.Context, count, width int) error {
-	c := lineCount
+func (t *task) Init(_ context.Context, width int) error {
 	w := lineWidth
-
-	if count > 0 {
-		c = count
-	}
 
 	if width > 0 {
 		w = width
 	}
 
-	t.log = Livelog{
+	t.log = Log{
 		Line:  make(chan *Line, c),
 		Width: w,
 	}
@@ -120,7 +114,7 @@ func (t *task) Run(ctx context.Context, _ string, envs, args []string) error {
 	return nil
 }
 
-func (t *task) Tail(_ context.Context) Livelog {
+func (t *task) Tail(_ context.Context) Log {
 	return t.log
 }
 
@@ -128,7 +122,7 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 	w := t.log.Width - utf8.RuneCountInString(tagBOL)
 	p := 1
 
-	helper := func(_ context.Context, reader *bufio.Reader, log Livelog) {
+	helper := func(_ context.Context, reader *bufio.Reader, log Log) {
 		for {
 			line, err := reader.ReadBytes(lineSep)
 			if err != nil {

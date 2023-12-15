@@ -81,8 +81,8 @@ Flags:
         "cmd",
         "argv"
       ],
-      "livelog": {
-        "lineWidth": 500
+      "log": {
+        "width": 500
       }
     }
   }
@@ -117,9 +117,9 @@ Flags:
 >
 > `task.commands`: command and argument
 >
-> `task.livelog`: live log
+> `task.log`: task log
 >
-> `task.livelog.lineWidth`: line width in runes (default: 500)
+> `task.log.width`: line width in runes (default: 500)
 
 **Output**
 
@@ -250,6 +250,7 @@ Project License can be found [here](LICENSE).
 - [asynq](https://github.com/hibiken/asynq)
 - [asynqmon](https://github.com/hibiken/asynqmon)
 - [bufio-example](https://golang.org/src/bufio/example_test.go)
+- [chanx](https://github.com/smallnest/chanx)
 - [cuelang](https://cuelang.org)
 - [cyclone-workflow](https://github.com/caicloud/cyclone)
 - [dagger](https://dagger.io/)
