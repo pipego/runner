@@ -41,7 +41,7 @@ func TestRunEcho(t *testing.T) {
 L:
 	for {
 		select {
-		case line := <-log.Line:
+		case line := <-log.Line.Out:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
 			fmt.Println("Message:", line.Message)
@@ -80,7 +80,7 @@ func TestRunBash(t *testing.T) {
 L:
 	for {
 		select {
-		case line := <-log.Line:
+		case line := <-log.Line.Out:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
 			fmt.Println("Message:", line.Message)
@@ -119,7 +119,7 @@ func TestRunPython(t *testing.T) {
 L:
 	for {
 		select {
-		case line := <-log.Line:
+		case line := <-log.Line.Out:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
 			fmt.Println("Message:", line.Message)
@@ -158,7 +158,7 @@ func TestRunSplit(t *testing.T) {
 L:
 	for {
 		select {
-		case line := <-log.Line:
+		case line := <-log.Line.Out:
 			if line.Message == tagEOF {
 				break L
 			}
@@ -197,7 +197,7 @@ func TestRunError(t *testing.T) {
 L:
 	for {
 		select {
-		case line := <-log.Line:
+		case line := <-log.Line.Out:
 			fmt.Println("Pos:", line.Pos)
 			fmt.Println("Time:", line.Time)
 			fmt.Println("Message:", line.Message)

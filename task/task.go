@@ -10,10 +10,12 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/pipego/runner/chanx"
 	"github.com/pipego/runner/config"
 )
 
 const (
+	lineCount = 5000
 	lineSep   = '\n'
 	lineWidth = 500   // BOL appended
 	tagBOL    = "BOL" // break of line
@@ -32,7 +34,7 @@ type Config struct {
 }
 
 type Log struct {
-	Line  chan *Line
+	Line  *chanx.UnboundedChan[*Line]
 	Width int
 }
 
@@ -58,7 +60,7 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (t *task) Init(_ context.Context, width int) error {
+func (t *task) Init(ctx context.Context, width int) error {
 	w := lineWidth
 
 	if width > 0 {
@@ -66,7 +68,7 @@ func (t *task) Init(_ context.Context, width int) error {
 	}
 
 	t.log = Log{
-		Line:  make(chan *Line, c),
+		Line:  chanx.NewUnboundedChan[*Line](ctx, lineCount),
 		Width: w,
 	}
 
@@ -133,9 +135,9 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 			m := utf8.RuneCountInString(s) % w
 			b := []rune(s)
 			for i := 0; i < r; i++ {
-				log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[i*w:(i+1)*w]) + tagBOL}
+				log.Line.In <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[i*w:(i+1)*w]) + tagBOL}
 			}
-			log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[len(b)-m:])}
+			log.Line.In <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[len(b)-m:])}
 			p += 1
 		}
 		t.wg.Done()
@@ -149,7 +151,7 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 
 	go func() {
 		t.wg.Wait()
-		t.log.Line <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: tagEOF}
-		close(t.log.Line)
+		t.log.Line.In <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: tagEOF}
+		close(t.log.Line.In)
 	}()
 }

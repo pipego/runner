@@ -133,7 +133,7 @@ L:
 		select {
 		case <-ctx.Done():
 			break L
-		case line, ok := <-log.Line:
+		case line, ok := <-log.Line.Out:
 			if ok {
 				_ = srv.Send(&pb.TaskReply{
 					Output: &pb.TaskOutput{
