@@ -9,8 +9,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/pkg/errors"
+	"github.com/smallnest/chanx"
 
-	"github.com/pipego/runner/chanx"
 	"github.com/pipego/runner/config"
 )
 

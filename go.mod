@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil/v3 v3.23.9
+	github.com/smallnest/chanx v1.2.0
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/goleak v1.1.12
 	golang.org/x/text v0.3.4
