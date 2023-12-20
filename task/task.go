@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	lineCount = 5000
+	lineCount = 1000
 	lineSep   = '\n'
 	lineWidth = 500   // BOL appended
 	tagBOL    = "BOL" // break of line
