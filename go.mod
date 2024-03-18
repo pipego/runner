@@ -4,6 +4,7 @@ go 1.22.0
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
+	github.com/hashicorp/go-hclog v1.6.2
 	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil/v3 v3.24.1
 	github.com/smallnest/chanx v1.2.0
@@ -18,10 +19,13 @@ require (
 require (
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect

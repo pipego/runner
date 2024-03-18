@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
 
 	"github.com/pipego/runner/config"
@@ -41,6 +42,7 @@ type File interface {
 
 type Config struct {
 	Config config.Config
+	Logger hclog.Logger
 }
 
 type file struct {

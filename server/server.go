@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
@@ -32,7 +33,8 @@ type Server interface {
 }
 
 type Config struct {
-	Addr string
+	Addr   string
+	Logger hclog.Logger
 }
 
 type server struct {
@@ -69,7 +71,7 @@ func (s *server) Run(_ context.Context) error {
 	return g.Serve(lis)
 }
 
-// nolint: gocyclo
+// nolint:gocyclo
 func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 	name, file, params, commands, width, err := s.recvTask(srv)
 	if err != nil {
@@ -254,7 +256,7 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	return nil
 }
 
-// nolint: gocritic
+// nolint:gocritic
 func (s *server) recvTask(srv pb.ServerProto_SendTaskServer) (name string, file *pb.TaskFile, params []*pb.TaskParam,
 	commands []string, width int, err error) {
 	for {
@@ -287,6 +289,8 @@ func (s *server) newFile(ctx context.Context) (fl.File, error) {
 	if c == nil {
 		return nil, errors.New("failed to config")
 	}
+
+	c.Logger = s.cfg.Logger
 
 	return fl.New(ctx, c), nil
 }
@@ -326,6 +330,8 @@ func (s *server) newTask(ctx context.Context) (task.Task, error) {
 		return nil, errors.New("failed to config")
 	}
 
+	c.Logger = s.cfg.Logger
+
 	return task.New(ctx, c), nil
 }
 
@@ -355,7 +361,7 @@ func (s *server) evalEnv(ctx context.Context, params []*pb.TaskParam, data strin
 	return data
 }
 
-// nolint: lll
+// nolint:lll
 func (s *server) recvGlance(srv pb.ServerProto_SendGlanceServer) (dir *pb.GlanceDirReq, file *pb.GlanceFileReq, sys *pb.GlanceSysReq, err error) {
 	for {
 		r, err := srv.Recv()
@@ -385,6 +391,8 @@ func (s *server) newGlance(ctx context.Context) (glance.Glance, error) {
 	if c == nil {
 		return nil, errors.New("failed to config")
 	}
+
+	c.Logger = s.cfg.Logger
 
 	return glance.New(ctx, c), nil
 }

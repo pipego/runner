@@ -15,6 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
@@ -51,6 +52,7 @@ type Glance interface {
 
 type Config struct {
 	Config config.Config
+	Logger hclog.Logger
 }
 
 type Entry struct {
@@ -148,7 +150,7 @@ func (g *glance) File(_ context.Context, path string, maxSize int64) (content st
 	return content, true, nil
 }
 
-// nolint: gocritic
+// nolint:gocritic
 func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, _memory, _storage Stats, _host, _os string, err error) {
 	allocatable.MilliCPU, requested.MilliCPU = g.milliCPU()
 	allocatable.Memory, requested.Memory = g.memory()

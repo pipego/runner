@@ -45,10 +45,12 @@ usage: runner --listen-url=LISTEN-URL [<flags>]
 
 pipego runner
 
+
 Flags:
-  --help                   Show context-sensitive help (also try --help-long and --help-man).
-  --version                Show application version.
+  --[no-]help              Show context-sensitive help (also try --help-long and --help-man).
+  --[no-]version           Show application version.
   --listen-url=LISTEN-URL  Listen URL (host:port)
+  --log-level="INFO"       Log level (DEBUG|INFO|WARN|ERROR)
 ```
 
 

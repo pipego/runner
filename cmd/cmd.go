@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
@@ -15,51 +16,66 @@ import (
 )
 
 const (
+	logName    = "runner"
 	routineNum = -1
 )
 
 var (
 	app       = kingpin.New("runner", "pipego runner").Version(config.Version + "-build-" + config.Build)
 	listenUrl = app.Flag("listen-url", "Listen URL (host:port)").Required().String()
+	logLevel  = app.Flag("log-level", "Log level (DEBUG|INFO|WARN|ERROR)").Default("INFO").String()
 )
 
 func Run(ctx context.Context) error {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	c, err := initConfig(ctx)
+	logger, err := initLogger(ctx, *logLevel)
+	if err != nil {
+		return errors.Wrap(err, "failed to init logger")
+	}
+
+	c, err := initConfig(ctx, logger)
 	if err != nil {
 		return errors.Wrap(err, "failed to init config")
 	}
 
-	s, err := initServer(ctx, c)
+	s, err := initServer(ctx, logger, c)
 	if err != nil {
 		return errors.Wrap(err, "failed to init server")
 	}
 
-	if err := runServer(ctx, s); err != nil {
+	if err := runServer(ctx, logger, s); err != nil {
 		return errors.Wrap(err, "failed to run server")
 	}
 
 	return nil
 }
 
-func initConfig(_ context.Context) (*config.Config, error) {
+func initLogger(_ context.Context, level string) (hclog.Logger, error) {
+	return hclog.New(&hclog.LoggerOptions{
+		Name:  logName,
+		Level: hclog.LevelFromString(level),
+	}), nil
+}
+
+func initConfig(_ context.Context, _ hclog.Logger) (*config.Config, error) {
 	c := config.New()
 	return c, nil
 }
 
-func initServer(ctx context.Context, _ *config.Config) (server.Server, error) {
+func initServer(ctx context.Context, logger hclog.Logger, _ *config.Config) (server.Server, error) {
 	c := server.DefaultConfig()
 	if c == nil {
 		return nil, errors.New("failed to config")
 	}
 
 	c.Addr = *listenUrl
+	c.Logger = logger
 
 	return server.New(ctx, c), nil
 }
 
-func runServer(ctx context.Context, srv server.Server) error {
+func runServer(ctx context.Context, _ hclog.Logger, srv server.Server) error {
 	if err := srv.Init(ctx); err != nil {
 		return errors.New("failed to init")
 	}
