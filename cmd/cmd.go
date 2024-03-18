@@ -2,16 +2,20 @@ package cmd
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/pipego/runner/config"
 	"github.com/pipego/runner/server"
+)
+
+const (
+	routineNum = -1
 )
 
 var (
@@ -60,11 +64,15 @@ func runServer(ctx context.Context, srv server.Server) error {
 		return errors.New("failed to init")
 	}
 
-	go func(ctx context.Context, srv server.Server) {
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(routineNum)
+
+	g.Go(func() error {
 		if err := srv.Run(ctx); err != nil {
-			log.Fatalf("failed to run: %v", err)
+			return errors.Wrap(err, "failed to run")
 		}
-	}(ctx, srv)
+		return nil
+	})
 
 	s := make(chan os.Signal, 1)
 
@@ -73,15 +81,15 @@ func runServer(ctx context.Context, srv server.Server) error {
 	// kill -9 is syscall.SIGKILL but can"t be caught, so don't need add it
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 
-	done := make(chan bool, 1)
-
-	go func(ctx context.Context, srv server.Server, s chan os.Signal, done chan bool) {
+	g.Go(func() error {
 		<-s
 		_ = srv.Deinit(ctx)
-		done <- true
-	}(ctx, srv, s, done)
+		return nil
+	})
 
-	<-done
+	if err := g.Wait(); err != nil {
+		return errors.Wrap(err, "failed to wait")
+	}
 
 	return nil
 }

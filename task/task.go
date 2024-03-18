@@ -4,12 +4,12 @@ import (
 	"bufio"
 	"context"
 	"os/exec"
-	"sync"
 	"time"
 	"unicode/utf8"
 
 	"github.com/pkg/errors"
 	"github.com/smallnest/chanx"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/pipego/runner/config"
 )
@@ -17,9 +17,12 @@ import (
 const (
 	lineCount = 1000
 	lineSep   = '\n'
-	lineWidth = 500   // BOL appended
-	tagBOL    = "BOL" // break of line
-	tagEOF    = "EOF" // end of file
+	lineWidth = 500 // BOL appended
+
+	routineNum = -1
+
+	tagBOL = "BOL" // break of line
+	tagEOF = "EOF" // end of file
 )
 
 type Task interface {
@@ -47,7 +50,6 @@ type Line struct {
 type task struct {
 	cfg *Config
 	log Log
-	wg  sync.WaitGroup
 }
 
 func New(_ context.Context, cfg *Config) Task {
@@ -109,9 +111,16 @@ func (t *task) Run(ctx context.Context, _ string, envs, args []string) error {
 	_ = cmd.Start()
 	t.routine(ctx, readerStdout, readerStderr)
 
-	go func(cmd *exec.Cmd) {
-		_ = cmd.Wait()
-	}(cmd)
+	g, _ := errgroup.WithContext(ctx)
+	g.SetLimit(routineNum)
+
+	g.Go(func() error {
+		return cmd.Wait()
+	})
+
+	if err = g.Wait(); err != nil {
+		return errors.Wrap(err, "failed to wait")
+	}
 
 	return nil
 }
@@ -140,18 +149,26 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 			log.Line.In <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[len(b)-m:])}
 			p += 1
 		}
-		t.wg.Done()
 	}
 
-	t.wg.Add(1)
-	go helper(ctx, stdout, t.log)
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(routineNum)
 
-	t.wg.Add(1)
-	go helper(ctx, stderr, t.log)
+	g.Go(func() error {
+		helper(ctx, stdout, t.log)
+		return nil
+	})
 
-	go func() {
-		t.wg.Wait()
+	g.Go(func() error {
+		helper(ctx, stderr, t.log)
+		return nil
+	})
+
+	g.Go(func() error {
 		t.log.Line.In <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: tagEOF}
 		close(t.log.Line.In)
-	}()
+		return nil
+	})
+
+	_ = g.Wait()
 }
