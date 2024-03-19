@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"os/exec"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -52,6 +53,7 @@ type Line struct {
 type task struct {
 	cfg *Config
 	log Log
+	wg  sync.WaitGroup
 }
 
 func New(_ context.Context, cfg *Config) Task {
@@ -117,7 +119,8 @@ func (t *task) Run(ctx context.Context, _ string, envs, args []string) error {
 	g.SetLimit(routineNum)
 
 	g.Go(func() error {
-		return cmd.Wait()
+		_ = cmd.Wait()
+		return nil
 	})
 
 	if err = g.Wait(); err != nil {
@@ -151,22 +154,26 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 			log.Line.In <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[len(b)-m:])}
 			p += 1
 		}
+		t.wg.Done()
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(routineNum)
 
+	t.wg.Add(1)
 	g.Go(func() error {
 		helper(ctx, stdout, t.log)
 		return nil
 	})
 
+	t.wg.Add(1)
 	g.Go(func() error {
 		helper(ctx, stderr, t.log)
 		return nil
 	})
 
 	g.Go(func() error {
+		t.wg.Wait()
 		t.cfg.Logger.Debug("task: Message: tagEOF")
 		t.log.Line.In <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: tagEOF}
 		close(t.log.Line.In)

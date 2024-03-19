@@ -7,18 +7,36 @@ import (
 	"testing"
 	"unicode/utf8"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
+
+	"github.com/pipego/runner/config"
 )
+
+func initTask() *task {
+	t := task{
+		cfg: DefaultConfig(),
+		log: Log{},
+	}
+
+	t.cfg.Config = config.Config{}
+	t.cfg.Logger = hclog.New(&hclog.LoggerOptions{
+		Name:  "task",
+		Level: hclog.LevelFromString("DEBUG"),
+	})
+
+	return &t
+}
 
 func TestRunEcho(t *testing.T) {
 	var args []string
 	var envs []string
 	var err error
-	var _t task
 
 	defer goleak.VerifyNone(t)
 
+	_t := initTask()
 	ctx := context.Background()
 
 	err = _t.Init(ctx, lineWidth)
@@ -59,10 +77,10 @@ func TestRunBash(t *testing.T) {
 	var args []string
 	var envs []string
 	var err error
-	var _t task
 
 	defer goleak.VerifyNone(t)
 
+	_t := initTask()
 	ctx := context.Background()
 
 	err = _t.Init(ctx, lineWidth)
@@ -98,10 +116,10 @@ func TestRunPython(t *testing.T) {
 	var args []string
 	var envs []string
 	var err error
-	var _t task
 
 	defer goleak.VerifyNone(t)
 
+	_t := initTask()
 	ctx := context.Background()
 
 	err = _t.Init(ctx, lineWidth)
@@ -137,10 +155,10 @@ func TestRunSplit(t *testing.T) {
 	var args []string
 	var envs []string
 	var err error
-	var _t task
 
 	defer goleak.VerifyNone(t)
 
+	_t := initTask()
 	ctx := context.Background()
 
 	err = _t.Init(ctx, lineWidth)
@@ -176,10 +194,10 @@ func TestRunError(t *testing.T) {
 	var args []string
 	var envs []string
 	var err error
-	var _t task
 
 	defer goleak.VerifyNone(t)
 
+	_t := initTask()
 	ctx := context.Background()
 
 	err = _t.Init(ctx, lineWidth)
