@@ -75,11 +75,14 @@ func (s *server) Run(_ context.Context) error {
 func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 	name, file, params, commands, width, err := s.recvTask(srv)
 	if err != nil {
+		s.cfg.Logger.Error("SendTask: %s", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	if len(file.GetContent()) != 0 && len(commands) != 0 {
-		return srv.Send(&pb.TaskReply{Error: "file and commands not supported meanwhile"})
+		err := "file and commands not supported meanwhile"
+		s.cfg.Logger.Error("SendTask: %s", err)
+		return srv.Send(&pb.TaskReply{Error: err})
 	}
 
 	ctx, cancel := context.WithCancel(srv.Context())
@@ -87,11 +90,13 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 
 	f, err := s.newFile(ctx)
 	if err != nil {
-		return srv.Send(&pb.TaskReply{Error: "failed to new file"})
+		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	if err = f.Init(ctx); err != nil {
-		return srv.Send(&pb.TaskReply{Error: "failed to init file"})
+		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	defer func(ctx context.Context) {
@@ -106,18 +111,21 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 			_ = f.Remove(ctx, n)
 		}(ctx, n)
 		if e != nil {
-			return srv.Send(&pb.TaskReply{Error: "failed to load file"})
+			s.cfg.Logger.Error("SendTask: %s", e.Error())
+			return srv.Send(&pb.TaskReply{Error: e.Error()})
 		}
 		commands = []string{"bash", "-c", n}
 	}
 
 	t, err := s.newTask(ctx)
 	if err != nil {
-		return srv.Send(&pb.TaskReply{Error: "failed to new task"})
+		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	if err := t.Init(ctx, width); err != nil {
-		return srv.Send(&pb.TaskReply{Error: "failed to init task"})
+		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	defer func(ctx context.Context) {
@@ -125,7 +133,8 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 	}(ctx)
 
 	if err := t.Run(ctx, name, s.buildEnv(ctx, params), commands); err != nil {
-		return srv.Send(&pb.TaskReply{Error: "failed to run task"})
+		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	log := t.Tail(ctx)
@@ -137,6 +146,7 @@ L:
 			break L
 		case line, ok := <-log.Line.Out:
 			if ok {
+				s.cfg.Logger.Debug("SendTask: line: %v", line)
 				_ = srv.Send(&pb.TaskReply{
 					Output: &pb.TaskOutput{
 						Pos:     line.Pos,
@@ -153,6 +163,7 @@ L:
 	return nil
 }
 
+// nolint:funlen
 func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	var buf []*pb.GlanceEntry
 	var entries []glance.Entry
@@ -163,6 +174,7 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 
 	dir, file, sys, err := s.recvGlance(srv)
 	if err != nil {
+		s.cfg.Logger.Error("SendGlance: %s", err.Error())
 		return srv.Send(&pb.GlanceReply{Error: err.Error()})
 	}
 
@@ -171,11 +183,13 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 
 	g, err := s.newGlance(ctx)
 	if err != nil {
-		return srv.Send(&pb.GlanceReply{Error: "failed to new glance"})
+		s.cfg.Logger.Error("SendGlance: %s", err.Error())
+		return srv.Send(&pb.GlanceReply{Error: err.Error()})
 	}
 
 	if err = g.Init(ctx); err != nil {
-		return srv.Send(&pb.GlanceReply{Error: "failed to init glance"})
+		s.cfg.Logger.Error("SendGlance: %s", err.Error())
+		return srv.Send(&pb.GlanceReply{Error: err.Error()})
 	}
 
 	defer func(ctx context.Context) {
@@ -185,7 +199,8 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	if dir.GetPath() != "" {
 		entries, err = g.Dir(ctx, dir.GetPath())
 		if err != nil {
-			return srv.Send(&pb.GlanceReply{Error: "failed to run dir"})
+			s.cfg.Logger.Error("SendGlance: %s", err.Error())
+			return srv.Send(&pb.GlanceReply{Error: err.Error()})
 		}
 		for _, item := range entries {
 			buf = append(buf, &pb.GlanceEntry{
@@ -203,16 +218,27 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	if file.GetPath() != "" {
 		content, readable, err = g.File(ctx, file.GetPath(), file.GetMaxSize())
 		if err != nil {
-			return srv.Send(&pb.GlanceReply{Error: "failed to run file"})
+			s.cfg.Logger.Error("SendGlance: %s", err.Error())
+			return srv.Send(&pb.GlanceReply{Error: err.Error()})
 		}
 	}
 
 	if sys.GetEnable() {
 		allocatable, requested, _cpu, _memory, _storage, _host, _os, err = g.Sys(ctx)
 		if err != nil {
-			return srv.Send(&pb.GlanceReply{Error: "failed to run sys"})
+			s.cfg.Logger.Error("SendGlance: %s", err.Error())
+			return srv.Send(&pb.GlanceReply{Error: err.Error()})
 		}
 	}
+
+	s.cfg.Logger.Debug("SendGlance: buf: %v", buf)
+	s.cfg.Logger.Debug("SendGlance: content: %v", content)
+	s.cfg.Logger.Debug("SendGlance: readable: %v", readable)
+	s.cfg.Logger.Debug("SendGlance: allocatable: %v", allocatable)
+	s.cfg.Logger.Debug("SendGlance: requested: %v", requested)
+	s.cfg.Logger.Debug("SendGlance: cpu: %v", _cpu)
+	s.cfg.Logger.Debug("SendGlance: memory: %v", _memory)
+	s.cfg.Logger.Debug("SendGlance: storage: %v", _storage)
 
 	_ = srv.Send(&pb.GlanceReply{
 		Dir: &pb.GlanceDirRep{

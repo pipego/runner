@@ -174,7 +174,7 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 
 	g.Go(func() error {
 		t.wg.Wait()
-		t.cfg.Logger.Debug("task: Message: tagEOF")
+		t.cfg.Logger.Debug("routine: Message: tagEOF")
 		t.log.Line.In <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: tagEOF}
 		close(t.log.Line.In)
 		return nil
