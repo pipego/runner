@@ -21,6 +21,7 @@ import (
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/process"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -32,6 +33,7 @@ const (
 	Bitwise  = 30
 	Duration = 2 * time.Second
 	GB       = "GB"
+	Interval = 0
 	Milli    = 1000
 
 	Current = "."
@@ -47,7 +49,7 @@ type Glance interface {
 	Deinit(context.Context) error
 	Dir(context.Context, string) ([]Entry, error)
 	File(context.Context, string, int64) (string, bool, error)
-	Sys(context.Context) (Resource, Resource, Stats, Stats, Stats, string, string, error)
+	Sys(context.Context) (Resource, Resource, Stats, Stats, Stats, []Process, string, string, error)
 }
 
 type Config struct {
@@ -74,6 +76,15 @@ type Resource struct {
 type Stats struct {
 	Total string `json:"total"`
 	Used  string `json:"used"`
+}
+
+type Process struct {
+	Name    string  `json:"name"`
+	Cmdline string  `json:"cmdline"`
+	Memory  int64   `json:"memory"`
+	Percent float64 `json:"percent"`
+	Pid     int64   `json:"pid"`
+	Ppid    int64   `json:"ppid"`
 }
 
 type glance struct {
@@ -120,7 +131,7 @@ func (g *glance) Dir(_ context.Context, path string) (entries []Entry, err error
 	}
 
 	buf, e := os.ReadDir(path)
-	if err != nil {
+	if e != nil {
 		return entries, errors.Wrap(e, "faied to read dir")
 	}
 
@@ -151,16 +162,18 @@ func (g *glance) File(_ context.Context, path string, maxSize int64) (content st
 }
 
 // nolint:gocritic
-func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, _memory, _storage Stats, _host, _os string, err error) {
+func (g *glance) Sys(_ context.Context) (allocatable, requested Resource, _cpu, _memory, _storage Stats, _processes []Process,
+	_host, _os string, err error) {
 	allocatable.MilliCPU, requested.MilliCPU = g.milliCPU()
 	allocatable.Memory, requested.Memory = g.memory()
 	allocatable.Storage, requested.Storage = g.storage()
 
 	_cpu, _memory, _storage = g.stats(allocatable, requested)
+	_processes = g.processes()
 	_host = g._host()
 	_os = g._os()
 
-	return allocatable, requested, _cpu, _memory, _storage, _host, _os, nil
+	return allocatable, requested, _cpu, _memory, _storage, _processes, _host, _os, nil
 }
 
 func (g *glance) entry(dname, fname string) (Entry, error) {
@@ -325,6 +338,33 @@ func (g *glance) stats(alloc, req Resource) (_cpu, memory, storage Stats) {
 	storage.Used = strconv.FormatInt(req.Storage>>Bitwise, Base) + " " + GB
 
 	return _cpu, memory, storage
+}
+
+func (g *glance) processes() []Process {
+	var buf []Process
+
+	processes, err := process.Processes()
+	if err != nil {
+		return buf
+	}
+
+	for _, item := range processes {
+		name, _ := item.Name()
+		cmdline, _ := item.Cmdline()
+		memory, _ := item.MemoryInfo()
+		percent, _ := item.Percent(Interval)
+		ppid, _ := item.Ppid()
+		buf = append(buf, Process{
+			Name:    name,
+			Cmdline: cmdline,
+			Memory:  int64(memory.RSS),
+			Percent: percent,
+			Pid:     int64(item.Pid),
+			Ppid:    int64(ppid),
+		})
+	}
+
+	return buf
 }
 
 func (g *glance) _host() string {

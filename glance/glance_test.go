@@ -54,7 +54,7 @@ func TestSys(t *testing.T) {
 
 	ctx := context.Background()
 
-	alloc, request, _cpu, _memory, _storage, _host, _os, _ := g.Sys(ctx)
+	alloc, request, _cpu, _memory, _storage, _processes, _host, _os, _ := g.Sys(ctx)
 	assert.NotEqual(t, -1, alloc.MilliCPU)
 	assert.NotEqual(t, -1, alloc.Memory)
 	assert.NotEqual(t, -1, alloc.Storage)
@@ -64,6 +64,7 @@ func TestSys(t *testing.T) {
 	assert.NotEqual(t, nil, _cpu)
 	assert.NotEqual(t, nil, _memory)
 	assert.NotEqual(t, nil, _storage)
+	assert.NotEqual(t, nil, _processes)
 	assert.NotEqual(t, "", _host)
 	assert.NotEqual(t, "", _os)
 }
@@ -170,6 +171,15 @@ func TestStats(t *testing.T) {
 	assert.NotEqual(t, nil, _cpu)
 	assert.NotEqual(t, nil, _memory)
 	assert.NotEqual(t, nil, _storage)
+}
+
+func TestProcesses(t *testing.T) {
+	g := glance{
+		cfg: DefaultConfig(),
+	}
+
+	_processes := g.processes()
+	assert.NotEqual(t, nil, _processes)
 }
 
 func TestHost(t *testing.T) {

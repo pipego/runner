@@ -145,6 +145,7 @@ message GlanceStats {
   GlanceMemory memory = 3;
   string os = 4;
   GlanceStorage storage = 5;
+  repeated GlanceProcess processes = 6;
 }
 
 message GlanceCPU {
@@ -160,4 +161,13 @@ message GlanceMemory {
 message GlanceStorage {
   string total = 1;
   string used = 2;
+}
+
+message GlanceProcess {
+  string name = 1;
+  string cmdline = 2;
+  int64 memory = 3;
+  double percent = 4;
+  int64 pid = 5;
+  int64 ppid = 6;
 }

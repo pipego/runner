@@ -231,7 +231,17 @@ Flags:
       "storage": {
         "total": "250 GB",
         "used": "18 GB"
-      }
+      },
+      "processes": [
+        {
+          "name": "init(Ubuntu-22.",
+          "cmdline": "/init",
+          "memory": 1114112,
+          "percent": 0,
+          "pid": 1,
+          "ppid": 0
+        }
+      ]
     }
   },
   "error": "text"

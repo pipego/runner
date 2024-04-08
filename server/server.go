@@ -165,12 +165,14 @@ L:
 
 // nolint:funlen
 func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
-	var buf []*pb.GlanceEntry
-	var entries []glance.Entry
-	var content, _host, _os string
-	var readable bool
 	var allocatable, requested glance.Resource
+	var content, _host, _os string
+	var entBuf []*pb.GlanceEntry
+	var entries []glance.Entry
+	var procBuf []*pb.GlanceProcess
+	var readable bool
 	var _cpu, _memory, _storage glance.Stats
+	var _processes []glance.Process
 
 	dir, file, sys, err := s.recvGlance(srv)
 	if err != nil {
@@ -203,7 +205,7 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 			return srv.Send(&pb.GlanceReply{Error: err.Error()})
 		}
 		for _, item := range entries {
-			buf = append(buf, &pb.GlanceEntry{
+			entBuf = append(entBuf, &pb.GlanceEntry{
 				Name:  item.Name,
 				IsDir: item.IsDir,
 				Size:  item.Size,
@@ -224,14 +226,24 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	}
 
 	if sys.GetEnable() {
-		allocatable, requested, _cpu, _memory, _storage, _host, _os, err = g.Sys(ctx)
+		allocatable, requested, _cpu, _memory, _storage, _processes, _host, _os, err = g.Sys(ctx)
 		if err != nil {
 			s.cfg.Logger.Error("SendGlance: %s", err.Error())
 			return srv.Send(&pb.GlanceReply{Error: err.Error()})
 		}
+		for _, item := range _processes {
+			procBuf = append(procBuf, &pb.GlanceProcess{
+				Name:    item.Name,
+				Cmdline: item.Cmdline,
+				Memory:  item.Memory,
+				Percent: item.Percent,
+				Pid:     item.Pid,
+				Ppid:    item.Ppid,
+			})
+		}
 	}
 
-	s.cfg.Logger.Debug("SendGlance: buf: %v", buf)
+	s.cfg.Logger.Debug("SendGlance: entries: %v", entBuf)
 	s.cfg.Logger.Debug("SendGlance: content: %v", content)
 	s.cfg.Logger.Debug("SendGlance: readable: %v", readable)
 	s.cfg.Logger.Debug("SendGlance: allocatable: %v", allocatable)
@@ -239,10 +251,11 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	s.cfg.Logger.Debug("SendGlance: cpu: %v", _cpu)
 	s.cfg.Logger.Debug("SendGlance: memory: %v", _memory)
 	s.cfg.Logger.Debug("SendGlance: storage: %v", _storage)
+	s.cfg.Logger.Debug("SendGlance: processes: %v", _processes)
 
 	_ = srv.Send(&pb.GlanceReply{
 		Dir: &pb.GlanceDirRep{
-			Entries: buf,
+			Entries: entBuf,
 		},
 		File: &pb.GlanceFileRep{
 			Content:  content,
@@ -276,6 +289,7 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 					Total: _storage.Total,
 					Used:  _storage.Used,
 				},
+				Processes: procBuf,
 			},
 		}})
 
