@@ -31,9 +31,9 @@ import (
 const (
 	Base     = 10
 	Bitwise  = 30
-	Duration = 2 * time.Second
+	Duration = "2s"
 	GB       = "GB"
-	Interval = 0
+	Interval = "2s"
 	Milli    = 1000
 
 	Current = "."
@@ -263,8 +263,10 @@ func (g *glance) milliCPU() (alloc, request int64) {
 		return -1, -1
 	}
 
+	duration, _ := time.ParseDuration(Duration)
+
 	// FIXME: Got error on MacOS 10.13.6
-	p, err := cpu.Percent(Duration, false)
+	p, err := cpu.Percent(duration, false)
 	if err != nil {
 		return -1, -1
 	}
@@ -348,11 +350,16 @@ func (g *glance) processes() []Process {
 		return buf
 	}
 
+	interval, _ := time.ParseDuration(Interval)
+
 	for _, item := range processes {
 		name, _ := item.Name()
 		cmdline, _ := item.Cmdline()
-		memory, _ := item.MemoryInfo()
-		percent, _ := item.Percent(Interval)
+		memory, e := item.MemoryInfo()
+		if e != nil {
+			memory = &process.MemoryInfoStat{}
+		}
+		percent, _ := item.Percent(interval)
 		ppid, _ := item.Ppid()
 		buf = append(buf, Process{
 			Name:    name,
