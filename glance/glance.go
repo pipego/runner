@@ -33,7 +33,7 @@ const (
 	Bitwise  = 30
 	Duration = "2s"
 	GB       = "GB"
-	Interval = "2s"
+	Interval = "0s"
 	Milli    = 1000
 
 	Current = "."
