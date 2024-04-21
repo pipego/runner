@@ -164,10 +164,14 @@ message GlanceStorage {
 }
 
 message GlanceProcess {
+  GlanceThread process = 1;
+  repeated GlanceThread threads = 2;
+}
+
+message GlanceThread {
   string name = 1;
   string cmdline = 2;
   int64 memory = 3;
-  double percent = 4;
+  double time = 4;
   int64 pid = 5;
-  int64 ppid = 6;
 }

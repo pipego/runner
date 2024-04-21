@@ -17,11 +17,11 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
+	"github.com/prometheus/procfs"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/mem"
-	"github.com/shirou/gopsutil/v3/process"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -31,9 +31,8 @@ import (
 const (
 	Base     = 10
 	Bitwise  = 30
-	Duration = "2s"
+	Duration = "0s"
 	GB       = "GB"
-	Interval = "0s"
 	Milli    = 1000
 
 	Current = "."
@@ -79,12 +78,16 @@ type Stats struct {
 }
 
 type Process struct {
+	Process Thread   `json:"process"`
+	Threads []Thread `json:"threads"`
+}
+
+type Thread struct {
 	Name    string  `json:"name"`
 	Cmdline string  `json:"cmdline"`
 	Memory  int64   `json:"memory"`
-	Percent float64 `json:"percent"`
+	Time    float64 `json:"time"`
 	Pid     int64   `json:"pid"`
-	Ppid    int64   `json:"ppid"`
 }
 
 type glance struct {
@@ -343,31 +346,43 @@ func (g *glance) stats(alloc, req Resource) (_cpu, memory, storage Stats) {
 }
 
 func (g *glance) processes() []Process {
-	var buf []Process
+	fetchProcess := func(proc procfs.Proc) Thread {
+		cmds, _ := proc.CmdLine()
+		stat, _ := proc.Stat()
+		return Thread{
+			Name:    stat.Comm,
+			Cmdline: strings.Join(cmds, " "),
+			Memory:  int64(stat.ResidentMemory()),
+			Time:    stat.CPUTime(),
+			Pid:     int64(stat.PID),
+		}
+	}
 
-	processes, err := process.Processes()
-	if err != nil {
+	fetchThreads := func(proc procfs.Proc) []Thread {
+		var buf []Thread
+		threads, _ := procfs.AllThreads(proc.PID)
+		for _, item := range threads {
+			cmds, _ := item.CmdLine()
+			stat, _ := item.Stat()
+			buf = append(buf, Thread{
+				Name:    stat.Comm,
+				Cmdline: strings.Join(cmds, " "),
+				Memory:  int64(stat.ResidentMemory()),
+				Time:    stat.CPUTime(),
+				Pid:     int64(stat.PID),
+			})
+		}
 		return buf
 	}
 
-	interval, _ := time.ParseDuration(Interval)
+	var buf []Process
+
+	processes, _ := procfs.AllProcs()
 
 	for _, item := range processes {
-		name, _ := item.Name()
-		cmdline, _ := item.Cmdline()
-		memory, e := item.MemoryInfo()
-		if e != nil {
-			memory = &process.MemoryInfoStat{}
-		}
-		percent, _ := item.Percent(interval)
-		ppid, _ := item.Ppid()
 		buf = append(buf, Process{
-			Name:    name,
-			Cmdline: cmdline,
-			Memory:  int64(memory.RSS),
-			Percent: percent,
-			Pid:     int64(item.Pid),
-			Ppid:    int64(ppid),
+			Process: fetchProcess(item),
+			Threads: fetchThreads(item),
 		})
 	}
 

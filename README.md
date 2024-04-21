@@ -234,12 +234,22 @@ Flags:
       },
       "processes": [
         {
-          "name": "init(Ubuntu-22.",
-          "cmdline": "/init",
-          "memory": 1114112,
-          "percent": 0,
-          "pid": 1,
-          "ppid": 0
+          "process": {
+            "name": "init",
+            "cmdline": "/init",
+            "memory": 684032,
+            "time": 1.00,
+            "pid": 1
+          },
+          "threads": [
+            {
+              "name": "child",
+              "cmdline": "/child",
+              "memory": 684032,
+              "time": 1.00,
+              "pid": 2
+            }
+          ]
         }
       ]
     }

@@ -231,14 +231,29 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 			s.cfg.Logger.Error("SendGlance: %s", err.Error())
 			return srv.Send(&pb.GlanceReply{Error: err.Error()})
 		}
+		helper := func(data []glance.Thread) []*pb.GlanceThread {
+			var threads []*pb.GlanceThread
+			for _, item := range data {
+				threads = append(threads, &pb.GlanceThread{
+					Name:    item.Name,
+					Cmdline: item.Cmdline,
+					Memory:  item.Memory,
+					Time:    item.Time,
+					Pid:     item.Pid,
+				})
+			}
+			return threads
+		}
 		for _, item := range _processes {
 			procBuf = append(procBuf, &pb.GlanceProcess{
-				Name:    item.Name,
-				Cmdline: item.Cmdline,
-				Memory:  item.Memory,
-				Percent: item.Percent,
-				Pid:     item.Pid,
-				Ppid:    item.Ppid,
+				Process: &pb.GlanceThread{
+					Name:    item.Process.Name,
+					Cmdline: item.Process.Cmdline,
+					Memory:  item.Process.Memory,
+					Time:    item.Process.Time,
+					Pid:     item.Process.Pid,
+				},
+				Threads: helper(item.Threads),
 			})
 		}
 	}

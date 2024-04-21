@@ -6,11 +6,12 @@ require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/hashicorp/go-hclog v1.6.2
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/procfs v0.14.0
 	github.com/shirou/gopsutil/v3 v3.24.1
 	github.com/smallnest/chanx v1.2.0
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/goleak v1.3.0
-	golang.org/x/sync v0.6.0
+	golang.org/x/sync v0.7.0
 	golang.org/x/text v0.14.0
 	google.golang.org/grpc v1.62.0
 	google.golang.org/protobuf v1.32.0
@@ -34,7 +35,7 @@ require (
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
