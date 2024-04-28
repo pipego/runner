@@ -272,6 +272,7 @@ Flags:
   "spec": {
     "maint": {
       "clock": {
+        "time": 1257894000,
         "sync": true
       }
     }
@@ -280,6 +281,8 @@ Flags:
 ```
 
 > `maint.clock`: clock maintenance
+>
+> `maint.clock.time`: clock base time (unix time)
 >
 > `maint.clock.sync`: enable/disable clock synchronization
 
