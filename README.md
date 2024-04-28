@@ -91,7 +91,7 @@ Flags:
 }
 ```
 
-> `task.file`: script file in Bash
+> `task.file`: script file in bash
 >
 > `task.file.content`: bytes
 >
@@ -111,9 +111,9 @@ Flags:
 > >
 > > `name3=$name2` (`$name3: value1`)
 > >
-> > `name4=$$name1` (`$name4: 790name1`, the PID of this script)
+> > `name4=$$name1` (`$name4: 790name1`, the pid of this script)
 > >
-> > `name4=${BASHPID}name1` (`$name4: 790name1`, the PID of current instance)
+> > `name4=${BASHPID}name1` (`$name4: 790name1`, the pid of current instance)
 > >
 > > `name5=#name1` (`$name5: #name1`, invalid symbol in Bash)
 >
@@ -135,7 +135,7 @@ Flags:
 
 > `pos`: line position
 >
-> `time`: Unix timestamp
+> `time`: unix timestamp
 >
 > `message`: line message in string
 >
@@ -257,6 +257,63 @@ Flags:
   "error": "text"
 }
 ```
+
+
+
+### 3. Maint
+
+```json
+{
+  "apiVersion": "v1",
+  "kind": "runner",
+  "metadata": {
+    "name": "runner"
+  },
+  "spec": {
+    "maint": {
+      "clock": {
+        "sync": true
+      }
+    }
+  }
+}
+```
+
+> `maint.clock`: clock maintenance
+>
+> `maint.clock.sync`: enable/disable clock synchronization
+
+**Output**
+
+```json
+{
+  "clock": {
+    "diff": {
+      "time": 100,
+      "dangerous": true
+    },
+    "sync": {
+      "status": 0
+    }
+  }
+}
+```
+
+> `clock.diff`: clock difference
+>
+> > `time`: clock difference in milliseconds
+> >
+> > `dangerous`: if the difference is big enough to be considered dangerous
+>
+> `clock.sync`: clock synchronization
+>
+> > `status`: clock synchronization status
+> >
+> > `0`: clock is synchronised
+> >
+> > `1`: clock is not synchronised
+> >
+> > `2`: clock state is indeterminant
 
 
 
