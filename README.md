@@ -285,6 +285,15 @@ Flags:
 > `maint.clock.time`: clock base time (unix time)
 >
 > `maint.clock.sync`: enable/disable clock synchronization
+> >
+> > The clock synchronization on Ubuntu
+> >
+> > ```bash
+> > sudo apt install -y ntp ntpdate ntpstat
+> > sudo service ntp stop
+> > sudo ntpdate -s time.nist.gov
+> > sudo service ntp start
+> > ```
 
 **Output**
 
