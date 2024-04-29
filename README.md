@@ -298,7 +298,8 @@ Flags:
     "sync": {
       "status": 0
     }
-  }
+  },
+  "error": "text"
 }
 ```
 

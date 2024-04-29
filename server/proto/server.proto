@@ -7,6 +7,7 @@ package runner;
 service ServerProto {
   rpc SendTask (stream TaskRequest) returns (stream TaskReply) {}
   rpc SendGlance (stream GlanceRequest) returns (stream GlanceReply) {}
+  rpc SendMaint (stream MaintRequest) returns (stream MaintReply) {}
 }
 
 message TaskRequest {
@@ -174,4 +175,47 @@ message GlanceThread {
   int64 memory = 3;
   double time = 4;
   int64 pid = 5;
+}
+
+message MaintRequest {
+  string apiVersion = 1;
+  string kind = 2;
+  MaintMetadata metadata = 3;
+  MaintSpec spec = 4;
+}
+
+message MaintMetadata {
+  string name = 1;
+}
+
+message MaintSpec {
+  Maint maint = 1;
+}
+
+message Maint {
+  MaintClockReq clock = 1;
+}
+
+message MaintClockReq {
+  int64 time = 1;
+  bool sync = 2;
+}
+
+message MaintReply {
+  MaintClockRep clock = 1;
+  string error = 2;
+}
+
+message MaintClockRep {
+  MaintClockDiff diff = 1;
+  MaintClockSync sync = 2;
+}
+
+message MaintClockDiff {
+  int64 time = 1;
+  bool dangerous = 2;
+}
+
+message MaintClockSync {
+  int64 status = 1;
 }

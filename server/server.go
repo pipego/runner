@@ -16,6 +16,7 @@ import (
 
 	fl "github.com/pipego/runner/file"
 	"github.com/pipego/runner/glance"
+	"github.com/pipego/runner/maint"
 	pb "github.com/pipego/runner/server/proto"
 	"github.com/pipego/runner/task"
 )
@@ -311,6 +312,56 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	return nil
 }
 
+func (s *server) SendMaint(srv pb.ServerProto_SendMaintServer) error {
+	clock, err := s.recvMaint(srv)
+	if err != nil {
+		s.cfg.Logger.Error("SendMaint: %s", err.Error())
+		return srv.Send(&pb.MaintReply{Error: err.Error()})
+	}
+
+	ctx, cancel := context.WithCancel(srv.Context())
+	defer cancel()
+
+	m, err := s.newMaint(ctx)
+	if err != nil {
+		s.cfg.Logger.Error("SendMaint: %s", err.Error())
+		return srv.Send(&pb.MaintReply{Error: err.Error()})
+	}
+
+	if err = m.Init(ctx); err != nil {
+		s.cfg.Logger.Error("SendMaint: %s", err.Error())
+		return srv.Send(&pb.MaintReply{Error: err.Error()})
+	}
+
+	defer func(ctx context.Context) {
+		_ = m.Deinit(ctx)
+	}(ctx)
+
+	diffTime, diffDangerous, syncStatus, err := m.Clock(ctx, clock.GetTime(), clock.GetSync())
+	if err != nil {
+		s.cfg.Logger.Error("SendMaint: %s", err.Error())
+		return srv.Send(&pb.MaintReply{Error: err.Error()})
+	}
+
+	s.cfg.Logger.Debug("SendMaint: diffTime: %v", diffTime)
+	s.cfg.Logger.Debug("SendMaint: diffDangerous: %v", diffDangerous)
+	s.cfg.Logger.Debug("SendMaint: syncStatus: %v", syncStatus)
+
+	_ = srv.Send(&pb.MaintReply{
+		Clock: &pb.MaintClockRep{
+			Diff: &pb.MaintClockDiff{
+				Time:      diffTime,
+				Dangerous: diffDangerous,
+			},
+			Sync: &pb.MaintClockSync{
+				Status: syncStatus,
+			},
+		},
+	})
+
+	return nil
+}
+
 // nolint:gocritic
 func (s *server) recvTask(srv pb.ServerProto_SendTaskServer) (name string, file *pb.TaskFile, params []*pb.TaskParam,
 	commands []string, width int, err error) {
@@ -450,4 +501,37 @@ func (s *server) newGlance(ctx context.Context) (glance.Glance, error) {
 	c.Logger = s.cfg.Logger
 
 	return glance.New(ctx, c), nil
+}
+
+func (s *server) recvMaint(srv pb.ServerProto_SendMaintServer) (clock *pb.MaintClockReq, err error) {
+	for {
+		r, err := srv.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, errors.Wrap(err, "failed to receive")
+		}
+
+		if r.Kind != Kind {
+			return nil, errors.Wrap(err, "invalid kind")
+		}
+
+		clock = r.Spec.Maint.GetClock()
+
+		break
+	}
+
+	return clock, nil
+}
+
+func (s *server) newMaint(ctx context.Context) (maint.Maint, error) {
+	c := maint.DefaultConfig()
+	if c == nil {
+		return nil, errors.New("failed to config")
+	}
+
+	c.Logger = s.cfg.Logger
+
+	return maint.New(ctx, c), nil
 }
