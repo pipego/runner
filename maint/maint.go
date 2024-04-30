@@ -2,7 +2,9 @@ package maint
 
 import (
 	"context"
+	"math"
 	"os/exec"
+	"time"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
@@ -89,7 +91,11 @@ func (m *maint) syncClock(ctx context.Context) int64 {
 	return clockStatusSynchronised
 }
 
-func (m *maint) diffClock(_ context.Context, clockTime int64) (int64, bool) {
-	// TBD: FIXME
-	return 0, true
+func (m *maint) diffClock(_ context.Context, clockTime int64) (diffTime int64, diffDangerous bool) {
+	localTime := time.Now()
+
+	diffTime = clockTime - localTime.Unix()
+	diffDangerous = math.Abs(float64(diffTime)) > clockDiffDangerous
+
+	return diffTime, diffDangerous
 }

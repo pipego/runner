@@ -326,6 +326,10 @@ Flags:
 >
 > > `time`: clock difference in milliseconds
 > >
+> > > positive value: behind of time
+> > >
+> > > negative value: ahead of time
+> >
 > > `dangerous`: if the difference is big enough to be considered dangerous
 
 
