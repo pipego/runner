@@ -197,8 +197,8 @@ message Maint {
 }
 
 message MaintClockReq {
-  int64 time = 1;
-  bool sync = 2;
+  bool sync = 1;
+  int64 time = 2;
 }
 
 message MaintReply {
@@ -207,15 +207,15 @@ message MaintReply {
 }
 
 message MaintClockRep {
-  MaintClockDiff diff = 1;
-  MaintClockSync sync = 2;
+  MaintClockSync sync = 1;
+  MaintClockDiff diff = 2;
+}
+
+message MaintClockSync {
+  int64 status = 1;
 }
 
 message MaintClockDiff {
   int64 time = 1;
   bool dangerous = 2;
-}
-
-message MaintClockSync {
-  int64 status = 1;
 }

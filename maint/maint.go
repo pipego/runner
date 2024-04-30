@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	clockNtpStat = "ntpstat"
+	clockDiffDangerous = 5000
+	clockNtpStat       = "ntpstat"
 
 	clockStatusSynchronised    = 0
 	clockStatusNotSynchronised = 1
@@ -21,7 +22,7 @@ const (
 type Maint interface {
 	Init(context.Context) error
 	Deinit(context.Context) error
-	Clock(context.Context, int64, bool) (int64, bool, int64, error)
+	Clock(context.Context, int64, bool) (int64, int64, bool, error)
 }
 
 type Config struct {
@@ -51,10 +52,10 @@ func (m *maint) Deinit(_ context.Context) error {
 	return nil
 }
 
-func (m *maint) Clock(ctx context.Context, clockTime int64, clockSync bool) (diffTime int64, diffDangerous bool, syncStatus int64,
+func (m *maint) Clock(ctx context.Context, clockTime int64, clockSync bool) (syncStatus int64, diffTime int64, diffDangerous bool,
 	err error) {
 	if clockTime <= 0 {
-		return 0, true, clockStatusIndeterminant, errors.New("invalid clock time")
+		return clockStatusIndeterminant, 0, true, errors.New("invalid clock time")
 	}
 
 	if clockSync {
@@ -67,7 +68,7 @@ func (m *maint) Clock(ctx context.Context, clockTime int64, clockSync bool) (dif
 	m.cfg.Logger.Debug("diffTime", diffTime)
 	m.cfg.Logger.Debug("diffDangerous", diffDangerous)
 
-	return diffTime, diffDangerous, syncStatus, nil
+	return syncStatus, diffTime, diffDangerous, nil
 }
 
 func (m *maint) syncClock(ctx context.Context) int64 {

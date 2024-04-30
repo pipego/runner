@@ -337,24 +337,24 @@ func (s *server) SendMaint(srv pb.ServerProto_SendMaintServer) error {
 		_ = m.Deinit(ctx)
 	}(ctx)
 
-	diffTime, diffDangerous, syncStatus, err := m.Clock(ctx, clock.GetTime(), clock.GetSync())
+	syncStatus, diffTime, diffDangerous, err := m.Clock(ctx, clock.GetTime(), clock.GetSync())
 	if err != nil {
 		s.cfg.Logger.Error("SendMaint: %s", err.Error())
 		return srv.Send(&pb.MaintReply{Error: err.Error()})
 	}
 
+	s.cfg.Logger.Debug("SendMaint: syncStatus: %v", syncStatus)
 	s.cfg.Logger.Debug("SendMaint: diffTime: %v", diffTime)
 	s.cfg.Logger.Debug("SendMaint: diffDangerous: %v", diffDangerous)
-	s.cfg.Logger.Debug("SendMaint: syncStatus: %v", syncStatus)
 
 	_ = srv.Send(&pb.MaintReply{
 		Clock: &pb.MaintClockRep{
+			Sync: &pb.MaintClockSync{
+				Status: syncStatus,
+			},
 			Diff: &pb.MaintClockDiff{
 				Time:      diffTime,
 				Dangerous: diffDangerous,
-			},
-			Sync: &pb.MaintClockSync{
-				Status: syncStatus,
 			},
 		},
 	})

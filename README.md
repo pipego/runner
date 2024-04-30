@@ -272,8 +272,8 @@ Flags:
   "spec": {
     "maint": {
       "clock": {
-        "time": 1257894000,
-        "sync": true
+        "sync": true,
+        "time": 1257894000
       }
     }
   }
@@ -281,8 +281,6 @@ Flags:
 ```
 
 > `maint.clock`: clock maintenance
->
-> `maint.clock.time`: clock base time (unix time)
 >
 > `maint.clock.sync`: enable/disable clock synchronization
 > >
@@ -294,30 +292,26 @@ Flags:
 > > sudo ntpdate -s time.nist.gov
 > > sudo service ntp start
 > > ```
+>
+> `maint.clock.time`: clock base time (unix time)
 
 **Output**
 
 ```json
 {
   "clock": {
+    "sync": {
+      "status": 0
+    },
     "diff": {
       "time": 100,
       "dangerous": true
-    },
-    "sync": {
-      "status": 0
     }
   },
   "error": "text"
 }
 ```
 
-> `clock.diff`: clock difference
->
-> > `time`: clock difference in milliseconds
-> >
-> > `dangerous`: if the difference is big enough to be considered dangerous
->
 > `clock.sync`: clock synchronization
 >
 > > `status`: clock synchronization status
@@ -327,6 +321,12 @@ Flags:
 > > `1`: clock is not synchronised
 > >
 > > `2`: clock state is indeterminant
+>
+> `clock.diff`: clock difference
+>
+> > `time`: clock difference in milliseconds
+> >
+> > `dangerous`: if the difference is big enough to be considered dangerous
 
 
 
@@ -354,6 +354,8 @@ Project License can be found [here](LICENSE).
 - [go-exec](https://gist.github.com/craftslab/1fe9151fbf069a9e1341e4daebe43b5c)
 - [grpctest](https://github.com/grpc/grpc-go/tree/master/internal/grpctest)
 - [grpc-streaming](https://www.freecodecamp.org/news/grpc-server-side-streaming-with-go/)
+- [jenkins-clockdifference](https://github.com/jenkinsci/jenkins/blob/master/core/src/main/java/hudson/util/ClockDifference.java)
+- [jenkins-clockdifference](https://javadoc.jenkins.io/hudson/util/ClockDifference.html)
 - [kube-parallelize](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/framework/parallelize/parallelism.go)
 - [kube-schduler](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/schedule_one.go)
 - [kube-scheduling](https://cloud.tencent.com/developer/article/1644857)
