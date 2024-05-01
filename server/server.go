@@ -76,13 +76,13 @@ func (s *server) Run(_ context.Context) error {
 func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 	name, file, params, commands, width, err := s.recvTask(srv)
 	if err != nil {
-		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	if len(file.GetContent()) != 0 && len(commands) != 0 {
 		err := "file and commands not supported meanwhile"
-		s.cfg.Logger.Error("SendTask: %s", err)
+		s.cfg.Logger.Error("SendTask", err)
 		return srv.Send(&pb.TaskReply{Error: err})
 	}
 
@@ -91,12 +91,12 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 
 	f, err := s.newFile(ctx)
 	if err != nil {
-		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	if err = f.Init(ctx); err != nil {
-		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
@@ -112,7 +112,7 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 			_ = f.Remove(ctx, n)
 		}(ctx, n)
 		if e != nil {
-			s.cfg.Logger.Error("SendTask: %s", e.Error())
+			s.cfg.Logger.Error("SendTask", e.Error())
 			return srv.Send(&pb.TaskReply{Error: e.Error()})
 		}
 		commands = []string{"bash", "-c", n}
@@ -120,12 +120,12 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 
 	t, err := s.newTask(ctx)
 	if err != nil {
-		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
 	if err := t.Init(ctx, width); err != nil {
-		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
@@ -134,7 +134,7 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 	}(ctx)
 
 	if err := t.Run(ctx, name, s.buildEnv(ctx, params), commands); err != nil {
-		s.cfg.Logger.Error("SendTask: %s", err.Error())
+		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
@@ -147,7 +147,7 @@ L:
 			break L
 		case line, ok := <-log.Line.Out:
 			if ok {
-				s.cfg.Logger.Debug("SendTask: line: %v", line)
+				s.cfg.Logger.Debug("SendTask: line", line)
 				_ = srv.Send(&pb.TaskReply{
 					Output: &pb.TaskOutput{
 						Pos:     line.Pos,
@@ -177,7 +177,7 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 
 	dir, file, sys, err := s.recvGlance(srv)
 	if err != nil {
-		s.cfg.Logger.Error("SendGlance: %s", err.Error())
+		s.cfg.Logger.Error("SendGlance", err.Error())
 		return srv.Send(&pb.GlanceReply{Error: err.Error()})
 	}
 
@@ -186,12 +186,12 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 
 	g, err := s.newGlance(ctx)
 	if err != nil {
-		s.cfg.Logger.Error("SendGlance: %s", err.Error())
+		s.cfg.Logger.Error("SendGlance", err.Error())
 		return srv.Send(&pb.GlanceReply{Error: err.Error()})
 	}
 
 	if err = g.Init(ctx); err != nil {
-		s.cfg.Logger.Error("SendGlance: %s", err.Error())
+		s.cfg.Logger.Error("SendGlance", err.Error())
 		return srv.Send(&pb.GlanceReply{Error: err.Error()})
 	}
 
@@ -202,7 +202,7 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	if dir.GetPath() != "" {
 		entries, err = g.Dir(ctx, dir.GetPath())
 		if err != nil {
-			s.cfg.Logger.Error("SendGlance: %s", err.Error())
+			s.cfg.Logger.Error("SendGlance", err.Error())
 			return srv.Send(&pb.GlanceReply{Error: err.Error()})
 		}
 		for _, item := range entries {
@@ -221,7 +221,7 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	if file.GetPath() != "" {
 		content, readable, err = g.File(ctx, file.GetPath(), file.GetMaxSize())
 		if err != nil {
-			s.cfg.Logger.Error("SendGlance: %s", err.Error())
+			s.cfg.Logger.Error("SendGlance", err.Error())
 			return srv.Send(&pb.GlanceReply{Error: err.Error()})
 		}
 	}
@@ -229,7 +229,7 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 	if sys.GetEnable() {
 		allocatable, requested, _cpu, _memory, _storage, _processes, _host, _os, err = g.Sys(ctx)
 		if err != nil {
-			s.cfg.Logger.Error("SendGlance: %s", err.Error())
+			s.cfg.Logger.Error("SendGlance", err.Error())
 			return srv.Send(&pb.GlanceReply{Error: err.Error()})
 		}
 		helper := func(data []glance.Thread) []*pb.GlanceThread {
@@ -259,15 +259,15 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 		}
 	}
 
-	s.cfg.Logger.Debug("SendGlance: entries: %v", entBuf)
-	s.cfg.Logger.Debug("SendGlance: content: %v", content)
-	s.cfg.Logger.Debug("SendGlance: readable: %v", readable)
-	s.cfg.Logger.Debug("SendGlance: allocatable: %v", allocatable)
-	s.cfg.Logger.Debug("SendGlance: requested: %v", requested)
-	s.cfg.Logger.Debug("SendGlance: cpu: %v", _cpu)
-	s.cfg.Logger.Debug("SendGlance: memory: %v", _memory)
-	s.cfg.Logger.Debug("SendGlance: storage: %v", _storage)
-	s.cfg.Logger.Debug("SendGlance: processes: %v", _processes)
+	s.cfg.Logger.Debug("SendGlance: entries", entBuf)
+	s.cfg.Logger.Debug("SendGlance: content", content)
+	s.cfg.Logger.Debug("SendGlance: readable", readable)
+	s.cfg.Logger.Debug("SendGlance: allocatable", allocatable)
+	s.cfg.Logger.Debug("SendGlance: requested", requested)
+	s.cfg.Logger.Debug("SendGlance: cpu", _cpu)
+	s.cfg.Logger.Debug("SendGlance: memory", _memory)
+	s.cfg.Logger.Debug("SendGlance: storage", _storage)
+	s.cfg.Logger.Debug("SendGlance: processes", _processes)
 
 	_ = srv.Send(&pb.GlanceReply{
 		Dir: &pb.GlanceDirRep{
@@ -315,7 +315,7 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 func (s *server) SendMaint(srv pb.ServerProto_SendMaintServer) error {
 	clock, err := s.recvMaint(srv)
 	if err != nil {
-		s.cfg.Logger.Error("SendMaint: %s", err.Error())
+		s.cfg.Logger.Error("SendMaint", err.Error())
 		return srv.Send(&pb.MaintReply{Error: err.Error()})
 	}
 
@@ -324,12 +324,12 @@ func (s *server) SendMaint(srv pb.ServerProto_SendMaintServer) error {
 
 	m, err := s.newMaint(ctx)
 	if err != nil {
-		s.cfg.Logger.Error("SendMaint: %s", err.Error())
+		s.cfg.Logger.Error("SendMaint", err.Error())
 		return srv.Send(&pb.MaintReply{Error: err.Error()})
 	}
 
 	if err = m.Init(ctx); err != nil {
-		s.cfg.Logger.Error("SendMaint: %s", err.Error())
+		s.cfg.Logger.Error("SendMaint", err.Error())
 		return srv.Send(&pb.MaintReply{Error: err.Error()})
 	}
 
@@ -339,13 +339,13 @@ func (s *server) SendMaint(srv pb.ServerProto_SendMaintServer) error {
 
 	syncStatus, diffTime, diffDangerous, err := m.Clock(ctx, clock.GetTime(), clock.GetSync())
 	if err != nil {
-		s.cfg.Logger.Error("SendMaint: %s", err.Error())
+		s.cfg.Logger.Error("SendMaint", err.Error())
 		return srv.Send(&pb.MaintReply{Error: err.Error()})
 	}
 
-	s.cfg.Logger.Debug("SendMaint: syncStatus: %v", syncStatus)
-	s.cfg.Logger.Debug("SendMaint: diffTime: %v", diffTime)
-	s.cfg.Logger.Debug("SendMaint: diffDangerous: %v", diffDangerous)
+	s.cfg.Logger.Debug("SendMaint: syncStatus", syncStatus)
+	s.cfg.Logger.Debug("SendMaint: diffTime", diffTime)
+	s.cfg.Logger.Debug("SendMaint: diffDangerous", diffDangerous)
 
 	_ = srv.Send(&pb.MaintReply{
 		Clock: &pb.MaintClockRep{
