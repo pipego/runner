@@ -313,35 +313,19 @@ func (s *server) SendGlance(srv pb.ServerProto_SendGlanceServer) error {
 }
 
 func (s *server) SendMaint(srv pb.ServerProto_SendMaintServer) error {
-	clock, err := s.recvMaint(srv)
-	if err != nil {
-		s.cfg.Logger.Error("SendMaint", err.Error())
-		return srv.Send(&pb.MaintReply{Error: err.Error()})
-	}
+	clock, _ := s.recvMaint(srv)
 
 	ctx, cancel := context.WithCancel(srv.Context())
 	defer cancel()
 
-	m, err := s.newMaint(ctx)
-	if err != nil {
-		s.cfg.Logger.Error("SendMaint", err.Error())
-		return srv.Send(&pb.MaintReply{Error: err.Error()})
-	}
-
-	if err = m.Init(ctx); err != nil {
-		s.cfg.Logger.Error("SendMaint", err.Error())
-		return srv.Send(&pb.MaintReply{Error: err.Error()})
-	}
+	m, _ := s.newMaint(ctx)
+	_ = m.Init(ctx)
 
 	defer func(ctx context.Context) {
 		_ = m.Deinit(ctx)
 	}(ctx)
 
-	syncStatus, diffTime, diffDangerous, err := m.Clock(ctx, clock.GetTime(), clock.GetSync())
-	if err != nil {
-		s.cfg.Logger.Error("SendMaint", err.Error())
-		return srv.Send(&pb.MaintReply{Error: err.Error()})
-	}
+	syncStatus, diffTime, diffDangerous, _ := m.Clock(ctx, clock.GetTime(), clock.GetSync())
 
 	s.cfg.Logger.Debug("SendMaint: syncStatus", syncStatus)
 	s.cfg.Logger.Debug("SendMaint: diffTime", diffTime)

@@ -288,9 +288,9 @@ Flags:
 > >
 > > ```bash
 > > sudo apt install -y ntp ntpdate ntpstat
-> > sudo service ntp stop
 > > sudo ntpdate -s time.nist.gov
-> > sudo service ntp start
+> > sudo service ntp restart
+> > ntpstat
 > > ```
 >
 > `maint.clock.time`: clock base time (unix time)
@@ -301,36 +301,35 @@ Flags:
 {
   "clock": {
     "sync": {
-      "status": 0
+      "status": "synchronized"
     },
     "diff": {
       "time": 100,
       "dangerous": true
     }
-  },
-  "error": "text"
+  }
 }
 ```
 
 > `clock.sync`: clock synchronization
 >
-> > `status`: clock synchronization status
+> > `clock.sync.status`: clock synchronization status
 > >
-> > `0`: clock is synchronised
-> >
-> > `1`: clock is not synchronised
-> >
-> > `2`: clock state is indeterminant
+> > > `synchronized`: clock is synchronized
+> > >
+> > > `unsynchronized`: clock is not synchronized
+> > >
+> > > `indeterminant`: clock state is indeterminant
 >
 > `clock.diff`: clock difference
 >
-> > `time`: clock difference in milliseconds
+> > `clock.diff.time`: clock difference in milliseconds
 > >
 > > > positive value: behind of time
 > > >
 > > > negative value: ahead of time
 > >
-> > `dangerous`: if the difference is big enough to be considered dangerous
+> > `clock.diff.dangerous`: if the difference is big enough to be considered dangerous
 
 
 

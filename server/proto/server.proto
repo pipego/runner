@@ -203,7 +203,6 @@ message MaintClockReq {
 
 message MaintReply {
   MaintClockRep clock = 1;
-  string error = 2;
 }
 
 message MaintClockRep {
@@ -212,7 +211,7 @@ message MaintClockRep {
 }
 
 message MaintClockSync {
-  int64 status = 1;
+  string status = 1;
 }
 
 message MaintClockDiff {
