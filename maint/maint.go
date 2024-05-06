@@ -109,8 +109,6 @@ func (m *maint) syncClock(ctx context.Context) int64 {
 	_ = runDate(ctx)
 	_ = runService(ctx)
 
-	// TBD: Add time delay
-
 	return runStat(ctx)
 }
 
