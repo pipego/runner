@@ -14,7 +14,11 @@ import (
 
 const (
 	clockDiffDangerous = 5000
-	clockNtpStat       = "ntpstat"
+	clockTimeServer    = "time.nist.gov"
+
+	clockNtpDate    = "\"sudo ntpdate -s " + clockTimeServer + "\""
+	clockNtpService = "\"sudo service ntp restart\""
+	clockNtpStat    = "ntpstat"
 
 	clockStatusSynchronised    = 0
 	clockStatusNotSynchronised = 1
@@ -74,21 +78,40 @@ func (m *maint) Clock(ctx context.Context, clockTime int64, clockSync bool) (syn
 }
 
 func (m *maint) syncClock(ctx context.Context) int64 {
-	var exitError *exec.ExitError
-
-	cmd := exec.CommandContext(ctx, clockNtpStat)
-
-	if err := cmd.Start(); err != nil {
-		return clockStatusIndeterminant
+	runDate := func(ctx context.Context) error {
+		cmd := exec.CommandContext(ctx, "bash", "-c", clockNtpDate)
+		_ = cmd.Start()
+		_ = cmd.Wait()
+		return nil
 	}
 
-	if err := cmd.Wait(); err != nil {
-		if errors.As(err, &exitError) {
-			return int64(exitError.ExitCode())
+	runService := func(ctx context.Context) error {
+		cmd := exec.CommandContext(ctx, "bash", "-c", clockNtpService)
+		_ = cmd.Start()
+		_ = cmd.Wait()
+		return nil
+	}
+
+	runStat := func(ctx context.Context) int64 {
+		var exitError *exec.ExitError
+		cmd := exec.CommandContext(ctx, clockNtpStat)
+		if err := cmd.Start(); err != nil {
+			return clockStatusIndeterminant
 		}
+		if err := cmd.Wait(); err != nil {
+			if errors.As(err, &exitError) {
+				return int64(exitError.ExitCode())
+			}
+		}
+		return clockStatusSynchronised
 	}
 
-	return clockStatusSynchronised
+	_ = runDate(ctx)
+	_ = runService(ctx)
+
+	// TBD: Add time delay
+
+	return runStat(ctx)
 }
 
 func (m *maint) diffClock(_ context.Context, clockTime int64) (diffTime int64, diffDangerous bool) {
