@@ -85,25 +85,20 @@ Flags:
       ],
       "log": {
         "width": 500
-      }
+      },
+      "language": "bash"
     }
   }
 }
 ```
 
-> `task.file`: script file in bash
+> `task.file`: file written in `task.language`
 >
-> `task.file.content`: bytes
+> `task.file.content`: content int bytes
 >
-> > The shebang in `task.file.content` should be one of below:
-> >
-> > `#!/bin/bash`
-> >
-> > `#!/usr/bin/env bash`
+> `task.file.gzip`: gzip in boolean
 >
-> `task.file.gzip`: boolean
->
-> `task.params`: parameter and value
+> `task.params`: parameter in name/value
 >
 > > `name1=value1` (`$name1: value1`)
 > >
@@ -117,11 +112,13 @@ Flags:
 > >
 > > `name5=#name1` (`$name5: #name1`, invalid symbol in Bash)
 >
-> `task.commands`: command and argument
+> `task.commands`: commands in cmd/argv
 >
-> `task.log`: task log
+> `task.log`: log in streaming
 >
-> `task.log.width`: line width in runes (default: 500)
+> `task.log.width`: width in runes (default: 500)
+>
+> `task.language`: language type (e.g., bash | go | groovy | java | python | rust)
 
 **Output**
 
