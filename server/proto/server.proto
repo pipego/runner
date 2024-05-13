@@ -31,6 +31,7 @@ message Task {
   repeated TaskParam params = 3;
   repeated string commands = 4;
   TaskLog log = 5;
+  string language = 6;
 }
 
 message TaskFile {
