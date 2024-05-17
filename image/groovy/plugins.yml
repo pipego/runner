@@ -1,0 +1,13 @@
+plugins:
+  - artifactId: workflow-job
+    source:
+      version: latest
+  - artifactId: workflow-cps
+    source:
+      version: latest
+  - artifactId: structs
+    source:
+      version: latest
+  - artifactId: ssh-credentials
+    source:
+      version: latest
