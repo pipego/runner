@@ -119,6 +119,18 @@ Flags:
 > `task.log.width`: width in runes (default: 500)
 >
 > `task.language`: language type (e.g., bash | go | groovy | java | python | rust)
+>
+> > The language images
+> >
+> > pipego/runner/language/go:latest
+> >
+> > pipego/runner/language/groovy:latest
+> >
+> > pipego/runner/language/java:latest
+> >
+> > pipego/runner/language/python:latest
+> >
+> > pipego/runner/language/rust:latest
 
 **Output**
 
