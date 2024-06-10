@@ -30,13 +30,18 @@ const (
 type Task interface {
 	Init(context.Context, int) error
 	Deinit(context.Context) error
-	Run(context.Context, string, []string, []string) error
+	Run(context.Context, string, []string, []string, Language) error
 	Tail(ctx context.Context) Log
 }
 
 type Config struct {
 	Config config.Config
 	Logger hclog.Logger
+}
+
+type Language struct {
+	Name  string
+	Image string
 }
 
 type Log struct {
@@ -85,7 +90,7 @@ func (t *task) Deinit(_ context.Context) error {
 	return nil
 }
 
-func (t *task) Run(ctx context.Context, _ string, envs, args []string) error {
+func (t *task) Run(ctx context.Context, _ string, envs, args []string, lang Language) error {
 	var a []string
 	var n string
 	var err error

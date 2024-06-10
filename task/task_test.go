@@ -32,6 +32,7 @@ func initTask() *task {
 func TestRunEcho(t *testing.T) {
 	var args []string
 	var envs []string
+	var lang Language
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -42,16 +43,16 @@ func TestRunEcho(t *testing.T) {
 	err = _t.Init(ctx, lineWidth)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"invalid"}
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.NotEqual(t, nil, err)
 
 	envs = []string{"ENV1=task1", "ENV2=task2"}
 	args = []string{"bash", "-c", "echo $ENV1 $ENV2"}
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)
@@ -76,6 +77,7 @@ L:
 func TestRunBash(t *testing.T) {
 	var args []string
 	var envs []string
+	var lang Language
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -86,11 +88,11 @@ func TestRunBash(t *testing.T) {
 	err = _t.Init(ctx, lineWidth)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"bash", "-c", "../test/bash.sh"}
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)
@@ -115,6 +117,7 @@ L:
 func TestRunPython(t *testing.T) {
 	var args []string
 	var envs []string
+	var lang Language
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -125,11 +128,11 @@ func TestRunPython(t *testing.T) {
 	err = _t.Init(ctx, lineWidth)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"bash", "-c", "python3 ../test/python.py"}
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)
@@ -154,6 +157,7 @@ L:
 func TestRunSplit(t *testing.T) {
 	var args []string
 	var envs []string
+	var lang Language
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -164,11 +168,11 @@ func TestRunSplit(t *testing.T) {
 	err = _t.Init(ctx, lineWidth)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"bash", "-c", "python3 ../test/split.py"}
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)
@@ -193,6 +197,7 @@ L:
 func TestRunError(t *testing.T) {
 	var args []string
 	var envs []string
+	var lang Language
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -203,11 +208,11 @@ func TestRunError(t *testing.T) {
 	err = _t.Init(ctx, lineWidth)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.NotEqual(t, nil, err)
 
 	args = []string{"bash", "-c", "../test/error.sh"}
-	err = _t.Run(ctx, "", envs, args)
+	err = _t.Run(ctx, "", envs, args, lang)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)

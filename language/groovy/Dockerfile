@@ -8,7 +8,7 @@ RUN apt update && \
 USER root
 WORKDIR /jenkins
 COPY plugins.yml .
-RUN curl -L https://github.com/jenkinsci/jenkins/releases/download/jenkins-2.452.1/jenkins.war -o jenkins.war && \
+RUN curl -L https://github.com/jenkinsci/jenkins/releases/download/jenkins-2.461/jenkins.war -o jenkins.war && \
     unzip jenkins.war -d jenkins-war-files
 RUN curl -L https://github.com/jenkinsci/jenkinsfile-runner/releases/download/1.0-beta-32/jenkinsfile-runner-1.0-beta-32.zip -o jenkinsfile-runner.zip && \
     mkdir jenkinsfile-runner && \
@@ -21,5 +21,5 @@ RUN rm -rf *.jar *.war *.yml *.zip
 USER root
 WORKDIR /jenkins
 ENV PATH=/jenkins/jenkinsfile-runner/bin:$PATH
-ENTRYPOINT ["jenkinsfile-runner", "-ns", "-w", "jenkins-war-files", "-p", "plugins", "--runWorkspace", "workspace", "-f"]
+ENTRYPOINT ["jenkinsfile-runner", "-w", "jenkins-war-files", "-p", "plugins", "--runWorkspace", "workspace", "-f"]
 CMD ["/workspace/jenkinsfile"]

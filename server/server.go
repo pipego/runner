@@ -74,7 +74,7 @@ func (s *server) Run(_ context.Context) error {
 
 // nolint:gocyclo
 func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
-	name, file, params, commands, width, err := s.recvTask(srv)
+	name, file, params, commands, width, language, err := s.recvTask(srv)
 	if err != nil {
 		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
@@ -133,7 +133,7 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 		_ = t.Deinit(ctx)
 	}(ctx)
 
-	if err := t.Run(ctx, name, s.buildEnv(ctx, params), commands); err != nil {
+	if err := t.Run(ctx, name, s.buildEnv(ctx, params), commands, s.buildLanguage(ctx, language)); err != nil {
 		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
@@ -348,18 +348,18 @@ func (s *server) SendMaint(srv pb.ServerProto_SendMaintServer) error {
 
 // nolint:gocritic
 func (s *server) recvTask(srv pb.ServerProto_SendTaskServer) (name string, file *pb.TaskFile, params []*pb.TaskParam,
-	commands []string, width int, err error) {
+	commands []string, width int, language *pb.TaskLanguage, err error) {
 	for {
 		r, err := srv.Recv()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return "", nil, nil, nil, 0, errors.Wrap(err, "failed to receive")
+			return "", nil, nil, nil, 0, nil, errors.Wrap(err, "failed to receive")
 		}
 
 		if r.Kind != Kind {
-			return "", nil, nil, nil, 0, errors.New("invalid kind")
+			return "", nil, nil, nil, 0, nil, errors.New("invalid kind")
 		}
 
 		name = r.Spec.Task.GetName()
@@ -367,11 +367,12 @@ func (s *server) recvTask(srv pb.ServerProto_SendTaskServer) (name string, file 
 		params = r.Spec.Task.GetParams()
 		commands = r.Spec.Task.GetCommands()
 		width = int(r.Spec.Task.GetLog().GetWidth())
+		language = r.Spec.Task.GetLanguage()
 
 		break
 	}
 
-	return name, file, params, commands, width, nil
+	return name, file, params, commands, width, language, nil
 }
 
 func (s *server) newFile(ctx context.Context) (fl.File, error) {
@@ -449,6 +450,13 @@ func (s *server) evalEnv(ctx context.Context, params []*pb.TaskParam, data strin
 	}
 
 	return data
+}
+
+func (s *server) buildLanguage(ctx context.Context, language *pb.TaskLanguage) task.Language {
+	return task.Language{
+		Name:  language.GetName(),
+		Image: language.GetImage(),
+	}
 }
 
 // nolint:lll

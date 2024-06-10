@@ -86,7 +86,10 @@ Flags:
       "log": {
         "width": 500
       },
-      "language": "bash"
+      "language": {
+        "name": "groovy",
+        "image": "craftslab/groovy:latest"
+      }
     }
   }
 }
@@ -118,19 +121,20 @@ Flags:
 >
 > `task.log.width`: width in runes (default: 500)
 >
-> `task.language`: language type (e.g., bash | go | groovy | java | python | rust)
+> `task.language`: task language
 >
-> > The language images
-> >
-> > pipego/runner/language/go:latest
-> >
-> > pipego/runner/language/groovy:latest
-> >
-> > pipego/runner/language/java:latest
-> >
-> > pipego/runner/language/python:latest
-> >
-> > pipego/runner/language/rust:latest
+> `task.language.name`: language name
+>
+> `task.language.image`: language image
+>
+> |  name   | image                      |
+> |:-------:|:---------------------------|
+> |  bash   | none                       |
+> |   go    | craftslab/go:latest        |
+> | groovy  | craftslab/groovy:latest    |
+> |  java   | craftslab/java:latest      |
+> | python  | craftslab/python:latest    |
+> |  rust   | craftslab/rust:latest      |
 
 **Output**
 
@@ -368,6 +372,7 @@ Project License can be found [here](LICENSE).
 - [grpc-streaming](https://www.freecodecamp.org/news/grpc-server-side-streaming-with-go/)
 - [jenkins-clockdifference](https://github.com/jenkinsci/jenkins/blob/master/core/src/main/java/hudson/util/ClockDifference.java)
 - [jenkins-clockdifference](https://javadoc.jenkins.io/hudson/util/ClockDifference.html)
+- [jenkinsfile-runner](https://github.com/jenkinsci/jenkinsfile-runner/blob/main/docs/using/EXTENDING_DOCKER.adoc)
 - [kube-parallelize](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/framework/parallelize/parallelism.go)
 - [kube-schduler](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/schedule_one.go)
 - [kube-scheduling](https://cloud.tencent.com/developer/article/1644857)

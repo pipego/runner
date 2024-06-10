@@ -160,3 +160,21 @@ func TestBuildEnv(t *testing.T) {
 	assert.Equal(t, "name4=$$name1", buf[3])
 	assert.Equal(t, "name5=#name1", buf[4])
 }
+
+func TestBuildLanguage(t *testing.T) {
+	s := server{
+		cfg: DefaultConfig(),
+	}
+
+	ctx := context.Background()
+
+	lang := &pb.TaskLanguage{
+		Name:  "name",
+		Image: "image",
+	}
+
+	buf := s.buildLanguage(ctx, lang)
+	assert.NotEqual(t, nil, buf)
+	assert.Equal(t, "name", buf.Name)
+	assert.Equal(t, "image", buf.Image)
+}

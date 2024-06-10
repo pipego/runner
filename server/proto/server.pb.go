@@ -190,12 +190,12 @@ type Task struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name     string       `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	File     *TaskFile    `protobuf:"bytes,2,opt,name=file,proto3" json:"file,omitempty"`
-	Params   []*TaskParam `protobuf:"bytes,3,rep,name=params,proto3" json:"params,omitempty"`
-	Commands []string     `protobuf:"bytes,4,rep,name=commands,proto3" json:"commands,omitempty"`
-	Log      *TaskLog     `protobuf:"bytes,5,opt,name=log,proto3" json:"log,omitempty"`
-	Language string       `protobuf:"bytes,6,opt,name=language,proto3" json:"language,omitempty"`
+	Name     string        `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	File     *TaskFile     `protobuf:"bytes,2,opt,name=file,proto3" json:"file,omitempty"`
+	Params   []*TaskParam  `protobuf:"bytes,3,rep,name=params,proto3" json:"params,omitempty"`
+	Commands []string      `protobuf:"bytes,4,rep,name=commands,proto3" json:"commands,omitempty"`
+	Log      *TaskLog      `protobuf:"bytes,5,opt,name=log,proto3" json:"log,omitempty"`
+	Language *TaskLanguage `protobuf:"bytes,6,opt,name=language,proto3" json:"language,omitempty"`
 }
 
 func (x *Task) Reset() {
@@ -265,11 +265,11 @@ func (x *Task) GetLog() *TaskLog {
 	return nil
 }
 
-func (x *Task) GetLanguage() string {
+func (x *Task) GetLanguage() *TaskLanguage {
 	if x != nil {
 		return x.Language
 	}
-	return ""
+	return nil
 }
 
 type TaskFile struct {
@@ -429,6 +429,61 @@ func (x *TaskLog) GetWidth() int64 {
 	return 0
 }
 
+type TaskLanguage struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name  string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Image string `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
+}
+
+func (x *TaskLanguage) Reset() {
+	*x = TaskLanguage{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_server_proto_server_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TaskLanguage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaskLanguage) ProtoMessage() {}
+
+func (x *TaskLanguage) ProtoReflect() protoreflect.Message {
+	mi := &file_server_proto_server_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaskLanguage.ProtoReflect.Descriptor instead.
+func (*TaskLanguage) Descriptor() ([]byte, []int) {
+	return file_server_proto_server_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *TaskLanguage) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TaskLanguage) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
 type TaskReply struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -441,7 +496,7 @@ type TaskReply struct {
 func (x *TaskReply) Reset() {
 	*x = TaskReply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[7]
+		mi := &file_server_proto_server_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -454,7 +509,7 @@ func (x *TaskReply) String() string {
 func (*TaskReply) ProtoMessage() {}
 
 func (x *TaskReply) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[7]
+	mi := &file_server_proto_server_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -467,7 +522,7 @@ func (x *TaskReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskReply.ProtoReflect.Descriptor instead.
 func (*TaskReply) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{7}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *TaskReply) GetOutput() *TaskOutput {
@@ -497,7 +552,7 @@ type TaskOutput struct {
 func (x *TaskOutput) Reset() {
 	*x = TaskOutput{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[8]
+		mi := &file_server_proto_server_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -510,7 +565,7 @@ func (x *TaskOutput) String() string {
 func (*TaskOutput) ProtoMessage() {}
 
 func (x *TaskOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[8]
+	mi := &file_server_proto_server_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -523,7 +578,7 @@ func (x *TaskOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskOutput.ProtoReflect.Descriptor instead.
 func (*TaskOutput) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{8}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *TaskOutput) GetPos() int64 {
@@ -561,7 +616,7 @@ type GlanceRequest struct {
 func (x *GlanceRequest) Reset() {
 	*x = GlanceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[9]
+		mi := &file_server_proto_server_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -574,7 +629,7 @@ func (x *GlanceRequest) String() string {
 func (*GlanceRequest) ProtoMessage() {}
 
 func (x *GlanceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[9]
+	mi := &file_server_proto_server_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -587,7 +642,7 @@ func (x *GlanceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceRequest.ProtoReflect.Descriptor instead.
 func (*GlanceRequest) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{9}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GlanceRequest) GetApiVersion() string {
@@ -629,7 +684,7 @@ type GlanceMetadata struct {
 func (x *GlanceMetadata) Reset() {
 	*x = GlanceMetadata{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[10]
+		mi := &file_server_proto_server_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -642,7 +697,7 @@ func (x *GlanceMetadata) String() string {
 func (*GlanceMetadata) ProtoMessage() {}
 
 func (x *GlanceMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[10]
+	mi := &file_server_proto_server_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -655,7 +710,7 @@ func (x *GlanceMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceMetadata.ProtoReflect.Descriptor instead.
 func (*GlanceMetadata) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{10}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GlanceMetadata) GetName() string {
@@ -676,7 +731,7 @@ type GlanceSpec struct {
 func (x *GlanceSpec) Reset() {
 	*x = GlanceSpec{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[11]
+		mi := &file_server_proto_server_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -689,7 +744,7 @@ func (x *GlanceSpec) String() string {
 func (*GlanceSpec) ProtoMessage() {}
 
 func (x *GlanceSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[11]
+	mi := &file_server_proto_server_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -702,7 +757,7 @@ func (x *GlanceSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceSpec.ProtoReflect.Descriptor instead.
 func (*GlanceSpec) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{11}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GlanceSpec) GetGlance() *Glance {
@@ -725,7 +780,7 @@ type Glance struct {
 func (x *Glance) Reset() {
 	*x = Glance{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[12]
+		mi := &file_server_proto_server_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -738,7 +793,7 @@ func (x *Glance) String() string {
 func (*Glance) ProtoMessage() {}
 
 func (x *Glance) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[12]
+	mi := &file_server_proto_server_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -751,7 +806,7 @@ func (x *Glance) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Glance.ProtoReflect.Descriptor instead.
 func (*Glance) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{12}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Glance) GetDir() *GlanceDirReq {
@@ -786,7 +841,7 @@ type GlanceDirReq struct {
 func (x *GlanceDirReq) Reset() {
 	*x = GlanceDirReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[13]
+		mi := &file_server_proto_server_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -799,7 +854,7 @@ func (x *GlanceDirReq) String() string {
 func (*GlanceDirReq) ProtoMessage() {}
 
 func (x *GlanceDirReq) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[13]
+	mi := &file_server_proto_server_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -812,7 +867,7 @@ func (x *GlanceDirReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceDirReq.ProtoReflect.Descriptor instead.
 func (*GlanceDirReq) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{13}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GlanceDirReq) GetPath() string {
@@ -834,7 +889,7 @@ type GlanceFileReq struct {
 func (x *GlanceFileReq) Reset() {
 	*x = GlanceFileReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[14]
+		mi := &file_server_proto_server_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -847,7 +902,7 @@ func (x *GlanceFileReq) String() string {
 func (*GlanceFileReq) ProtoMessage() {}
 
 func (x *GlanceFileReq) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[14]
+	mi := &file_server_proto_server_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -860,7 +915,7 @@ func (x *GlanceFileReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceFileReq.ProtoReflect.Descriptor instead.
 func (*GlanceFileReq) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{14}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GlanceFileReq) GetPath() string {
@@ -888,7 +943,7 @@ type GlanceSysReq struct {
 func (x *GlanceSysReq) Reset() {
 	*x = GlanceSysReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[15]
+		mi := &file_server_proto_server_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -901,7 +956,7 @@ func (x *GlanceSysReq) String() string {
 func (*GlanceSysReq) ProtoMessage() {}
 
 func (x *GlanceSysReq) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[15]
+	mi := &file_server_proto_server_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -914,7 +969,7 @@ func (x *GlanceSysReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceSysReq.ProtoReflect.Descriptor instead.
 func (*GlanceSysReq) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{15}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GlanceSysReq) GetEnable() bool {
@@ -938,7 +993,7 @@ type GlanceReply struct {
 func (x *GlanceReply) Reset() {
 	*x = GlanceReply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[16]
+		mi := &file_server_proto_server_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -951,7 +1006,7 @@ func (x *GlanceReply) String() string {
 func (*GlanceReply) ProtoMessage() {}
 
 func (x *GlanceReply) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[16]
+	mi := &file_server_proto_server_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -964,7 +1019,7 @@ func (x *GlanceReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceReply.ProtoReflect.Descriptor instead.
 func (*GlanceReply) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{16}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GlanceReply) GetDir() *GlanceDirRep {
@@ -1006,7 +1061,7 @@ type GlanceDirRep struct {
 func (x *GlanceDirRep) Reset() {
 	*x = GlanceDirRep{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[17]
+		mi := &file_server_proto_server_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1019,7 +1074,7 @@ func (x *GlanceDirRep) String() string {
 func (*GlanceDirRep) ProtoMessage() {}
 
 func (x *GlanceDirRep) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[17]
+	mi := &file_server_proto_server_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1032,7 +1087,7 @@ func (x *GlanceDirRep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceDirRep.ProtoReflect.Descriptor instead.
 func (*GlanceDirRep) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{17}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GlanceDirRep) GetEntries() []*GlanceEntry {
@@ -1059,7 +1114,7 @@ type GlanceEntry struct {
 func (x *GlanceEntry) Reset() {
 	*x = GlanceEntry{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[18]
+		mi := &file_server_proto_server_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1072,7 +1127,7 @@ func (x *GlanceEntry) String() string {
 func (*GlanceEntry) ProtoMessage() {}
 
 func (x *GlanceEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[18]
+	mi := &file_server_proto_server_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1085,7 +1140,7 @@ func (x *GlanceEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceEntry.ProtoReflect.Descriptor instead.
 func (*GlanceEntry) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{18}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GlanceEntry) GetName() string {
@@ -1149,7 +1204,7 @@ type GlanceFileRep struct {
 func (x *GlanceFileRep) Reset() {
 	*x = GlanceFileRep{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[19]
+		mi := &file_server_proto_server_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1162,7 +1217,7 @@ func (x *GlanceFileRep) String() string {
 func (*GlanceFileRep) ProtoMessage() {}
 
 func (x *GlanceFileRep) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[19]
+	mi := &file_server_proto_server_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1175,7 +1230,7 @@ func (x *GlanceFileRep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceFileRep.ProtoReflect.Descriptor instead.
 func (*GlanceFileRep) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{19}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GlanceFileRep) GetContent() string {
@@ -1204,7 +1259,7 @@ type GlanceSysRep struct {
 func (x *GlanceSysRep) Reset() {
 	*x = GlanceSysRep{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[20]
+		mi := &file_server_proto_server_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1217,7 +1272,7 @@ func (x *GlanceSysRep) String() string {
 func (*GlanceSysRep) ProtoMessage() {}
 
 func (x *GlanceSysRep) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[20]
+	mi := &file_server_proto_server_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1230,7 +1285,7 @@ func (x *GlanceSysRep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceSysRep.ProtoReflect.Descriptor instead.
 func (*GlanceSysRep) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{20}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GlanceSysRep) GetResource() *GlanceResource {
@@ -1259,7 +1314,7 @@ type GlanceResource struct {
 func (x *GlanceResource) Reset() {
 	*x = GlanceResource{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[21]
+		mi := &file_server_proto_server_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1272,7 +1327,7 @@ func (x *GlanceResource) String() string {
 func (*GlanceResource) ProtoMessage() {}
 
 func (x *GlanceResource) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[21]
+	mi := &file_server_proto_server_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1285,7 +1340,7 @@ func (x *GlanceResource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceResource.ProtoReflect.Descriptor instead.
 func (*GlanceResource) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{21}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GlanceResource) GetAllocatable() *GlanceAllocatable {
@@ -1315,7 +1370,7 @@ type GlanceAllocatable struct {
 func (x *GlanceAllocatable) Reset() {
 	*x = GlanceAllocatable{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[22]
+		mi := &file_server_proto_server_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1328,7 +1383,7 @@ func (x *GlanceAllocatable) String() string {
 func (*GlanceAllocatable) ProtoMessage() {}
 
 func (x *GlanceAllocatable) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[22]
+	mi := &file_server_proto_server_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1341,7 +1396,7 @@ func (x *GlanceAllocatable) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceAllocatable.ProtoReflect.Descriptor instead.
 func (*GlanceAllocatable) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{22}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *GlanceAllocatable) GetMilliCPU() int64 {
@@ -1378,7 +1433,7 @@ type GlanceRequested struct {
 func (x *GlanceRequested) Reset() {
 	*x = GlanceRequested{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[23]
+		mi := &file_server_proto_server_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1391,7 +1446,7 @@ func (x *GlanceRequested) String() string {
 func (*GlanceRequested) ProtoMessage() {}
 
 func (x *GlanceRequested) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[23]
+	mi := &file_server_proto_server_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1404,7 +1459,7 @@ func (x *GlanceRequested) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceRequested.ProtoReflect.Descriptor instead.
 func (*GlanceRequested) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{23}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GlanceRequested) GetMilliCPU() int64 {
@@ -1444,7 +1499,7 @@ type GlanceStats struct {
 func (x *GlanceStats) Reset() {
 	*x = GlanceStats{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[24]
+		mi := &file_server_proto_server_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1457,7 +1512,7 @@ func (x *GlanceStats) String() string {
 func (*GlanceStats) ProtoMessage() {}
 
 func (x *GlanceStats) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[24]
+	mi := &file_server_proto_server_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1470,7 +1525,7 @@ func (x *GlanceStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceStats.ProtoReflect.Descriptor instead.
 func (*GlanceStats) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{24}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GlanceStats) GetCpu() *GlanceCPU {
@@ -1527,7 +1582,7 @@ type GlanceCPU struct {
 func (x *GlanceCPU) Reset() {
 	*x = GlanceCPU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[25]
+		mi := &file_server_proto_server_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1540,7 +1595,7 @@ func (x *GlanceCPU) String() string {
 func (*GlanceCPU) ProtoMessage() {}
 
 func (x *GlanceCPU) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[25]
+	mi := &file_server_proto_server_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1553,7 +1608,7 @@ func (x *GlanceCPU) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceCPU.ProtoReflect.Descriptor instead.
 func (*GlanceCPU) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{25}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GlanceCPU) GetTotal() string {
@@ -1582,7 +1637,7 @@ type GlanceMemory struct {
 func (x *GlanceMemory) Reset() {
 	*x = GlanceMemory{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[26]
+		mi := &file_server_proto_server_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1595,7 +1650,7 @@ func (x *GlanceMemory) String() string {
 func (*GlanceMemory) ProtoMessage() {}
 
 func (x *GlanceMemory) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[26]
+	mi := &file_server_proto_server_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1608,7 +1663,7 @@ func (x *GlanceMemory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceMemory.ProtoReflect.Descriptor instead.
 func (*GlanceMemory) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{26}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *GlanceMemory) GetTotal() string {
@@ -1637,7 +1692,7 @@ type GlanceStorage struct {
 func (x *GlanceStorage) Reset() {
 	*x = GlanceStorage{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[27]
+		mi := &file_server_proto_server_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1650,7 +1705,7 @@ func (x *GlanceStorage) String() string {
 func (*GlanceStorage) ProtoMessage() {}
 
 func (x *GlanceStorage) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[27]
+	mi := &file_server_proto_server_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1663,7 +1718,7 @@ func (x *GlanceStorage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceStorage.ProtoReflect.Descriptor instead.
 func (*GlanceStorage) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{27}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GlanceStorage) GetTotal() string {
@@ -1692,7 +1747,7 @@ type GlanceProcess struct {
 func (x *GlanceProcess) Reset() {
 	*x = GlanceProcess{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[28]
+		mi := &file_server_proto_server_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1705,7 +1760,7 @@ func (x *GlanceProcess) String() string {
 func (*GlanceProcess) ProtoMessage() {}
 
 func (x *GlanceProcess) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[28]
+	mi := &file_server_proto_server_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1718,7 +1773,7 @@ func (x *GlanceProcess) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceProcess.ProtoReflect.Descriptor instead.
 func (*GlanceProcess) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{28}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GlanceProcess) GetProcess() *GlanceThread {
@@ -1750,7 +1805,7 @@ type GlanceThread struct {
 func (x *GlanceThread) Reset() {
 	*x = GlanceThread{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[29]
+		mi := &file_server_proto_server_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1763,7 +1818,7 @@ func (x *GlanceThread) String() string {
 func (*GlanceThread) ProtoMessage() {}
 
 func (x *GlanceThread) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[29]
+	mi := &file_server_proto_server_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1776,7 +1831,7 @@ func (x *GlanceThread) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GlanceThread.ProtoReflect.Descriptor instead.
 func (*GlanceThread) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{29}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *GlanceThread) GetName() string {
@@ -1828,7 +1883,7 @@ type MaintRequest struct {
 func (x *MaintRequest) Reset() {
 	*x = MaintRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[30]
+		mi := &file_server_proto_server_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1841,7 +1896,7 @@ func (x *MaintRequest) String() string {
 func (*MaintRequest) ProtoMessage() {}
 
 func (x *MaintRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[30]
+	mi := &file_server_proto_server_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1854,7 +1909,7 @@ func (x *MaintRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintRequest.ProtoReflect.Descriptor instead.
 func (*MaintRequest) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{30}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *MaintRequest) GetApiVersion() string {
@@ -1896,7 +1951,7 @@ type MaintMetadata struct {
 func (x *MaintMetadata) Reset() {
 	*x = MaintMetadata{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[31]
+		mi := &file_server_proto_server_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1909,7 +1964,7 @@ func (x *MaintMetadata) String() string {
 func (*MaintMetadata) ProtoMessage() {}
 
 func (x *MaintMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[31]
+	mi := &file_server_proto_server_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1922,7 +1977,7 @@ func (x *MaintMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintMetadata.ProtoReflect.Descriptor instead.
 func (*MaintMetadata) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{31}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *MaintMetadata) GetName() string {
@@ -1943,7 +1998,7 @@ type MaintSpec struct {
 func (x *MaintSpec) Reset() {
 	*x = MaintSpec{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[32]
+		mi := &file_server_proto_server_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1956,7 +2011,7 @@ func (x *MaintSpec) String() string {
 func (*MaintSpec) ProtoMessage() {}
 
 func (x *MaintSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[32]
+	mi := &file_server_proto_server_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1969,7 +2024,7 @@ func (x *MaintSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintSpec.ProtoReflect.Descriptor instead.
 func (*MaintSpec) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{32}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *MaintSpec) GetMaint() *Maint {
@@ -1990,7 +2045,7 @@ type Maint struct {
 func (x *Maint) Reset() {
 	*x = Maint{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[33]
+		mi := &file_server_proto_server_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2003,7 +2058,7 @@ func (x *Maint) String() string {
 func (*Maint) ProtoMessage() {}
 
 func (x *Maint) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[33]
+	mi := &file_server_proto_server_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2016,7 +2071,7 @@ func (x *Maint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Maint.ProtoReflect.Descriptor instead.
 func (*Maint) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{33}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *Maint) GetClock() *MaintClockReq {
@@ -2038,7 +2093,7 @@ type MaintClockReq struct {
 func (x *MaintClockReq) Reset() {
 	*x = MaintClockReq{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[34]
+		mi := &file_server_proto_server_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2051,7 +2106,7 @@ func (x *MaintClockReq) String() string {
 func (*MaintClockReq) ProtoMessage() {}
 
 func (x *MaintClockReq) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[34]
+	mi := &file_server_proto_server_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2064,7 +2119,7 @@ func (x *MaintClockReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintClockReq.ProtoReflect.Descriptor instead.
 func (*MaintClockReq) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{34}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *MaintClockReq) GetSync() bool {
@@ -2092,7 +2147,7 @@ type MaintReply struct {
 func (x *MaintReply) Reset() {
 	*x = MaintReply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[35]
+		mi := &file_server_proto_server_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2105,7 +2160,7 @@ func (x *MaintReply) String() string {
 func (*MaintReply) ProtoMessage() {}
 
 func (x *MaintReply) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[35]
+	mi := &file_server_proto_server_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2118,7 +2173,7 @@ func (x *MaintReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintReply.ProtoReflect.Descriptor instead.
 func (*MaintReply) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{35}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *MaintReply) GetClock() *MaintClockRep {
@@ -2140,7 +2195,7 @@ type MaintClockRep struct {
 func (x *MaintClockRep) Reset() {
 	*x = MaintClockRep{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[36]
+		mi := &file_server_proto_server_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2153,7 +2208,7 @@ func (x *MaintClockRep) String() string {
 func (*MaintClockRep) ProtoMessage() {}
 
 func (x *MaintClockRep) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[36]
+	mi := &file_server_proto_server_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2166,7 +2221,7 @@ func (x *MaintClockRep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintClockRep.ProtoReflect.Descriptor instead.
 func (*MaintClockRep) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{36}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *MaintClockRep) GetSync() *MaintClockSync {
@@ -2194,7 +2249,7 @@ type MaintClockSync struct {
 func (x *MaintClockSync) Reset() {
 	*x = MaintClockSync{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[37]
+		mi := &file_server_proto_server_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2207,7 +2262,7 @@ func (x *MaintClockSync) String() string {
 func (*MaintClockSync) ProtoMessage() {}
 
 func (x *MaintClockSync) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[37]
+	mi := &file_server_proto_server_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2220,7 +2275,7 @@ func (x *MaintClockSync) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintClockSync.ProtoReflect.Descriptor instead.
 func (*MaintClockSync) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{37}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *MaintClockSync) GetStatus() string {
@@ -2242,7 +2297,7 @@ type MaintClockDiff struct {
 func (x *MaintClockDiff) Reset() {
 	*x = MaintClockDiff{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_proto_server_proto_msgTypes[38]
+		mi := &file_server_proto_server_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2255,7 +2310,7 @@ func (x *MaintClockDiff) String() string {
 func (*MaintClockDiff) ProtoMessage() {}
 
 func (x *MaintClockDiff) ProtoReflect() protoreflect.Message {
-	mi := &file_server_proto_server_proto_msgTypes[38]
+	mi := &file_server_proto_server_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2268,7 +2323,7 @@ func (x *MaintClockDiff) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintClockDiff.ProtoReflect.Descriptor instead.
 func (*MaintClockDiff) Descriptor() ([]byte, []int) {
-	return file_server_proto_server_proto_rawDescGZIP(), []int{38}
+	return file_server_proto_server_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *MaintClockDiff) GetTime() int64 {
@@ -2305,7 +2360,7 @@ var file_server_proto_server_proto_rawDesc = []byte{
 	0x61, 0x6d, 0x65, 0x22, 0x2c, 0x0a, 0x08, 0x54, 0x61, 0x73, 0x6b, 0x53, 0x70, 0x65, 0x63, 0x12,
 	0x20, 0x0a, 0x04, 0x74, 0x61, 0x73, 0x6b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e,
 	0x72, 0x75, 0x6e, 0x6e, 0x65, 0x72, 0x2e, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x04, 0x74, 0x61, 0x73,
-	0x6b, 0x22, 0xc6, 0x01, 0x0a, 0x04, 0x54, 0x61, 0x73, 0x6b, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
+	0x6b, 0x22, 0xdc, 0x01, 0x0a, 0x04, 0x54, 0x61, 0x73, 0x6b, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
 	0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x24,
 	0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x72,
 	0x75, 0x6e, 0x6e, 0x65, 0x72, 0x2e, 0x54, 0x61, 0x73, 0x6b, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x04,
@@ -2315,18 +2370,23 @@ var file_server_proto_server_proto_rawDesc = []byte{
 	0x1a, 0x0a, 0x08, 0x63, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28,
 	0x09, 0x52, 0x08, 0x63, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x73, 0x12, 0x21, 0x0a, 0x03, 0x6c,
 	0x6f, 0x67, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x72, 0x75, 0x6e, 0x6e, 0x65,
-	0x72, 0x2e, 0x54, 0x61, 0x73, 0x6b, 0x4c, 0x6f, 0x67, 0x52, 0x03, 0x6c, 0x6f, 0x67, 0x12, 0x1a,
-	0x0a, 0x08, 0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x08, 0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x22, 0x38, 0x0a, 0x08, 0x54, 0x61,
-	0x73, 0x6b, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e,
-	0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74,
-	0x12, 0x12, 0x0a, 0x04, 0x67, 0x7a, 0x69, 0x70, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x04,
-	0x67, 0x7a, 0x69, 0x70, 0x22, 0x35, 0x0a, 0x09, 0x54, 0x61, 0x73, 0x6b, 0x50, 0x61, 0x72, 0x61,
-	0x6d, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x1f, 0x0a, 0x07, 0x54,
-	0x61, 0x73, 0x6b, 0x4c, 0x6f, 0x67, 0x12, 0x14, 0x0a, 0x05, 0x77, 0x69, 0x64, 0x74, 0x68, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x77, 0x69, 0x64, 0x74, 0x68, 0x22, 0x4d, 0x0a, 0x09,
+	0x72, 0x2e, 0x54, 0x61, 0x73, 0x6b, 0x4c, 0x6f, 0x67, 0x52, 0x03, 0x6c, 0x6f, 0x67, 0x12, 0x30,
+	0x0a, 0x08, 0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x14, 0x2e, 0x72, 0x75, 0x6e, 0x6e, 0x65, 0x72, 0x2e, 0x54, 0x61, 0x73, 0x6b, 0x4c, 0x61,
+	0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x52, 0x08, 0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65,
+	0x22, 0x38, 0x0a, 0x08, 0x54, 0x61, 0x73, 0x6b, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x18, 0x0a, 0x07,
+	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x63,
+	0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x67, 0x7a, 0x69, 0x70, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x04, 0x67, 0x7a, 0x69, 0x70, 0x22, 0x35, 0x0a, 0x09, 0x54, 0x61,
+	0x73, 0x6b, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76,
+	0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x22, 0x1f, 0x0a, 0x07, 0x54, 0x61, 0x73, 0x6b, 0x4c, 0x6f, 0x67, 0x12, 0x14, 0x0a, 0x05,
+	0x77, 0x69, 0x64, 0x74, 0x68, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x77, 0x69, 0x64,
+	0x74, 0x68, 0x22, 0x38, 0x0a, 0x0c, 0x54, 0x61, 0x73, 0x6b, 0x4c, 0x61, 0x6e, 0x67, 0x75, 0x61,
+	0x67, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x22, 0x4d, 0x0a, 0x09,
 	0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x12, 0x2a, 0x0a, 0x06, 0x6f, 0x75, 0x74,
 	0x70, 0x75, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x72, 0x75, 0x6e, 0x6e,
 	0x65, 0x72, 0x2e, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x52, 0x06, 0x6f,
@@ -2535,7 +2595,7 @@ func file_server_proto_server_proto_rawDescGZIP() []byte {
 	return file_server_proto_server_proto_rawDescData
 }
 
-var file_server_proto_server_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
+var file_server_proto_server_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
 var file_server_proto_server_proto_goTypes = []interface{}{
 	(*TaskRequest)(nil),       // 0: runner.TaskRequest
 	(*TaskMetadata)(nil),      // 1: runner.TaskMetadata
@@ -2544,38 +2604,39 @@ var file_server_proto_server_proto_goTypes = []interface{}{
 	(*TaskFile)(nil),          // 4: runner.TaskFile
 	(*TaskParam)(nil),         // 5: runner.TaskParam
 	(*TaskLog)(nil),           // 6: runner.TaskLog
-	(*TaskReply)(nil),         // 7: runner.TaskReply
-	(*TaskOutput)(nil),        // 8: runner.TaskOutput
-	(*GlanceRequest)(nil),     // 9: runner.GlanceRequest
-	(*GlanceMetadata)(nil),    // 10: runner.GlanceMetadata
-	(*GlanceSpec)(nil),        // 11: runner.GlanceSpec
-	(*Glance)(nil),            // 12: runner.Glance
-	(*GlanceDirReq)(nil),      // 13: runner.GlanceDirReq
-	(*GlanceFileReq)(nil),     // 14: runner.GlanceFileReq
-	(*GlanceSysReq)(nil),      // 15: runner.GlanceSysReq
-	(*GlanceReply)(nil),       // 16: runner.GlanceReply
-	(*GlanceDirRep)(nil),      // 17: runner.GlanceDirRep
-	(*GlanceEntry)(nil),       // 18: runner.GlanceEntry
-	(*GlanceFileRep)(nil),     // 19: runner.GlanceFileRep
-	(*GlanceSysRep)(nil),      // 20: runner.GlanceSysRep
-	(*GlanceResource)(nil),    // 21: runner.GlanceResource
-	(*GlanceAllocatable)(nil), // 22: runner.GlanceAllocatable
-	(*GlanceRequested)(nil),   // 23: runner.GlanceRequested
-	(*GlanceStats)(nil),       // 24: runner.GlanceStats
-	(*GlanceCPU)(nil),         // 25: runner.GlanceCPU
-	(*GlanceMemory)(nil),      // 26: runner.GlanceMemory
-	(*GlanceStorage)(nil),     // 27: runner.GlanceStorage
-	(*GlanceProcess)(nil),     // 28: runner.GlanceProcess
-	(*GlanceThread)(nil),      // 29: runner.GlanceThread
-	(*MaintRequest)(nil),      // 30: runner.MaintRequest
-	(*MaintMetadata)(nil),     // 31: runner.MaintMetadata
-	(*MaintSpec)(nil),         // 32: runner.MaintSpec
-	(*Maint)(nil),             // 33: runner.Maint
-	(*MaintClockReq)(nil),     // 34: runner.MaintClockReq
-	(*MaintReply)(nil),        // 35: runner.MaintReply
-	(*MaintClockRep)(nil),     // 36: runner.MaintClockRep
-	(*MaintClockSync)(nil),    // 37: runner.MaintClockSync
-	(*MaintClockDiff)(nil),    // 38: runner.MaintClockDiff
+	(*TaskLanguage)(nil),      // 7: runner.TaskLanguage
+	(*TaskReply)(nil),         // 8: runner.TaskReply
+	(*TaskOutput)(nil),        // 9: runner.TaskOutput
+	(*GlanceRequest)(nil),     // 10: runner.GlanceRequest
+	(*GlanceMetadata)(nil),    // 11: runner.GlanceMetadata
+	(*GlanceSpec)(nil),        // 12: runner.GlanceSpec
+	(*Glance)(nil),            // 13: runner.Glance
+	(*GlanceDirReq)(nil),      // 14: runner.GlanceDirReq
+	(*GlanceFileReq)(nil),     // 15: runner.GlanceFileReq
+	(*GlanceSysReq)(nil),      // 16: runner.GlanceSysReq
+	(*GlanceReply)(nil),       // 17: runner.GlanceReply
+	(*GlanceDirRep)(nil),      // 18: runner.GlanceDirRep
+	(*GlanceEntry)(nil),       // 19: runner.GlanceEntry
+	(*GlanceFileRep)(nil),     // 20: runner.GlanceFileRep
+	(*GlanceSysRep)(nil),      // 21: runner.GlanceSysRep
+	(*GlanceResource)(nil),    // 22: runner.GlanceResource
+	(*GlanceAllocatable)(nil), // 23: runner.GlanceAllocatable
+	(*GlanceRequested)(nil),   // 24: runner.GlanceRequested
+	(*GlanceStats)(nil),       // 25: runner.GlanceStats
+	(*GlanceCPU)(nil),         // 26: runner.GlanceCPU
+	(*GlanceMemory)(nil),      // 27: runner.GlanceMemory
+	(*GlanceStorage)(nil),     // 28: runner.GlanceStorage
+	(*GlanceProcess)(nil),     // 29: runner.GlanceProcess
+	(*GlanceThread)(nil),      // 30: runner.GlanceThread
+	(*MaintRequest)(nil),      // 31: runner.MaintRequest
+	(*MaintMetadata)(nil),     // 32: runner.MaintMetadata
+	(*MaintSpec)(nil),         // 33: runner.MaintSpec
+	(*Maint)(nil),             // 34: runner.Maint
+	(*MaintClockReq)(nil),     // 35: runner.MaintClockReq
+	(*MaintReply)(nil),        // 36: runner.MaintReply
+	(*MaintClockRep)(nil),     // 37: runner.MaintClockRep
+	(*MaintClockSync)(nil),    // 38: runner.MaintClockSync
+	(*MaintClockDiff)(nil),    // 39: runner.MaintClockDiff
 }
 var file_server_proto_server_proto_depIdxs = []int32{
 	1,  // 0: runner.TaskRequest.metadata:type_name -> runner.TaskMetadata
@@ -2584,45 +2645,46 @@ var file_server_proto_server_proto_depIdxs = []int32{
 	4,  // 3: runner.Task.file:type_name -> runner.TaskFile
 	5,  // 4: runner.Task.params:type_name -> runner.TaskParam
 	6,  // 5: runner.Task.log:type_name -> runner.TaskLog
-	8,  // 6: runner.TaskReply.output:type_name -> runner.TaskOutput
-	10, // 7: runner.GlanceRequest.metadata:type_name -> runner.GlanceMetadata
-	11, // 8: runner.GlanceRequest.spec:type_name -> runner.GlanceSpec
-	12, // 9: runner.GlanceSpec.glance:type_name -> runner.Glance
-	13, // 10: runner.Glance.dir:type_name -> runner.GlanceDirReq
-	14, // 11: runner.Glance.file:type_name -> runner.GlanceFileReq
-	15, // 12: runner.Glance.sys:type_name -> runner.GlanceSysReq
-	17, // 13: runner.GlanceReply.dir:type_name -> runner.GlanceDirRep
-	19, // 14: runner.GlanceReply.file:type_name -> runner.GlanceFileRep
-	20, // 15: runner.GlanceReply.sys:type_name -> runner.GlanceSysRep
-	18, // 16: runner.GlanceDirRep.entries:type_name -> runner.GlanceEntry
-	21, // 17: runner.GlanceSysRep.resource:type_name -> runner.GlanceResource
-	24, // 18: runner.GlanceSysRep.stats:type_name -> runner.GlanceStats
-	22, // 19: runner.GlanceResource.allocatable:type_name -> runner.GlanceAllocatable
-	23, // 20: runner.GlanceResource.requested:type_name -> runner.GlanceRequested
-	25, // 21: runner.GlanceStats.cpu:type_name -> runner.GlanceCPU
-	26, // 22: runner.GlanceStats.memory:type_name -> runner.GlanceMemory
-	27, // 23: runner.GlanceStats.storage:type_name -> runner.GlanceStorage
-	28, // 24: runner.GlanceStats.processes:type_name -> runner.GlanceProcess
-	29, // 25: runner.GlanceProcess.process:type_name -> runner.GlanceThread
-	29, // 26: runner.GlanceProcess.threads:type_name -> runner.GlanceThread
-	31, // 27: runner.MaintRequest.metadata:type_name -> runner.MaintMetadata
-	32, // 28: runner.MaintRequest.spec:type_name -> runner.MaintSpec
-	33, // 29: runner.MaintSpec.maint:type_name -> runner.Maint
-	34, // 30: runner.Maint.clock:type_name -> runner.MaintClockReq
-	36, // 31: runner.MaintReply.clock:type_name -> runner.MaintClockRep
-	37, // 32: runner.MaintClockRep.sync:type_name -> runner.MaintClockSync
-	38, // 33: runner.MaintClockRep.diff:type_name -> runner.MaintClockDiff
-	0,  // 34: runner.ServerProto.SendTask:input_type -> runner.TaskRequest
-	9,  // 35: runner.ServerProto.SendGlance:input_type -> runner.GlanceRequest
-	30, // 36: runner.ServerProto.SendMaint:input_type -> runner.MaintRequest
-	7,  // 37: runner.ServerProto.SendTask:output_type -> runner.TaskReply
-	16, // 38: runner.ServerProto.SendGlance:output_type -> runner.GlanceReply
-	35, // 39: runner.ServerProto.SendMaint:output_type -> runner.MaintReply
-	37, // [37:40] is the sub-list for method output_type
-	34, // [34:37] is the sub-list for method input_type
-	34, // [34:34] is the sub-list for extension type_name
-	34, // [34:34] is the sub-list for extension extendee
-	0,  // [0:34] is the sub-list for field type_name
+	7,  // 6: runner.Task.language:type_name -> runner.TaskLanguage
+	9,  // 7: runner.TaskReply.output:type_name -> runner.TaskOutput
+	11, // 8: runner.GlanceRequest.metadata:type_name -> runner.GlanceMetadata
+	12, // 9: runner.GlanceRequest.spec:type_name -> runner.GlanceSpec
+	13, // 10: runner.GlanceSpec.glance:type_name -> runner.Glance
+	14, // 11: runner.Glance.dir:type_name -> runner.GlanceDirReq
+	15, // 12: runner.Glance.file:type_name -> runner.GlanceFileReq
+	16, // 13: runner.Glance.sys:type_name -> runner.GlanceSysReq
+	18, // 14: runner.GlanceReply.dir:type_name -> runner.GlanceDirRep
+	20, // 15: runner.GlanceReply.file:type_name -> runner.GlanceFileRep
+	21, // 16: runner.GlanceReply.sys:type_name -> runner.GlanceSysRep
+	19, // 17: runner.GlanceDirRep.entries:type_name -> runner.GlanceEntry
+	22, // 18: runner.GlanceSysRep.resource:type_name -> runner.GlanceResource
+	25, // 19: runner.GlanceSysRep.stats:type_name -> runner.GlanceStats
+	23, // 20: runner.GlanceResource.allocatable:type_name -> runner.GlanceAllocatable
+	24, // 21: runner.GlanceResource.requested:type_name -> runner.GlanceRequested
+	26, // 22: runner.GlanceStats.cpu:type_name -> runner.GlanceCPU
+	27, // 23: runner.GlanceStats.memory:type_name -> runner.GlanceMemory
+	28, // 24: runner.GlanceStats.storage:type_name -> runner.GlanceStorage
+	29, // 25: runner.GlanceStats.processes:type_name -> runner.GlanceProcess
+	30, // 26: runner.GlanceProcess.process:type_name -> runner.GlanceThread
+	30, // 27: runner.GlanceProcess.threads:type_name -> runner.GlanceThread
+	32, // 28: runner.MaintRequest.metadata:type_name -> runner.MaintMetadata
+	33, // 29: runner.MaintRequest.spec:type_name -> runner.MaintSpec
+	34, // 30: runner.MaintSpec.maint:type_name -> runner.Maint
+	35, // 31: runner.Maint.clock:type_name -> runner.MaintClockReq
+	37, // 32: runner.MaintReply.clock:type_name -> runner.MaintClockRep
+	38, // 33: runner.MaintClockRep.sync:type_name -> runner.MaintClockSync
+	39, // 34: runner.MaintClockRep.diff:type_name -> runner.MaintClockDiff
+	0,  // 35: runner.ServerProto.SendTask:input_type -> runner.TaskRequest
+	10, // 36: runner.ServerProto.SendGlance:input_type -> runner.GlanceRequest
+	31, // 37: runner.ServerProto.SendMaint:input_type -> runner.MaintRequest
+	8,  // 38: runner.ServerProto.SendTask:output_type -> runner.TaskReply
+	17, // 39: runner.ServerProto.SendGlance:output_type -> runner.GlanceReply
+	36, // 40: runner.ServerProto.SendMaint:output_type -> runner.MaintReply
+	38, // [38:41] is the sub-list for method output_type
+	35, // [35:38] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_server_proto_server_proto_init() }
@@ -2716,7 +2778,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TaskReply); i {
+			switch v := v.(*TaskLanguage); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2728,7 +2790,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TaskOutput); i {
+			switch v := v.(*TaskReply); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2740,7 +2802,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceRequest); i {
+			switch v := v.(*TaskOutput); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2752,7 +2814,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceMetadata); i {
+			switch v := v.(*GlanceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2764,7 +2826,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceSpec); i {
+			switch v := v.(*GlanceMetadata); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2776,7 +2838,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Glance); i {
+			switch v := v.(*GlanceSpec); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2788,7 +2850,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceDirReq); i {
+			switch v := v.(*Glance); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2800,7 +2862,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceFileReq); i {
+			switch v := v.(*GlanceDirReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2812,7 +2874,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceSysReq); i {
+			switch v := v.(*GlanceFileReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2824,7 +2886,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceReply); i {
+			switch v := v.(*GlanceSysReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2836,7 +2898,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceDirRep); i {
+			switch v := v.(*GlanceReply); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2848,7 +2910,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceEntry); i {
+			switch v := v.(*GlanceDirRep); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2860,7 +2922,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceFileRep); i {
+			switch v := v.(*GlanceEntry); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2872,7 +2934,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceSysRep); i {
+			switch v := v.(*GlanceFileRep); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2884,7 +2946,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceResource); i {
+			switch v := v.(*GlanceSysRep); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2896,7 +2958,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceAllocatable); i {
+			switch v := v.(*GlanceResource); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2908,7 +2970,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceRequested); i {
+			switch v := v.(*GlanceAllocatable); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2920,7 +2982,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceStats); i {
+			switch v := v.(*GlanceRequested); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2932,7 +2994,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceCPU); i {
+			switch v := v.(*GlanceStats); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2944,7 +3006,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceMemory); i {
+			switch v := v.(*GlanceCPU); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2956,7 +3018,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceStorage); i {
+			switch v := v.(*GlanceMemory); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2968,7 +3030,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceProcess); i {
+			switch v := v.(*GlanceStorage); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2980,7 +3042,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GlanceThread); i {
+			switch v := v.(*GlanceProcess); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2992,7 +3054,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MaintRequest); i {
+			switch v := v.(*GlanceThread); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3004,7 +3066,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MaintMetadata); i {
+			switch v := v.(*MaintRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3016,7 +3078,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MaintSpec); i {
+			switch v := v.(*MaintMetadata); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3028,7 +3090,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Maint); i {
+			switch v := v.(*MaintSpec); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3040,7 +3102,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MaintClockReq); i {
+			switch v := v.(*Maint); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3052,7 +3114,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MaintReply); i {
+			switch v := v.(*MaintClockReq); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3064,7 +3126,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MaintClockRep); i {
+			switch v := v.(*MaintReply); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3076,7 +3138,7 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MaintClockSync); i {
+			switch v := v.(*MaintClockRep); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3088,6 +3150,18 @@ func file_server_proto_server_proto_init() {
 			}
 		}
 		file_server_proto_server_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MaintClockSync); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_server_proto_server_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MaintClockDiff); i {
 			case 0:
 				return &v.state
@@ -3106,7 +3180,7 @@ func file_server_proto_server_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_server_proto_server_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   39,
+			NumMessages:   40,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
