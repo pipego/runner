@@ -2,12 +2,19 @@ package task
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"os/exec"
 	"sync"
 	"time"
 	"unicode/utf8"
 
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/client"
 	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
 	"github.com/smallnest/chanx"
@@ -25,6 +32,16 @@ const (
 
 	tagBOL = "BOL" // break of line
 	tagEOF = "EOF" // end of file
+)
+
+var (
+	languages = map[string]string{
+		"go":     "craftslab/go:latest",
+		"groovy": "craftslab/groovy:latest",
+		"java":   "craftslab/java:latest",
+		"python": "craftslab/python:latest",
+		"rust":   "craftslab/rust:latest",
+	}
 )
 
 type Task interface {
@@ -56,9 +73,15 @@ type Line struct {
 }
 
 type task struct {
-	cfg *Config
-	log Log
-	wg  sync.WaitGroup
+	cfg    *Config
+	client *client.Client
+	log    Log
+	wg     sync.WaitGroup
+}
+
+type artifactAuth struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 func New(_ context.Context, cfg *Config) Task {
@@ -72,10 +95,17 @@ func DefaultConfig() *Config {
 }
 
 func (t *task) Init(ctx context.Context, width int) error {
+	var err error
+
 	w := lineWidth
 
 	if width > 0 {
 		w = width
+	}
+
+	t.client, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return errors.Wrap(err, "failed to new client")
 	}
 
 	t.log = Log{
@@ -87,6 +117,10 @@ func (t *task) Init(ctx context.Context, width int) error {
 }
 
 func (t *task) Deinit(_ context.Context) error {
+	if t.client != nil {
+		_ = t.client.Close()
+	}
+
 	return nil
 }
 
@@ -186,4 +220,79 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 	})
 
 	_ = g.Wait()
+}
+
+func (t *task) runLanguage(ctx context.Context, name, space, file string) error {
+	// TBD: FIXME
+
+	return nil
+}
+
+func (t *task) pullImage(ctx context.Context, name string) error {
+	helper := func(v interface{}) string {
+		var buf bytes.Buffer
+		encoder := base64.NewEncoder(base64.StdEncoding, &buf)
+		_ = json.NewEncoder(encoder).Encode(v)
+		_ = encoder.Close()
+		return buf.String()
+	}
+
+	auth := artifactAuth{
+		Username: "",
+		Password: "",
+	}
+
+	options := image.PullOptions{
+		RegistryAuth: helper(auth),
+	}
+
+	out, err := t.client.ImagePull(ctx, name, options)
+	if err != nil {
+		return errors.Wrap(err, "failed to pull image")
+	}
+
+	_ = out.Close()
+
+	return nil
+}
+
+func (t *task) runImage(ctx context.Context, name, volume, cmd string) ([]byte, error) {
+	var buf []byte
+
+	resp, err := t.client.ContainerCreate(ctx, &container.Config{}, &container.HostConfig{}, &network.NetworkingConfig{},
+		nil, "")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create container")
+	}
+
+	defer func(ctx context.Context, c *client.Client, id string) {
+		opts := container.RemoveOptions{
+			RemoveVolumes: true,
+			RemoveLinks:   true,
+			Force:         true,
+		}
+		_ = c.ContainerRemove(ctx, id, opts)
+	}(ctx, t.client, resp.ID)
+
+	if err = t.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return nil, errors.Wrap(err, "failed to start container")
+	}
+
+	// TBD: FIXME
+	// Load output into buf
+
+	return buf, nil
+}
+
+func (t *task) removeImage(ctx context.Context, name string) error {
+	options := image.RemoveOptions{
+		Force:         true,
+		PruneChildren: true,
+	}
+
+	if _, err := t.client.ImageRemove(ctx, name, options); err != nil {
+		return errors.Wrap(err, "failed to remove image")
+	}
+
+	return nil
 }

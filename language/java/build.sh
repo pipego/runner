@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -f Dockerfile --rm -t pipego/runner/language/java:latest .
+docker build -f Dockerfile --rm -t craftslab/java:latest .

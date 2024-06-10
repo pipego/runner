@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -f Dockerfile --rm -t pipego/runner/language/go:latest .
+docker build -f Dockerfile --rm -t craftslab/go:latest .
