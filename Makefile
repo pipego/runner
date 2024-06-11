@@ -25,6 +25,9 @@ proto: go-proto
 test: go-test
 .PHONY: test
 
+all-test: go-all-test
+.PHONY: all-test
+
 
 # Non-PHONY targets (real files)
 
@@ -45,3 +48,6 @@ go-proto: FORCE
 
 go-test: FORCE
 	./script/test.sh report
+
+go-all-test: FORCE
+	./script/test.sh all

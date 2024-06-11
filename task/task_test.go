@@ -1,3 +1,5 @@
+//go:build all_test
+
 package task
 
 import (
@@ -7,6 +9,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
+	"github.com/docker/docker/client"
 	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
@@ -15,9 +18,12 @@ import (
 )
 
 func initTask() *task {
+	_client, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+
 	t := task{
-		cfg: DefaultConfig(),
-		log: Log{},
+		cfg:    DefaultConfig(),
+		client: _client,
+		log:    Log{},
 	}
 
 	t.cfg.Config = config.Config{}
@@ -231,5 +237,20 @@ L:
 	}
 
 	err = _t.Deinit(ctx)
+	assert.Equal(t, nil, err)
+}
+
+func TestRunLanguage(t *testing.T) {
+	var err error
+
+	defer goleak.VerifyNone(t)
+
+	_t := initTask()
+	ctx := context.Background()
+
+	name := "groovy"
+	space := "space"
+
+	err = _t.runLanguage(ctx, name, space, languages[name])
 	assert.Equal(t, nil, err)
 }

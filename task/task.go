@@ -24,6 +24,9 @@ import (
 )
 
 const (
+	authName = ""
+	authPass = ""
+
 	lineCount = 1000
 	lineSep   = '\n'
 	lineWidth = 500 // BOL appended
@@ -85,8 +88,11 @@ type artifactAuth struct {
 }
 
 func New(_ context.Context, cfg *Config) Task {
+	_client, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+
 	return &task{
-		cfg: cfg,
+		cfg:    cfg,
+		client: _client,
 	}
 }
 
@@ -95,17 +101,10 @@ func DefaultConfig() *Config {
 }
 
 func (t *task) Init(ctx context.Context, width int) error {
-	var err error
-
 	w := lineWidth
 
 	if width > 0 {
 		w = width
-	}
-
-	t.client, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		return errors.Wrap(err, "failed to new client")
 	}
 
 	t.log = Log{
@@ -141,6 +140,9 @@ func (t *task) Run(ctx context.Context, _ string, envs, args []string, lang Lang
 	if err != nil {
 		return errors.New("name not found")
 	}
+
+	// TBD: FIXME
+	// Run t.runLanguage
 
 	cmd := exec.CommandContext(ctx, n, a...)
 	cmd.Env = append(cmd.Environ(), envs...)
@@ -238,8 +240,8 @@ func (t *task) pullImage(ctx context.Context, name string) error {
 	}
 
 	auth := artifactAuth{
-		Username: "",
-		Password: "",
+		Username: authName,
+		Password: authPass,
 	}
 
 	options := image.PullOptions{
@@ -256,10 +258,16 @@ func (t *task) pullImage(ctx context.Context, name string) error {
 	return nil
 }
 
-func (t *task) runImage(ctx context.Context, name, volume, cmd string) ([]byte, error) {
+func (t *task) runImage(ctx context.Context, name string, cmd []string, volume map[string]struct{}) ([]byte, error) {
 	var buf []byte
 
-	resp, err := t.client.ContainerCreate(ctx, &container.Config{}, &container.HostConfig{}, &network.NetworkingConfig{},
+	cfg := &container.Config{
+		Image:   name,
+		Cmd:     cmd,
+		Volumes: volume,
+	}
+
+	resp, err := t.client.ContainerCreate(ctx, cfg, &container.HostConfig{}, &network.NetworkingConfig{},
 		nil, "")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create container")
