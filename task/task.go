@@ -2,10 +2,10 @@ package task
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"io"
 	"os/exec"
 	"sync"
 	"time"
@@ -13,7 +13,9 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
@@ -224,28 +226,34 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 	_ = g.Wait()
 }
 
-func (t *task) runLanguage(ctx context.Context, name, space, file string) error {
-	// TBD: FIXME
+func (t *task) runLanguage(ctx context.Context, name, file, source, target string) ([]byte, error) {
+	if err := t.pullImage(ctx, name); err != nil {
+		return nil, errors.Wrap(err, "failed to pull image")
+	}
 
-	return nil
+	buf, err := t.runImage(ctx, name, []string{file}, source, target)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to run image")
+	}
+
+	if err := t.removeImage(ctx, name); err != nil {
+		return nil, errors.Wrap(err, "failed to remove image")
+	}
+
+	return buf, nil
 }
 
 func (t *task) pullImage(ctx context.Context, name string) error {
-	helper := func(v interface{}) string {
-		var buf bytes.Buffer
-		encoder := base64.NewEncoder(base64.StdEncoding, &buf)
-		_ = json.NewEncoder(encoder).Encode(v)
-		_ = encoder.Close()
-		return buf.String()
-	}
-
-	auth := artifactAuth{
+	_config := registry.AuthConfig{
 		Username: authName,
 		Password: authPass,
 	}
 
+	encodedJSON, _ := json.Marshal(_config)
+	auth := base64.URLEncoding.EncodeToString(encodedJSON)
+
 	options := image.PullOptions{
-		RegistryAuth: helper(auth),
+		RegistryAuth: auth,
 	}
 
 	out, err := t.client.ImagePull(ctx, name, options)
@@ -258,16 +266,26 @@ func (t *task) pullImage(ctx context.Context, name string) error {
 	return nil
 }
 
-func (t *task) runImage(ctx context.Context, name string, cmd []string, volume map[string]struct{}) ([]byte, error) {
+func (t *task) runImage(ctx context.Context, name string, cmd []string, source, target string) ([]byte, error) {
 	var buf []byte
 
-	cfg := &container.Config{
-		Image:   name,
-		Cmd:     cmd,
-		Volumes: volume,
+	_config := &container.Config{
+		Image: name,
+		Cmd:   cmd,
+		Tty:   false,
 	}
 
-	resp, err := t.client.ContainerCreate(ctx, cfg, &container.HostConfig{}, &network.NetworkingConfig{},
+	hostConfig := &container.HostConfig{
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: source,
+				Target: target,
+			},
+		},
+	}
+
+	resp, err := t.client.ContainerCreate(ctx, _config, hostConfig, &network.NetworkingConfig{},
 		nil, "")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create container")
@@ -286,8 +304,24 @@ func (t *task) runImage(ctx context.Context, name string, cmd []string, volume m
 		return nil, errors.Wrap(err, "failed to start container")
 	}
 
-	// TBD: FIXME
-	// Load output into buf
+	statusCh, errCh := t.client.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to wait container")
+		}
+	case <-statusCh:
+	}
+
+	out, err := t.client.ContainerLogs(ctx, resp.ID, container.LogsOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to log container")
+	}
+
+	buf, err = io.ReadAll(out)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read log")
+	}
 
 	return buf, nil
 }
