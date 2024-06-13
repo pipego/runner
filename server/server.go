@@ -454,8 +454,12 @@ func (s *server) evalEnv(ctx context.Context, params []*pb.TaskParam, data strin
 
 func (s *server) buildLanguage(ctx context.Context, language *pb.TaskLanguage) task.Language {
 	return task.Language{
-		Name:  language.GetName(),
-		Image: language.GetImage(),
+		Name: language.GetName(),
+		Artifact: task.Artifact{
+			Image: language.GetArtifact().GetImage(),
+			User:  language.GetArtifact().GetUser(),
+			Pass:  language.GetArtifact().GetPass(),
+		},
 	}
 }
 

@@ -88,7 +88,11 @@ Flags:
       },
       "language": {
         "name": "groovy",
-        "image": "craftslab/groovy:latest"
+        "artifact": {
+          "image": "craftslab/groovy:latest",
+          "user": "name",
+          "pass": "pass"
+        }
       }
     }
   }
@@ -125,16 +129,22 @@ Flags:
 >
 > `task.language.name`: language name
 >
-> `task.language.image`: language image
+> `task.language.artifact`: language artifact
 >
-> |  name   | image                      |
-> |:-------:|:---------------------------|
-> |  bash   | none                       |
-> |   go    | craftslab/go:latest        |
-> | groovy  | craftslab/groovy:latest    |
-> |  java   | craftslab/java:latest      |
-> | python  | craftslab/python:latest    |
-> |  rust   | craftslab/rust:latest      |
+> `task.language.artifact.image`: artifact image
+>
+> |  name   | artifact.image          |
+> |:-------:|:------------------------|
+> |  bash   | none                    |
+> |   go    | craftslab/go:latest     |
+> | groovy  | craftslab/groovy:latest |
+> |  java   | craftslab/java:latest   |
+> | python  | craftslab/python:latest |
+> |  rust   | craftslab/rust:latest   |
+>
+> `task.language.artifact.user`: artifact user
+>
+> `task.language.artifact.pass`: artifact pass
 
 **Output**
 

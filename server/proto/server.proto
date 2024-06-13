@@ -50,7 +50,13 @@ message TaskLog {
 
 message TaskLanguage {
   string name = 1;
-  string image = 2;
+  TaskArtifact artifact = 2;
+}
+
+message TaskArtifact {
+  string image = 1;
+  string user = 2;
+  string pass = 3;
 }
 
 message TaskReply {

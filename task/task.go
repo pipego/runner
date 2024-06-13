@@ -26,9 +26,6 @@ import (
 )
 
 const (
-	authName = ""
-	authPass = ""
-
 	lineCount = 1000
 	lineSep   = '\n'
 	lineWidth = 500 // BOL appended
@@ -62,8 +59,14 @@ type Config struct {
 }
 
 type Language struct {
-	Name  string
+	Name     string
+	Artifact Artifact
+}
+
+type Artifact struct {
 	Image string
+	User  string
+	Pass  string
 }
 
 type Log struct {
@@ -118,6 +121,9 @@ func (t *task) Init(ctx context.Context, width int) error {
 }
 
 func (t *task) Deinit(_ context.Context) error {
+	// TBD: FIXME
+	// Remove all images
+
 	if t.client != nil {
 		_ = t.client.Close()
 	}
@@ -144,7 +150,7 @@ func (t *task) Run(ctx context.Context, _ string, envs, args []string, lang Lang
 	}
 
 	// TBD: FIXME
-	// Run t.runLanguage
+	// Run runLanguage
 
 	cmd := exec.CommandContext(ctx, n, a...)
 	cmd.Env = append(cmd.Environ(), envs...)
@@ -226,34 +232,35 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 	_ = g.Wait()
 }
 
-func (t *task) runLanguage(ctx context.Context, name, file, source, target string) ([]byte, error) {
-	if err := t.pullImage(ctx, name); err != nil {
+func (t *task) runLanguage(ctx context.Context, _image, user, pass, file, source, target string) ([]byte, error) {
+	if err := t.pullImage(ctx, _image, user, pass); err != nil {
 		return nil, errors.Wrap(err, "failed to pull image")
 	}
 
-	buf, err := t.runImage(ctx, name, []string{file}, source, target)
+	buf, err := t.runImage(ctx, _image, []string{file}, source, target)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to run image")
 	}
 
-	if err := t.removeImage(ctx, name); err != nil {
-		return nil, errors.Wrap(err, "failed to remove image")
-	}
+	// TBD: FIXME
+	// Remove container
 
 	return buf, nil
 }
 
-func (t *task) pullImage(ctx context.Context, name string) error {
+func (t *task) pullImage(ctx context.Context, name, user, pass string) error {
 	_config := registry.AuthConfig{
-		Username: authName,
-		Password: authPass,
+		Username: user,
+		Password: pass,
 	}
 
 	encodedJSON, _ := json.Marshal(_config)
 	auth := base64.URLEncoding.EncodeToString(encodedJSON)
 
-	options := image.PullOptions{
-		RegistryAuth: auth,
+	options := image.PullOptions{}
+
+	if user != "" && pass != "" {
+		options.RegistryAuth = auth
 	}
 
 	out, err := t.client.ImagePull(ctx, name, options)
@@ -313,7 +320,7 @@ func (t *task) runImage(ctx context.Context, name string, cmd []string, source, 
 	case <-statusCh:
 	}
 
-	out, err := t.client.ContainerLogs(ctx, resp.ID, container.LogsOptions{})
+	out, err := t.client.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to log container")
 	}

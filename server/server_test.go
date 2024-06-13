@@ -169,12 +169,18 @@ func TestBuildLanguage(t *testing.T) {
 	ctx := context.Background()
 
 	lang := &pb.TaskLanguage{
-		Name:  "name",
-		Image: "image",
+		Name: "name",
+		Artifact: &pb.TaskArtifact{
+			Image: "image",
+			User:  "name",
+			Pass:  "pass",
+		},
 	}
 
 	buf := s.buildLanguage(ctx, lang)
 	assert.NotEqual(t, nil, buf)
 	assert.Equal(t, "name", buf.Name)
-	assert.Equal(t, "image", buf.Image)
+	assert.Equal(t, "image", buf.Artifact.Image)
+	assert.Equal(t, "name", buf.Artifact.User)
+	assert.Equal(t, "pass", buf.Artifact.Pass)
 }

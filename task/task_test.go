@@ -5,6 +5,7 @@ package task
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -240,17 +241,44 @@ L:
 	assert.Equal(t, nil, err)
 }
 
-func TestRunLanguage(t *testing.T) {
-	var err error
-
+func TestPullImage(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	_t := initTask()
 	ctx := context.Background()
 
-	name := "groovy"
-	space := "space"
+	name := languages["groovy"]
 
-	err = _t.runLanguage(ctx, name, space, languages[name])
+	err := _t.pullImage(ctx, name, "", "")
+	assert.Equal(t, nil, err)
+}
+
+func TestRunImage(t *testing.T) {
+	defer goleak.VerifyNone(t)
+
+	_t := initTask()
+	ctx := context.Background()
+
+	name := languages["groovy"]
+	cmd := []string{"/workspace/jenkinsfile"}
+	source, _ := filepath.Abs("../test")
+	target := "/workspace"
+
+	// Refer: docker run --rm -v "$PWD"/workspace:/workspace craftslab/groovy:latest /workspace/jenkinsfile
+	buf, err := _t.runImage(ctx, name, cmd, source, target)
+	assert.Equal(t, nil, err)
+
+	fmt.Println(string(buf))
+}
+
+func TestRemoveImage(t *testing.T) {
+	defer goleak.VerifyNone(t)
+
+	_t := initTask()
+	ctx := context.Background()
+
+	name := languages["groovy"]
+
+	err := _t.removeImage(ctx, name)
 	assert.Equal(t, nil, err)
 }
