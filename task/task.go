@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
@@ -81,10 +82,10 @@ type Line struct {
 }
 
 type task struct {
-	cfg    *Config
-	client *client.Client
-	log    Log
-	wg     sync.WaitGroup
+	cfg     *Config
+	log     Log
+	wg      sync.WaitGroup
+	_client *client.Client
 }
 
 type artifactAuth struct {
@@ -96,8 +97,8 @@ func New(_ context.Context, cfg *Config) Task {
 	_client, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 
 	return &task{
-		cfg:    cfg,
-		client: _client,
+		cfg:     cfg,
+		_client: _client,
 	}
 }
 
@@ -117,15 +118,18 @@ func (t *task) Init(ctx context.Context, width int) error {
 		Width: w,
 	}
 
+	// TBD: FIXME
+	// Run pullImage
+
 	return nil
 }
 
 func (t *task) Deinit(_ context.Context) error {
 	// TBD: FIXME
-	// Remove all images
+	// Run removeImage
 
-	if t.client != nil {
-		_ = t.client.Close()
+	if t._client != nil {
+		_ = t._client.Close()
 	}
 
 	return nil
@@ -232,20 +236,12 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 	_ = g.Wait()
 }
 
-func (t *task) runLanguage(ctx context.Context, _image, user, pass, file, source, target string) ([]byte, error) {
-	if err := t.pullImage(ctx, _image, user, pass); err != nil {
-		return nil, errors.Wrap(err, "failed to pull image")
-	}
-
-	buf, err := t.runImage(ctx, _image, []string{file}, source, target)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to run image")
-	}
-
+func (t *task) runLanguage(ctx context.Context) ([]byte, error) {
 	// TBD: FIXME
-	// Remove container
+	// Run runContainer
+	// Run removeContainer
 
-	return buf, nil
+	return nil, nil
 }
 
 func (t *task) pullImage(ctx context.Context, name, user, pass string) error {
@@ -263,7 +259,7 @@ func (t *task) pullImage(ctx context.Context, name, user, pass string) error {
 		options.RegistryAuth = auth
 	}
 
-	out, err := t.client.ImagePull(ctx, name, options)
+	out, err := t._client.ImagePull(ctx, name, options)
 	if err != nil {
 		return errors.Wrap(err, "failed to pull image")
 	}
@@ -273,9 +269,7 @@ func (t *task) pullImage(ctx context.Context, name, user, pass string) error {
 	return nil
 }
 
-func (t *task) runImage(ctx context.Context, name string, cmd []string, source, target string) ([]byte, error) {
-	var buf []byte
-
+func (t *task) runContainer(ctx context.Context, name string, cmd []string, source, target string) (id string, out []byte, err error) {
 	_config := &container.Config{
 		Image: name,
 		Cmd:   cmd,
@@ -292,54 +286,67 @@ func (t *task) runImage(ctx context.Context, name string, cmd []string, source, 
 		},
 	}
 
-	resp, err := t.client.ContainerCreate(ctx, _config, hostConfig, &network.NetworkingConfig{},
+	resp, err := t._client.ContainerCreate(ctx, _config, hostConfig, &network.NetworkingConfig{},
 		nil, "")
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create container")
+		return "", nil, errors.Wrap(err, "failed to create container")
 	}
 
-	defer func(ctx context.Context, c *client.Client, id string) {
-		opts := container.RemoveOptions{
-			RemoveVolumes: true,
-			RemoveLinks:   true,
-			Force:         true,
-		}
-		_ = c.ContainerRemove(ctx, id, opts)
-	}(ctx, t.client, resp.ID)
-
-	if err = t.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		return nil, errors.Wrap(err, "failed to start container")
+	if err = t._client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return "", nil, errors.Wrap(err, "failed to start container")
 	}
 
-	statusCh, errCh := t.client.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	statusCh, errCh := t._client.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to wait container")
+			return "", nil, errors.Wrap(err, "failed to wait container")
 		}
 	case <-statusCh:
 	}
 
-	out, err := t.client.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
+	buf, err := t._client.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to log container")
+		return "", nil, errors.Wrap(err, "failed to log container")
 	}
 
-	buf, err = io.ReadAll(out)
+	out, err = io.ReadAll(buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read log")
+		return "", nil, errors.Wrap(err, "failed to read log")
 	}
 
-	return buf, nil
+	return resp.ID, out, nil
 }
 
-func (t *task) removeImage(ctx context.Context, name string) error {
+func (t *task) removeContainer(ctx context.Context, id string) error {
+	options := container.RemoveOptions{
+		RemoveVolumes: true,
+		RemoveLinks:   true,
+		Force:         true,
+	}
+
+	defer func(ctx context.Context, c *client.Client) {
+		_, _ = c.ContainersPrune(ctx, filters.Args{})
+	}(ctx, t._client)
+
+	if err := t._client.ContainerRemove(ctx, id, options); err != nil {
+		return errors.Wrap(err, "failed to remove container")
+	}
+
+	return nil
+}
+
+func (t *task) removeImage(ctx context.Context, id string) error {
 	options := image.RemoveOptions{
 		Force:         true,
 		PruneChildren: true,
 	}
 
-	if _, err := t.client.ImageRemove(ctx, name, options); err != nil {
+	defer func(ctx context.Context, c *client.Client) {
+		_, _ = c.ImagesPrune(ctx, filters.Args{})
+	}(ctx, t._client)
+
+	if _, err := t._client.ImageRemove(ctx, id, options); err != nil {
 		return errors.Wrap(err, "failed to remove image")
 	}
 

@@ -19,12 +19,9 @@ import (
 )
 
 func initTask() *task {
-	_client, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-
 	t := task{
-		cfg:    DefaultConfig(),
-		client: _client,
-		log:    Log{},
+		cfg: DefaultConfig(),
+		log: Log{},
 	}
 
 	t.cfg.Config = config.Config{}
@@ -241,22 +238,16 @@ L:
 	assert.Equal(t, nil, err)
 }
 
-func TestPullImage(t *testing.T) {
+func TestRunLanguage(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	_t := initTask()
-	ctx := context.Background()
+	_t._client, _ = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 
-	name := languages["groovy"]
+	defer func(_client *client.Client) {
+		_ = _client.Close()
+	}(_t._client)
 
-	err := _t.pullImage(ctx, name, "", "")
-	assert.Equal(t, nil, err)
-}
-
-func TestRunImage(t *testing.T) {
-	defer goleak.VerifyNone(t)
-
-	_t := initTask()
 	ctx := context.Background()
 
 	name := languages["groovy"]
@@ -264,21 +255,18 @@ func TestRunImage(t *testing.T) {
 	source, _ := filepath.Abs("../test")
 	target := "/workspace"
 
-	// Refer: docker run --rm -v "$PWD"/workspace:/workspace craftslab/groovy:latest /workspace/jenkinsfile
-	buf, err := _t.runImage(ctx, name, cmd, source, target)
+	err := _t.pullImage(ctx, name, "", "")
 	assert.Equal(t, nil, err)
 
-	fmt.Println(string(buf))
-}
+	// Refer: docker run --rm -v "$PWD"/workspace:/workspace craftslab/groovy:latest /workspace/jenkinsfile
+	id, out, err := _t.runContainer(ctx, name, cmd, source, target)
+	assert.Equal(t, nil, err)
 
-func TestRemoveImage(t *testing.T) {
-	defer goleak.VerifyNone(t)
+	fmt.Println(string(out))
 
-	_t := initTask()
-	ctx := context.Background()
+	err = _t.removeContainer(ctx, id)
+	assert.Equal(t, nil, err)
 
-	name := languages["groovy"]
-
-	err := _t.removeImage(ctx, name)
+	err = _t.removeImage(ctx, id)
 	assert.Equal(t, nil, err)
 }
