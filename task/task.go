@@ -229,12 +229,15 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 	_ = g.Wait()
 }
 
-func (t *task) runLanguage(ctx context.Context) ([]byte, error) {
-	// TBD: FIXME
-	// Run runContainer
-	// Run removeContainer
+func (t *task) runLanguage(ctx context.Context, cmd []string, source, target string) ([]byte, error) {
+	id, out, err := t.runContainer(ctx, t.lang.Artifact.Image, cmd, source, target)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to run container")
+	}
 
-	return nil, nil
+	_ = t.removeContainer(ctx, id)
+
+	return out, nil
 }
 
 func (t *task) pullImage(ctx context.Context, name, user, pass string) error {
