@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
@@ -264,7 +265,11 @@ func (t *task) pullImage(ctx context.Context, name, user, pass string) error {
 		return errors.Wrap(err, "failed to pull image")
 	}
 
-	_ = out.Close()
+	defer func(out io.ReadCloser) {
+		_ = out.Close()
+	}(out)
+
+	_, _ = io.Copy(os.Stdout, out)
 
 	return nil
 }
@@ -329,9 +334,7 @@ func (t *task) removeContainer(ctx context.Context, id string) error {
 		_, _ = c.ContainersPrune(ctx, filters.Args{})
 	}(ctx, t._client)
 
-	if err := t._client.ContainerRemove(ctx, id, options); err != nil {
-		return errors.Wrap(err, "failed to remove container")
-	}
+	_ = t._client.ContainerRemove(ctx, id, options)
 
 	return nil
 }
@@ -346,9 +349,7 @@ func (t *task) removeImage(ctx context.Context, id string) error {
 		_, _ = c.ImagesPrune(ctx, filters.Args{})
 	}(ctx, t._client)
 
-	if _, err := t._client.ImageRemove(ctx, id, options); err != nil {
-		return errors.Wrap(err, "failed to remove image")
-	}
+	_, _ = t._client.ImageRemove(ctx, id, options)
 
 	return nil
 }

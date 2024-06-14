@@ -258,7 +258,6 @@ func TestRunLanguage(t *testing.T) {
 	err := _t.pullImage(ctx, name, "", "")
 	assert.Equal(t, nil, err)
 
-	// Refer: docker run --rm -v "$PWD"/workspace:/workspace craftslab/groovy:latest /workspace/jenkinsfile
 	id, out, err := _t.runContainer(ctx, name, cmd, source, target)
 	assert.Equal(t, nil, err)
 
@@ -267,6 +266,6 @@ func TestRunLanguage(t *testing.T) {
 	err = _t.removeContainer(ctx, id)
 	assert.Equal(t, nil, err)
 
-	err = _t.removeImage(ctx, id)
+	err = _t.removeImage(ctx, name)
 	assert.Equal(t, nil, err)
 }
