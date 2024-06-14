@@ -171,9 +171,10 @@ func TestBuildLanguage(t *testing.T) {
 	lang := &pb.TaskLanguage{
 		Name: "name",
 		Artifact: &pb.TaskArtifact{
-			Image: "image",
-			User:  "name",
-			Pass:  "pass",
+			Image:   "image",
+			User:    "name",
+			Pass:    "pass",
+			Cleanup: false,
 		},
 	}
 
@@ -183,4 +184,5 @@ func TestBuildLanguage(t *testing.T) {
 	assert.Equal(t, "image", buf.Artifact.Image)
 	assert.Equal(t, "name", buf.Artifact.User)
 	assert.Equal(t, "pass", buf.Artifact.Pass)
+	assert.Equal(t, false, buf.Artifact.Cleanup)
 }

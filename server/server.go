@@ -74,6 +74,7 @@ func (s *server) Run(_ context.Context) error {
 
 // nolint:gocyclo
 func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
+	// Receive task
 	name, file, params, commands, width, language, err := s.recvTask(srv)
 	if err != nil {
 		s.cfg.Logger.Error("SendTask", err.Error())
@@ -89,6 +90,7 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 	ctx, cancel := context.WithCancel(srv.Context())
 	defer cancel()
 
+	// Init file
 	f, err := s.newFile(ctx)
 	if err != nil {
 		s.cfg.Logger.Error("SendTask", err.Error())
@@ -104,6 +106,7 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 		_ = f.Deinit(ctx)
 	}(ctx)
 
+	// Parse commands
 	if len(commands) != 0 {
 		commands = []string{"bash", "-c", strings.Join(commands, " ")}
 	} else if len(file.GetContent()) != 0 {
@@ -118,13 +121,14 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 		commands = []string{"bash", "-c", n}
 	}
 
+	// Run task
 	t, err := s.newTask(ctx)
 	if err != nil {
 		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
 
-	if err := t.Init(ctx, width); err != nil {
+	if err := t.Init(ctx, width, s.buildLanguage(ctx, language)); err != nil {
 		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
@@ -133,7 +137,7 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 		_ = t.Deinit(ctx)
 	}(ctx)
 
-	if err := t.Run(ctx, name, s.buildEnv(ctx, params), commands, s.buildLanguage(ctx, language)); err != nil {
+	if err := t.Run(ctx, name, s.buildEnv(ctx, params), commands); err != nil {
 		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
@@ -456,9 +460,10 @@ func (s *server) buildLanguage(ctx context.Context, language *pb.TaskLanguage) t
 	return task.Language{
 		Name: language.GetName(),
 		Artifact: task.Artifact{
-			Image: language.GetArtifact().GetImage(),
-			User:  language.GetArtifact().GetUser(),
-			Pass:  language.GetArtifact().GetPass(),
+			Image:   language.GetArtifact().GetImage(),
+			User:    language.GetArtifact().GetUser(),
+			Pass:    language.GetArtifact().GetPass(),
+			Cleanup: language.GetArtifact().GetCleanup(),
 		},
 	}
 }

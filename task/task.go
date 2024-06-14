@@ -38,20 +38,10 @@ const (
 	tagEOF = "EOF" // end of file
 )
 
-var (
-	languages = map[string]string{
-		"go":     "craftslab/go:latest",
-		"groovy": "craftslab/groovy:latest",
-		"java":   "craftslab/java:latest",
-		"python": "craftslab/python:latest",
-		"rust":   "craftslab/rust:latest",
-	}
-)
-
 type Task interface {
-	Init(context.Context, int) error
+	Init(context.Context, int, Language) error
 	Deinit(context.Context) error
-	Run(context.Context, string, []string, []string, Language) error
+	Run(context.Context, string, []string, []string) error
 	Tail(ctx context.Context) Log
 }
 
@@ -66,9 +56,10 @@ type Language struct {
 }
 
 type Artifact struct {
-	Image string
-	User  string
-	Pass  string
+	Image   string
+	User    string
+	Pass    string
+	Cleanup bool
 }
 
 type Log struct {
@@ -84,22 +75,15 @@ type Line struct {
 
 type task struct {
 	cfg     *Config
+	lang    Language
 	log     Log
 	wg      sync.WaitGroup
 	_client *client.Client
 }
 
-type artifactAuth struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 func New(_ context.Context, cfg *Config) Task {
-	_client, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-
 	return &task{
-		cfg:     cfg,
-		_client: _client,
+		cfg: cfg,
 	}
 }
 
@@ -107,11 +91,15 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-func (t *task) Init(ctx context.Context, width int) error {
-	w := lineWidth
+func (t *task) Init(ctx context.Context, width int, lang Language) error {
+	var w int
+
+	t.lang = lang
 
 	if width > 0 {
 		w = width
+	} else {
+		w = lineWidth
 	}
 
 	t.log = Log{
@@ -119,15 +107,19 @@ func (t *task) Init(ctx context.Context, width int) error {
 		Width: w,
 	}
 
-	// TBD: FIXME
-	// Run pullImage
+	t._client, _ = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+
+	if err := t.pullImage(ctx, t.lang.Artifact.Image, t.lang.Artifact.User, t.lang.Artifact.Pass); err != nil {
+		return errors.Wrap(err, "failed to pull image")
+	}
 
 	return nil
 }
 
-func (t *task) Deinit(_ context.Context) error {
-	// TBD: FIXME
-	// Run removeImage
+func (t *task) Deinit(ctx context.Context) error {
+	if t.lang.Artifact.Cleanup {
+		_ = t.removeImage(ctx, t.lang.Artifact.Image)
+	}
 
 	if t._client != nil {
 		_ = t._client.Close()
@@ -136,7 +128,7 @@ func (t *task) Deinit(_ context.Context) error {
 	return nil
 }
 
-func (t *task) Run(ctx context.Context, _ string, envs, args []string, lang Language) error {
+func (t *task) Run(ctx context.Context, _ string, envs, args []string) error {
 	var a []string
 	var n string
 	var err error

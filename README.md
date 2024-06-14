@@ -91,7 +91,8 @@ Flags:
         "artifact": {
           "image": "craftslab/groovy:latest",
           "user": "name",
-          "pass": "pass"
+          "pass": "pass",
+          "cleanup": false
         }
       }
     }
@@ -145,6 +146,8 @@ Flags:
 > `task.language.artifact.user`: artifact user
 >
 > `task.language.artifact.pass`: artifact pass
+>
+> `task.language.artifact.cleanup`: enable/disable artifact cleanup
 
 **Output**
 
@@ -372,6 +375,7 @@ Project License can be found [here](LICENSE).
 - [cuelang](https://cuelang.org)
 - [cyclone-workflow](https://github.com/caicloud/cyclone)
 - [dagger](https://dagger.io/)
+- [docker-examples](https://docs.docker.com/engine/api/sdk/examples/)
 - [drone-dag](https://github.com/drone/dag)
 - [drone-livelog](https://github.com/harness/drone/tree/master/livelog)
 - [drone-pipeline](https://docs.drone.io/pipeline/overview/)
