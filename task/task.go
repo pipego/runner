@@ -28,6 +28,8 @@ import (
 )
 
 const (
+	langBash = "bash"
+
 	lineCount = 1000
 	lineSep   = '\n'
 	lineWidth = 500 // BOL appended
@@ -128,56 +130,195 @@ func (t *task) Deinit(ctx context.Context) error {
 	return nil
 }
 
-func (t *task) Run(ctx context.Context, _ string, envs, args []string) error {
-	var a []string
-	var n string
+func (t *task) Run(ctx context.Context, _ string, env, arg []string) error {
+	var stdout, stderr *bufio.Reader
 	var err error
 
-	if len(args) > 1 {
-		n, err = exec.LookPath(args[0])
-		a = args[1:]
-	} else if len(args) == 1 {
-		n, err = exec.LookPath(args[0])
+	if t.lang.Name == langBash {
+		stdout, stderr, err = t.runBash(ctx, env, arg)
 	} else {
-		return errors.New("invalid args")
+		stdout, stderr, err = t.runLanguage(ctx, env, arg)
 	}
 
 	if err != nil {
-		return errors.New("name not found")
+		return errors.Wrap(err, "failed to run task")
 	}
 
-	// TBD: FIXME
-	// Run runLanguage
-
-	cmd := exec.CommandContext(ctx, n, a...)
-	cmd.Env = append(cmd.Environ(), envs...)
-
-	stdout, _ := cmd.StdoutPipe()
-	readerStdout := bufio.NewReader(stdout)
-
-	stderr, _ := cmd.StderrPipe()
-	readerStderr := bufio.NewReader(stderr)
-
-	_ = cmd.Start()
-	t.routine(ctx, readerStdout, readerStderr)
-
-	g, _ := errgroup.WithContext(ctx)
-	g.SetLimit(routineNum)
-
-	g.Go(func() error {
-		_ = cmd.Wait()
-		return nil
-	})
-
-	if err = g.Wait(); err != nil {
-		return errors.Wrap(err, "failed to wait")
-	}
+	t.routine(ctx, stdout, stderr)
 
 	return nil
 }
 
 func (t *task) Tail(_ context.Context) Log {
 	return t.log
+}
+
+// nolint:ineffassign
+func (t *task) runBash(ctx context.Context, env, cmd []string) (stdoutReader, stderrReader *bufio.Reader, err error) {
+	var a []string
+	var n string
+
+	if len(cmd) > 1 {
+		n, err = exec.LookPath(cmd[0])
+		a = cmd[1:]
+	} else if len(cmd) == 1 {
+		n, err = exec.LookPath(cmd[0])
+	} else {
+		return nil, nil, errors.New("invalid args")
+	}
+
+	if err != nil {
+		return nil, nil, errors.New("name not found")
+	}
+
+	c := exec.CommandContext(ctx, n, a...)
+	c.Env = append(c.Environ(), env...)
+
+	stdoutPipe, _ := c.StdoutPipe()
+	stdoutReader = bufio.NewReader(stdoutPipe)
+
+	stderrPipe, _ := c.StderrPipe()
+	stdoutReader = bufio.NewReader(stderrPipe)
+
+	_ = c.Start()
+
+	g, _ := errgroup.WithContext(ctx)
+	g.SetLimit(routineNum)
+
+	g.Go(func() error {
+		_ = c.Wait()
+		return nil
+	})
+
+	if err = g.Wait(); err != nil {
+		return nil, nil, errors.Wrap(err, "failed to wait")
+	}
+
+	return stdoutReader, stderrReader, nil
+}
+
+func (t *task) runLanguage(ctx context.Context, env, cmd []string) (stdoutReader, stderrReader *bufio.Reader, err error) {
+	// TBD: FIXME
+	// Set env
+
+	source := "TBD"
+	target := "TBD"
+
+	id, stdoutReader, err := t.runContainer(ctx, t.lang.Artifact.Image, cmd, source, target)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to run container")
+	}
+
+	_ = t.removeContainer(ctx, id)
+
+	return stdoutReader, stderrReader, nil
+}
+
+func (t *task) pullImage(ctx context.Context, name, user, pass string) error {
+	_config := registry.AuthConfig{
+		Username: user,
+		Password: pass,
+	}
+
+	encodedJSON, _ := json.Marshal(_config)
+	auth := base64.URLEncoding.EncodeToString(encodedJSON)
+
+	options := image.PullOptions{}
+
+	if user != "" && pass != "" {
+		options.RegistryAuth = auth
+	}
+
+	out, err := t._client.ImagePull(ctx, name, options)
+	if err != nil {
+		return errors.Wrap(err, "failed to pull image")
+	}
+
+	defer func(out io.ReadCloser) {
+		_ = out.Close()
+	}(out)
+
+	_, _ = io.Copy(os.Stdout, out)
+
+	return nil
+}
+
+func (t *task) runContainer(ctx context.Context, name string, cmd []string, source, target string) (id string,
+	stdout *bufio.Reader, err error) {
+	_config := &container.Config{
+		Image: name,
+		Cmd:   cmd,
+		Tty:   false,
+	}
+
+	hostConfig := &container.HostConfig{
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: source,
+				Target: target,
+			},
+		},
+	}
+
+	resp, err := t._client.ContainerCreate(ctx, _config, hostConfig, &network.NetworkingConfig{},
+		nil, "")
+	if err != nil {
+		return "", nil, errors.Wrap(err, "failed to create container")
+	}
+
+	if err = t._client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return "", nil, errors.Wrap(err, "failed to start container")
+	}
+
+	statusCh, errCh := t._client.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return "", nil, errors.Wrap(err, "failed to wait container")
+		}
+	case <-statusCh:
+	}
+
+	reader, err := t._client.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
+	if err != nil {
+		return "", nil, errors.Wrap(err, "failed to log container")
+	}
+
+	stdout = bufio.NewReader(reader)
+
+	return resp.ID, stdout, nil
+}
+
+func (t *task) removeContainer(ctx context.Context, id string) error {
+	options := container.RemoveOptions{
+		RemoveVolumes: true,
+		RemoveLinks:   true,
+		Force:         true,
+	}
+
+	defer func(ctx context.Context, c *client.Client) {
+		_, _ = c.ContainersPrune(ctx, filters.Args{})
+	}(ctx, t._client)
+
+	_ = t._client.ContainerRemove(ctx, id, options)
+
+	return nil
+}
+
+func (t *task) removeImage(ctx context.Context, id string) error {
+	options := image.RemoveOptions{
+		Force:         true,
+		PruneChildren: true,
+	}
+
+	defer func(ctx context.Context, c *client.Client) {
+		_, _ = c.ImagesPrune(ctx, filters.Args{})
+	}(ctx, t._client)
+
+	_, _ = t._client.ImageRemove(ctx, id, options)
+
+	return nil
 }
 
 func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
@@ -227,124 +368,4 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 	})
 
 	_ = g.Wait()
-}
-
-func (t *task) runLanguage(ctx context.Context, cmd []string, source, target string) ([]byte, error) {
-	id, out, err := t.runContainer(ctx, t.lang.Artifact.Image, cmd, source, target)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to run container")
-	}
-
-	_ = t.removeContainer(ctx, id)
-
-	return out, nil
-}
-
-func (t *task) pullImage(ctx context.Context, name, user, pass string) error {
-	_config := registry.AuthConfig{
-		Username: user,
-		Password: pass,
-	}
-
-	encodedJSON, _ := json.Marshal(_config)
-	auth := base64.URLEncoding.EncodeToString(encodedJSON)
-
-	options := image.PullOptions{}
-
-	if user != "" && pass != "" {
-		options.RegistryAuth = auth
-	}
-
-	out, err := t._client.ImagePull(ctx, name, options)
-	if err != nil {
-		return errors.Wrap(err, "failed to pull image")
-	}
-
-	defer func(out io.ReadCloser) {
-		_ = out.Close()
-	}(out)
-
-	_, _ = io.Copy(os.Stdout, out)
-
-	return nil
-}
-
-func (t *task) runContainer(ctx context.Context, name string, cmd []string, source, target string) (id string, out []byte, err error) {
-	_config := &container.Config{
-		Image: name,
-		Cmd:   cmd,
-		Tty:   false,
-	}
-
-	hostConfig := &container.HostConfig{
-		Mounts: []mount.Mount{
-			{
-				Type:   mount.TypeBind,
-				Source: source,
-				Target: target,
-			},
-		},
-	}
-
-	resp, err := t._client.ContainerCreate(ctx, _config, hostConfig, &network.NetworkingConfig{},
-		nil, "")
-	if err != nil {
-		return "", nil, errors.Wrap(err, "failed to create container")
-	}
-
-	if err = t._client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		return "", nil, errors.Wrap(err, "failed to start container")
-	}
-
-	statusCh, errCh := t._client.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return "", nil, errors.Wrap(err, "failed to wait container")
-		}
-	case <-statusCh:
-	}
-
-	buf, err := t._client.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
-	if err != nil {
-		return "", nil, errors.Wrap(err, "failed to log container")
-	}
-
-	out, err = io.ReadAll(buf)
-	if err != nil {
-		return "", nil, errors.Wrap(err, "failed to read log")
-	}
-
-	return resp.ID, out, nil
-}
-
-func (t *task) removeContainer(ctx context.Context, id string) error {
-	options := container.RemoveOptions{
-		RemoveVolumes: true,
-		RemoveLinks:   true,
-		Force:         true,
-	}
-
-	defer func(ctx context.Context, c *client.Client) {
-		_, _ = c.ContainersPrune(ctx, filters.Args{})
-	}(ctx, t._client)
-
-	_ = t._client.ContainerRemove(ctx, id, options)
-
-	return nil
-}
-
-func (t *task) removeImage(ctx context.Context, id string) error {
-	options := image.RemoveOptions{
-		Force:         true,
-		PruneChildren: true,
-	}
-
-	defer func(ctx context.Context, c *client.Client) {
-		_, _ = c.ImagesPrune(ctx, filters.Args{})
-	}(ctx, t._client)
-
-	_, _ = t._client.ImageRemove(ctx, id, options)
-
-	return nil
 }
