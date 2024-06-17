@@ -5,6 +5,7 @@ package task
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -19,7 +20,7 @@ import (
 )
 
 var (
-	languageBash = Language{
+	testBash = Language{
 		Name: langBash,
 		Artifact: Artifact{
 			Image:   "",
@@ -29,7 +30,7 @@ var (
 		},
 	}
 
-	languageGroovy = Language{
+	testGroovy = Language{
 		Name: "groovy",
 		Artifact: Artifact{
 			Image:   "craftslab/groovy:latest",
@@ -56,8 +57,9 @@ func initTask() *task {
 }
 
 func TestRunEcho(t *testing.T) {
-	var arg []string
 	var env []string
+	var cmd []string
+	var file string
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -65,19 +67,19 @@ func TestRunEcho(t *testing.T) {
 	_t := initTask()
 	ctx := context.Background()
 
-	err = _t.Init(ctx, lineWidth, languageBash)
+	err = _t.Init(ctx, lineWidth, testBash)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", env, arg)
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.NotEqual(t, nil, err)
 
-	arg = []string{"invalid"}
-	err = _t.Run(ctx, "", env, arg)
+	cmd = []string{"invalid"}
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.NotEqual(t, nil, err)
 
 	env = []string{"ENV1=task1", "ENV2=task2"}
-	arg = []string{"bash", "-c", "echo $ENV1 $ENV2"}
-	err = _t.Run(ctx, "", env, arg)
+	cmd = []string{"echo $ENV1 $ENV2"}
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)
@@ -100,8 +102,9 @@ L:
 }
 
 func TestRunBash(t *testing.T) {
-	var arg []string
 	var env []string
+	var cmd []string
+	var file string
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -109,14 +112,14 @@ func TestRunBash(t *testing.T) {
 	_t := initTask()
 	ctx := context.Background()
 
-	err = _t.Init(ctx, lineWidth, languageBash)
+	err = _t.Init(ctx, lineWidth, testBash)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", env, arg)
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.NotEqual(t, nil, err)
 
-	arg = []string{"bash", "-c", "../test/bash.sh"}
-	err = _t.Run(ctx, "", env, arg)
+	cmd = []string{"../test/bash.sh"}
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)
@@ -139,8 +142,9 @@ L:
 }
 
 func TestRunGroovy(t *testing.T) {
-	var arg []string
 	var env []string
+	var cmd []string
+	var file string
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -148,13 +152,12 @@ func TestRunGroovy(t *testing.T) {
 	_t := initTask()
 	ctx := context.Background()
 
-	err = _t.Init(ctx, lineWidth, languageGroovy)
+	err = _t.Init(ctx, lineWidth, testGroovy)
 	assert.Equal(t, nil, err)
 
-	// TBD: FIXME
-	// Set env and arg
-
-	err = _t.Run(ctx, "", env, arg)
+	env = []string{"ENV1=task1", "ENV2=task2"}
+	file = "../test/jenkinsfile"
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)
@@ -177,8 +180,9 @@ L:
 }
 
 func TestRunPython(t *testing.T) {
-	var arg []string
 	var env []string
+	var cmd []string
+	var file string
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -186,14 +190,14 @@ func TestRunPython(t *testing.T) {
 	_t := initTask()
 	ctx := context.Background()
 
-	err = _t.Init(ctx, lineWidth, languageBash)
+	err = _t.Init(ctx, lineWidth, testBash)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", env, arg)
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.NotEqual(t, nil, err)
 
-	arg = []string{"bash", "-c", "python3 ../test/python.py"}
-	err = _t.Run(ctx, "", env, arg)
+	cmd = []string{"python3 ../test/python.py"}
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)
@@ -216,8 +220,9 @@ L:
 }
 
 func TestRunSplit(t *testing.T) {
-	var arg []string
 	var env []string
+	var cmd []string
+	var file string
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -225,14 +230,14 @@ func TestRunSplit(t *testing.T) {
 	_t := initTask()
 	ctx := context.Background()
 
-	err = _t.Init(ctx, lineWidth, languageBash)
+	err = _t.Init(ctx, lineWidth, testBash)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", env, arg)
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.NotEqual(t, nil, err)
 
-	arg = []string{"bash", "-c", "python3 ../test/split.py"}
-	err = _t.Run(ctx, "", env, arg)
+	cmd = []string{"python3 ../test/split.py"}
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)
@@ -255,8 +260,9 @@ L:
 }
 
 func TestRunError(t *testing.T) {
-	var arg []string
 	var env []string
+	var cmd []string
+	var file string
 	var err error
 
 	defer goleak.VerifyNone(t)
@@ -264,14 +270,14 @@ func TestRunError(t *testing.T) {
 	_t := initTask()
 	ctx := context.Background()
 
-	err = _t.Init(ctx, lineWidth, languageBash)
+	err = _t.Init(ctx, lineWidth, testBash)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", env, arg)
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.NotEqual(t, nil, err)
 
-	arg = []string{"bash", "-c", "../test/error.sh"}
-	err = _t.Run(ctx, "", env, arg)
+	cmd = []string{"../test/error.sh"}
+	err = _t.Run(ctx, "", env, cmd, file)
 	assert.Equal(t, nil, err)
 
 	log := _t.Tail(ctx)
@@ -305,19 +311,20 @@ func TestImageContainer(t *testing.T) {
 
 	ctx := context.Background()
 
-	cmd := []string{"/workspace/jenkinsfile"}
-	source, _ := filepath.Abs("../test")
-	target := "/workspace"
-
-	err := _t.pullImage(ctx, languageGroovy.Artifact.Image, languageGroovy.Artifact.User, languageGroovy.Artifact.Pass)
+	err := _t.pullImage(ctx, testGroovy.Artifact.Image, testGroovy.Artifact.User, testGroovy.Artifact.Pass)
 	assert.Equal(t, nil, err)
 
-	id, _, err := _t.runContainer(ctx, languageGroovy.Artifact.Image, cmd, source, target)
+	env := []string{"ENV1=task1", "ENV2=task2"}
+	cmd := []string{filepath.Join(string(os.PathSeparator), langTarget, "jenkinsfile")}
+	source, _ := filepath.Abs("../test")
+	target := langTarget
+
+	id, _, err := _t.runContainer(ctx, testGroovy.Artifact.Image, env, cmd, source, target)
 	assert.Equal(t, nil, err)
 
 	err = _t.removeContainer(ctx, id)
 	assert.Equal(t, nil, err)
 
-	err = _t.removeImage(ctx, languageGroovy.Artifact.Image)
+	err = _t.removeImage(ctx, testGroovy.Artifact.Image)
 	assert.Equal(t, nil, err)
 }

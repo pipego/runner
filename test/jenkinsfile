@@ -4,6 +4,8 @@ pipeline {
         stage('Print') {
             steps {
                 echo 'Hello World!'
+                echo "ENV1=${env.ENV1}"
+                echo "ENV2=${env.ENV2}"
             }
         }
     }

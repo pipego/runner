@@ -27,6 +27,11 @@ const (
 	Layout = "20060102150405"
 )
 
+const (
+	Prefix = "pipego-runner-file-"
+	Tmp    = "/tmp"
+)
+
 type Server interface {
 	Init(context.Context) error
 	Deinit(context.Context) error
@@ -74,6 +79,8 @@ func (s *server) Run(_ context.Context) error {
 
 // nolint:gocyclo
 func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
+	var path string
+
 	// Receive task
 	name, file, params, commands, width, language, err := s.recvTask(srv)
 	if err != nil {
@@ -107,18 +114,15 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 	}(ctx)
 
 	// Parse commands
-	if len(commands) != 0 {
-		commands = []string{"bash", "-c", strings.Join(commands, " ")}
-	} else if len(file.GetContent()) != 0 {
-		n, e := s.loadFile(ctx, f, file.GetContent(), file.GetGzip())
-		defer func(ctx context.Context, n string) {
-			_ = f.Remove(ctx, n)
-		}(ctx, n)
-		if e != nil {
-			s.cfg.Logger.Error("SendTask", e.Error())
-			return srv.Send(&pb.TaskReply{Error: e.Error()})
+	if len(file.GetContent()) != 0 {
+		path, err = s.loadFile(ctx, f, file.GetContent(), file.GetGzip())
+		defer func(ctx context.Context, path string) {
+			_ = f.Remove(ctx, path)
+		}(ctx, path)
+		if err != nil {
+			s.cfg.Logger.Error("SendTask", err.Error())
+			return srv.Send(&pb.TaskReply{Error: err.Error()})
 		}
-		commands = []string{"bash", "-c", n}
 	}
 
 	// Run task
@@ -137,7 +141,7 @@ func (s *server) SendTask(srv pb.ServerProto_SendTaskServer) error {
 		_ = t.Deinit(ctx)
 	}(ctx)
 
-	if err := t.Run(ctx, name, s.buildEnv(ctx, params), commands); err != nil {
+	if err := t.Run(ctx, name, s.buildEnv(ctx, params), commands, path); err != nil {
 		s.cfg.Logger.Error("SendTask", err.Error())
 		return srv.Send(&pb.TaskReply{Error: err.Error()})
 	}
@@ -403,8 +407,7 @@ func (s *server) loadFile(ctx context.Context, file fl.File, data []byte, gzip b
 		buf = data
 	}
 
-	suffix := time.Now().Format(Layout)
-	name := filepath.Join(string(os.PathSeparator), "tmp", "pipego-runner-file-"+suffix)
+	name := filepath.Join(string(os.PathSeparator), Tmp, Prefix+time.Now().Format(Layout))
 
 	if err = file.Write(ctx, name, buf); err != nil {
 		_ = file.Remove(ctx, name)

@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -28,7 +30,8 @@ import (
 )
 
 const (
-	langBash = "bash"
+	langBash   = "bash"
+	langTarget = "/workspace"
 
 	lineCount = 1000
 	lineSep   = '\n'
@@ -43,7 +46,7 @@ const (
 type Task interface {
 	Init(context.Context, int, Language) error
 	Deinit(context.Context) error
-	Run(context.Context, string, []string, []string) error
+	Run(context.Context, string, []string, []string, string) error
 	Tail(ctx context.Context) Log
 }
 
@@ -130,14 +133,14 @@ func (t *task) Deinit(ctx context.Context) error {
 	return nil
 }
 
-func (t *task) Run(ctx context.Context, _ string, env, arg []string) error {
+func (t *task) Run(ctx context.Context, _ string, env, cmd []string, file string) error {
 	var stdout, stderr *bufio.Reader
 	var err error
 
 	if t.lang.Name == langBash {
-		stdout, stderr, err = t.runBash(ctx, env, arg)
+		stdout, stderr, err = t.runBash(ctx, env, cmd, file)
 	} else {
-		stdout, stderr, err = t.runLanguage(ctx, env, arg)
+		stdout, stderr, err = t.runLanguage(ctx, env, file)
 	}
 
 	if err != nil {
@@ -154,24 +157,23 @@ func (t *task) Tail(_ context.Context) Log {
 }
 
 // nolint:ineffassign
-func (t *task) runBash(ctx context.Context, env, cmd []string) (stdoutReader, stderrReader *bufio.Reader, err error) {
-	var a []string
-	var n string
+func (t *task) runBash(ctx context.Context, env, cmd []string, file string) (stdoutReader, stderrReader *bufio.Reader, err error) {
+	var name string
+	var arg []string
 
-	if len(cmd) > 1 {
-		n, err = exec.LookPath(cmd[0])
-		a = cmd[1:]
-	} else if len(cmd) == 1 {
-		n, err = exec.LookPath(cmd[0])
+	name, err = exec.LookPath(langBash)
+
+	if len(cmd) != 0 {
+		arg = []string{"-c", strings.Join(cmd, " ")}
 	} else {
-		return nil, nil, errors.New("invalid args")
+		if file != "" {
+			arg = []string{"-c", file}
+		} else {
+			return nil, nil, errors.New("invalid file")
+		}
 	}
 
-	if err != nil {
-		return nil, nil, errors.New("name not found")
-	}
-
-	c := exec.CommandContext(ctx, n, a...)
+	c := exec.CommandContext(ctx, name, arg...)
 	c.Env = append(c.Environ(), env...)
 
 	stdoutPipe, _ := c.StdoutPipe()
@@ -197,14 +199,11 @@ func (t *task) runBash(ctx context.Context, env, cmd []string) (stdoutReader, st
 	return stdoutReader, stderrReader, nil
 }
 
-func (t *task) runLanguage(ctx context.Context, env, cmd []string) (stdoutReader, stderrReader *bufio.Reader, err error) {
-	// TBD: FIXME
-	// Set env
+func (t *task) runLanguage(ctx context.Context, env []string, file string) (stdoutReader, stderrReader *bufio.Reader, err error) {
+	name := []string{filepath.Join(string(os.PathSeparator), langTarget, filepath.Base(file))}
+	source := filepath.Dir(file)
 
-	source := "TBD"
-	target := "TBD"
-
-	id, stdoutReader, err := t.runContainer(ctx, t.lang.Artifact.Image, cmd, source, target)
+	id, stdoutReader, err := t.runContainer(ctx, t.lang.Artifact.Image, env, name, source, langTarget)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to run container")
 	}
@@ -243,10 +242,11 @@ func (t *task) pullImage(ctx context.Context, name, user, pass string) error {
 	return nil
 }
 
-func (t *task) runContainer(ctx context.Context, name string, cmd []string, source, target string) (id string,
+func (t *task) runContainer(ctx context.Context, name string, env, cmd []string, source, target string) (id string,
 	stdout *bufio.Reader, err error) {
 	_config := &container.Config{
 		Image: name,
+		Env:   env,
 		Cmd:   cmd,
 		Tty:   false,
 	}
