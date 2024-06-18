@@ -112,22 +112,26 @@ func (t *task) Init(ctx context.Context, width int, lang Language) error {
 		Width: w,
 	}
 
-	t._client, _ = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if t.lang.Name != langBash {
+		t._client, _ = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 
-	if err := t.pullImage(ctx, t.lang.Artifact.Image, t.lang.Artifact.User, t.lang.Artifact.Pass); err != nil {
-		return errors.Wrap(err, "failed to pull image")
+		if err := t.pullImage(ctx, t.lang.Artifact.Image, t.lang.Artifact.User, t.lang.Artifact.Pass); err != nil {
+			return errors.Wrap(err, "failed to pull image")
+		}
 	}
 
 	return nil
 }
 
 func (t *task) Deinit(ctx context.Context) error {
-	if t.lang.Artifact.Cleanup {
-		_ = t.removeImage(ctx, t.lang.Artifact.Image)
-	}
+	if t.lang.Name != langBash {
+		if t.lang.Artifact.Cleanup {
+			_ = t.removeImage(ctx, t.lang.Artifact.Image)
+		}
 
-	if t._client != nil {
-		_ = t._client.Close()
+		if t._client != nil {
+			_ = t._client.Close()
+		}
 	}
 
 	return nil
