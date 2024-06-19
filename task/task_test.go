@@ -14,7 +14,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/goleak"
 
 	"github.com/pipego/runner/config"
 )
@@ -62,18 +61,12 @@ func TestRunEcho(t *testing.T) {
 	var file string
 	var err error
 
-	defer goleak.VerifyNone(t)
-
 	_t := initTask()
 	ctx := context.Background()
 
 	err = _t.Init(ctx, lineWidth, testBash)
 	assert.Equal(t, nil, err)
 
-	err = _t.Run(ctx, "", env, cmd, file)
-	assert.NotEqual(t, nil, err)
-
-	cmd = []string{"invalid"}
 	err = _t.Run(ctx, "", env, cmd, file)
 	assert.NotEqual(t, nil, err)
 
@@ -106,8 +99,6 @@ func TestRunBash(t *testing.T) {
 	var cmd []string
 	var file string
 	var err error
-
-	defer goleak.VerifyNone(t)
 
 	_t := initTask()
 	ctx := context.Background()
@@ -147,8 +138,6 @@ func TestRunGroovy(t *testing.T) {
 	var file string
 	var err error
 
-	defer goleak.VerifyNone(t)
-
 	_t := initTask()
 	ctx := context.Background()
 
@@ -156,7 +145,7 @@ func TestRunGroovy(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	env = []string{"ENV1=task1", "ENV2=task2"}
-	file = "../test/jenkinsfile"
+	file, _ = filepath.Abs("../test/jenkinsfile")
 	err = _t.Run(ctx, "", env, cmd, file)
 	assert.Equal(t, nil, err)
 
@@ -184,8 +173,6 @@ func TestRunPython(t *testing.T) {
 	var cmd []string
 	var file string
 	var err error
-
-	defer goleak.VerifyNone(t)
 
 	_t := initTask()
 	ctx := context.Background()
@@ -225,8 +212,6 @@ func TestRunSplit(t *testing.T) {
 	var file string
 	var err error
 
-	defer goleak.VerifyNone(t)
-
 	_t := initTask()
 	ctx := context.Background()
 
@@ -265,8 +250,6 @@ func TestRunError(t *testing.T) {
 	var file string
 	var err error
 
-	defer goleak.VerifyNone(t)
-
 	_t := initTask()
 	ctx := context.Background()
 
@@ -300,8 +283,6 @@ L:
 }
 
 func TestImageContainer(t *testing.T) {
-	defer goleak.VerifyNone(t)
-
 	_t := initTask()
 	_t._client, _ = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 

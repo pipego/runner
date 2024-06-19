@@ -99,8 +99,6 @@ func DefaultConfig() *Config {
 func (t *task) Init(ctx context.Context, width int, lang Language) error {
 	var w int
 
-	t.lang = lang
-
 	if width > 0 {
 		w = width
 	} else {
@@ -112,6 +110,7 @@ func (t *task) Init(ctx context.Context, width int, lang Language) error {
 		Width: w,
 	}
 
+	t.lang = lang
 	if t.lang.Name != langBash {
 		t._client, _ = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 
@@ -138,20 +137,17 @@ func (t *task) Deinit(ctx context.Context) error {
 }
 
 func (t *task) Run(ctx context.Context, _ string, env, cmd []string, file string) error {
-	var stdout, stderr *bufio.Reader
 	var err error
 
 	if t.lang.Name == langBash {
-		stdout, stderr, err = t.runBash(ctx, env, cmd, file)
+		err = t.runBash(ctx, env, cmd, file)
 	} else {
-		stdout, stderr, err = t.runLanguage(ctx, env, file)
+		err = t.runLanguage(ctx, env, file)
 	}
 
 	if err != nil {
 		return errors.Wrap(err, "failed to run task")
 	}
-
-	t.routine(ctx, stdout, stderr)
 
 	return nil
 }
@@ -161,11 +157,15 @@ func (t *task) Tail(_ context.Context) Log {
 }
 
 // nolint:ineffassign
-func (t *task) runBash(ctx context.Context, env, cmd []string, file string) (stdoutReader, stderrReader *bufio.Reader, err error) {
+func (t *task) runBash(ctx context.Context, env, cmd []string, file string) error {
 	var name string
 	var arg []string
+	var err error
 
 	name, err = exec.LookPath(langBash)
+	if err != nil {
+		return errors.New("name not found")
+	}
 
 	if len(cmd) != 0 {
 		arg = []string{"-c", strings.Join(cmd, " ")}
@@ -173,7 +173,7 @@ func (t *task) runBash(ctx context.Context, env, cmd []string, file string) (std
 		if file != "" {
 			arg = []string{"-c", file}
 		} else {
-			return nil, nil, errors.New("invalid file")
+			return errors.New("invalid file")
 		}
 	}
 
@@ -181,12 +181,13 @@ func (t *task) runBash(ctx context.Context, env, cmd []string, file string) (std
 	c.Env = append(c.Environ(), env...)
 
 	stdoutPipe, _ := c.StdoutPipe()
-	stdoutReader = bufio.NewReader(stdoutPipe)
+	stdoutReader := bufio.NewReader(stdoutPipe)
 
 	stderrPipe, _ := c.StderrPipe()
-	stdoutReader = bufio.NewReader(stderrPipe)
+	stderrReader := bufio.NewReader(stderrPipe)
 
 	_ = c.Start()
+	t.routine(ctx, stdoutReader, stderrReader)
 
 	g, _ := errgroup.WithContext(ctx)
 	g.SetLimit(routineNum)
@@ -197,24 +198,26 @@ func (t *task) runBash(ctx context.Context, env, cmd []string, file string) (std
 	})
 
 	if err = g.Wait(); err != nil {
-		return nil, nil, errors.Wrap(err, "failed to wait")
+		return errors.Wrap(err, "failed to wait")
 	}
 
-	return stdoutReader, stderrReader, nil
+	return nil
 }
 
-func (t *task) runLanguage(ctx context.Context, env []string, file string) (stdoutReader, stderrReader *bufio.Reader, err error) {
+func (t *task) runLanguage(ctx context.Context, env []string, file string) error {
 	name := []string{filepath.Join(string(os.PathSeparator), langTarget, filepath.Base(file))}
 	source := filepath.Dir(file)
 
-	id, stdoutReader, err := t.runContainer(ctx, t.lang.Artifact.Image, env, name, source, langTarget)
+	id, stdout, err := t.runContainer(ctx, t.lang.Artifact.Image, env, name, source, langTarget)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to run container")
+		return errors.Wrap(err, "failed to run container")
 	}
+
+	t.routine(ctx, stdout, nil)
 
 	_ = t.removeContainer(ctx, id)
 
-	return stdoutReader, stderrReader, nil
+	return nil
 }
 
 func (t *task) pullImage(ctx context.Context, name, user, pass string) error {
@@ -330,6 +333,10 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 	p := 1
 
 	helper := func(_ context.Context, reader *bufio.Reader, log Log) {
+		defer t.wg.Done()
+		if reader == nil {
+			return
+		}
 		for {
 			line, err := reader.ReadBytes(lineSep)
 			if err != nil {
@@ -345,7 +352,6 @@ func (t *task) routine(ctx context.Context, stdout, stderr *bufio.Reader) {
 			log.Line.In <- &Line{Pos: int64(p), Time: time.Now().UnixNano(), Message: string(b[len(b)-m:])}
 			p += 1
 		}
-		t.wg.Done()
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
