@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
+	"github.com/pipego/runner/config"
 	fl "github.com/pipego/runner/file"
 	"github.com/pipego/runner/glance"
 	"github.com/pipego/runner/maint"
@@ -354,6 +355,24 @@ func (s *server) SendMaint(srv pb.ServerProto_SendMaintServer) error {
 	return nil
 }
 
+func (s *server) SendConfig(srv pb.ServerProto_SendConfigServer) error {
+	configVersion, _ := s.recvConfig(srv)
+
+	s.cfg.Logger.Debug("SendConfig: version", configVersion)
+
+	var version string
+
+	if configVersion {
+		version = config.Version + "-build-" + config.Build
+	}
+
+	_ = srv.Send(&pb.ConfigReply{
+		Version: version,
+	})
+
+	return nil
+}
+
 // nolint:gocritic
 func (s *server) recvTask(srv pb.ServerProto_SendTaskServer) (name string, file *pb.TaskFile, params []*pb.TaskParam,
 	commands []string, width int, language *pb.TaskLanguage, err error) {
@@ -459,7 +478,7 @@ func (s *server) evalEnv(ctx context.Context, params []*pb.TaskParam, data strin
 	return data
 }
 
-func (s *server) buildLanguage(ctx context.Context, language *pb.TaskLanguage) task.Language {
+func (s *server) buildLanguage(_ context.Context, language *pb.TaskLanguage) task.Language {
 	return task.Language{
 		Name: language.GetName(),
 		Artifact: task.Artifact{
@@ -538,4 +557,26 @@ func (s *server) newMaint(ctx context.Context) (maint.Maint, error) {
 	c.Logger = s.cfg.Logger
 
 	return maint.New(ctx, c), nil
+}
+
+func (s *server) recvConfig(srv pb.ServerProto_SendConfigServer) (version bool, err error) {
+	for {
+		r, err := srv.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return version, errors.Wrap(err, "failed to receive")
+		}
+
+		if r.Kind != Kind {
+			return version, errors.Wrap(err, "invalid kind")
+		}
+
+		version = r.Spec.Config.GetVersion()
+
+		break
+	}
+
+	return version, nil
 }

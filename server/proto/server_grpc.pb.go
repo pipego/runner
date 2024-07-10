@@ -22,6 +22,7 @@ const (
 	ServerProto_SendTask_FullMethodName   = "/runner.ServerProto/SendTask"
 	ServerProto_SendGlance_FullMethodName = "/runner.ServerProto/SendGlance"
 	ServerProto_SendMaint_FullMethodName  = "/runner.ServerProto/SendMaint"
+	ServerProto_SendConfig_FullMethodName = "/runner.ServerProto/SendConfig"
 )
 
 // ServerProtoClient is the client API for ServerProto service.
@@ -31,6 +32,7 @@ type ServerProtoClient interface {
 	SendTask(ctx context.Context, opts ...grpc.CallOption) (ServerProto_SendTaskClient, error)
 	SendGlance(ctx context.Context, opts ...grpc.CallOption) (ServerProto_SendGlanceClient, error)
 	SendMaint(ctx context.Context, opts ...grpc.CallOption) (ServerProto_SendMaintClient, error)
+	SendConfig(ctx context.Context, opts ...grpc.CallOption) (ServerProto_SendConfigClient, error)
 }
 
 type serverProtoClient struct {
@@ -137,6 +139,38 @@ func (x *serverProtoSendMaintClient) Recv() (*MaintReply, error) {
 	return m, nil
 }
 
+func (c *serverProtoClient) SendConfig(ctx context.Context, opts ...grpc.CallOption) (ServerProto_SendConfigClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ServerProto_ServiceDesc.Streams[3], ServerProto_SendConfig_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &serverProtoSendConfigClient{ClientStream: stream}
+	return x, nil
+}
+
+type ServerProto_SendConfigClient interface {
+	Send(*ConfigRequest) error
+	Recv() (*ConfigReply, error)
+	grpc.ClientStream
+}
+
+type serverProtoSendConfigClient struct {
+	grpc.ClientStream
+}
+
+func (x *serverProtoSendConfigClient) Send(m *ConfigRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *serverProtoSendConfigClient) Recv() (*ConfigReply, error) {
+	m := new(ConfigReply)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ServerProtoServer is the server API for ServerProto service.
 // All implementations must embed UnimplementedServerProtoServer
 // for forward compatibility
@@ -144,6 +178,7 @@ type ServerProtoServer interface {
 	SendTask(ServerProto_SendTaskServer) error
 	SendGlance(ServerProto_SendGlanceServer) error
 	SendMaint(ServerProto_SendMaintServer) error
+	SendConfig(ServerProto_SendConfigServer) error
 	mustEmbedUnimplementedServerProtoServer()
 }
 
@@ -159,6 +194,9 @@ func (UnimplementedServerProtoServer) SendGlance(ServerProto_SendGlanceServer) e
 }
 func (UnimplementedServerProtoServer) SendMaint(ServerProto_SendMaintServer) error {
 	return status.Errorf(codes.Unimplemented, "method SendMaint not implemented")
+}
+func (UnimplementedServerProtoServer) SendConfig(ServerProto_SendConfigServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendConfig not implemented")
 }
 func (UnimplementedServerProtoServer) mustEmbedUnimplementedServerProtoServer() {}
 
@@ -251,6 +289,32 @@ func (x *serverProtoSendMaintServer) Recv() (*MaintRequest, error) {
 	return m, nil
 }
 
+func _ServerProto_SendConfig_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ServerProtoServer).SendConfig(&serverProtoSendConfigServer{ServerStream: stream})
+}
+
+type ServerProto_SendConfigServer interface {
+	Send(*ConfigReply) error
+	Recv() (*ConfigRequest, error)
+	grpc.ServerStream
+}
+
+type serverProtoSendConfigServer struct {
+	grpc.ServerStream
+}
+
+func (x *serverProtoSendConfigServer) Send(m *ConfigReply) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *serverProtoSendConfigServer) Recv() (*ConfigRequest, error) {
+	m := new(ConfigRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ServerProto_ServiceDesc is the grpc.ServiceDesc for ServerProto service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -274,6 +338,12 @@ var ServerProto_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "SendMaint",
 			Handler:       _ServerProto_SendMaint_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "SendConfig",
+			Handler:       _ServerProto_SendConfig_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

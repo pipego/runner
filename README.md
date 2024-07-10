@@ -359,6 +359,35 @@ Flags:
 
 
 
+### 4. Config
+
+```json
+{
+  "apiVersion": "v1",
+  "kind": "runner",
+  "metadata": {
+    "name": "runner"
+  },
+  "spec": {
+    "config": {
+      "version": true
+    }
+  }
+}
+```
+
+> `config.version`: runner version
+
+**Output**
+
+```json
+{
+  "version": "v1.0.0-build-2024-07-08T09:41:58+0800"
+}
+```
+
+
+
 ## License
 
 Project License can be found [here](LICENSE).

@@ -8,6 +8,7 @@ service ServerProto {
   rpc SendTask (stream TaskRequest) returns (stream TaskReply) {}
   rpc SendGlance (stream GlanceRequest) returns (stream GlanceReply) {}
   rpc SendMaint (stream MaintRequest) returns (stream MaintReply) {}
+  rpc SendConfig (stream ConfigRequest) returns (stream ConfigReply) {}
 }
 
 message TaskRequest {
@@ -230,4 +231,27 @@ message MaintClockSync {
 message MaintClockDiff {
   int64 time = 1;
   bool dangerous = 2;
+}
+
+message ConfigRequest {
+  string apiVersion = 1;
+  string kind = 2;
+  ConfigMetadata metadata = 3;
+  ConfigSpec spec = 4;
+}
+
+message ConfigMetadata {
+  string name = 1;
+}
+
+message ConfigSpec {
+  Config config = 1;
+}
+
+message Config {
+  bool version = 1;
+}
+
+message ConfigReply {
+  string version = 1;
 }
