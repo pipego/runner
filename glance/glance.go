@@ -282,6 +282,7 @@ func (g *glance) milliCPU() (alloc, request int64) {
 	return int64(c * Milli), int64(used * Milli)
 }
 
+// nolint:gosec
 func (g *glance) memory() (alloc, request int64) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
@@ -295,6 +296,7 @@ func (g *glance) memory() (alloc, request int64) {
 	return int64(v.Total), int64(v.Used)
 }
 
+// nolint:gosec
 func (g *glance) storage() (alloc, request int64) {
 	helper := func(path string) bool {
 		found := false
